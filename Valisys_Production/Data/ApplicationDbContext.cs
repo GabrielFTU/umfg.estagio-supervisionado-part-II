@@ -1,0 +1,215 @@
+using Microsoft.EntityFrameworkCore;
+using Valisys_Production.Models;
+using Valisys_Production.Models.Enums;
+
+namespace Valisys_Production.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options) { }
+
+        private static readonly Guid AdminProfileId = Guid.Parse("C0DE0000-0000-0000-0000-000000000001");
+        private static readonly Guid UnitId = Guid.Parse("C0DE0000-0000-0000-0000-000000000002");
+        private static readonly Guid KgId = Guid.Parse("C0DE0000-0000-0000-0000-000000000003");
+        private static readonly Guid Phase1Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000004");
+        private static readonly Guid SampleCategoryId = Guid.Parse("C0DE0000-0000-0000-0000-000000000006");
+        private static readonly Guid SampleTipoOrdemDeProducaoId = Guid.Parse("C0DE0000-0000-0000-0000-000000000008");
+        private static readonly Guid SampleAlmoxarifadoId = Guid.Parse("C0DE0000-0000-0000-0000-000000000009");
+        private static readonly Guid AdminUserId = Guid.Parse("C0DE0000-0000-0000-0000-000000000000");
+
+        public DbSet<Fornecedor> Fornecedores { get; set; }
+        public DbSet<Almoxarifado> Almoxarifados { get; set; }
+        public DbSet<Produto> Produtos { get; set; }
+        public DbSet<Lote> Lotes { get; set; }
+        public DbSet<OrdemDeProducao> OrdensDeProducao { get; set; }
+        public DbSet<Movimentacao> Movimentacoes { get; set; }
+        public DbSet<SolicitacaoProducao> SolicitacoesProducao { get; set; }
+        public DbSet<SolicitacaoProducaoItem> SolicitacaoProducaoItens { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Perfil> Perfis { get; set; }
+        public DbSet<FaseProducao> FasesProducao { get; set; }
+        public DbSet<CategoriaProduto> CategoriasProduto { get; set; }
+        public DbSet<UnidadeMedida> UnidadesMedida { get; set; }
+        public DbSet<TipoOrdemDeProducao> TiposDeOrdemDeProducao { get; set; }
+        public DbSet<FichaTecnica> FichasTecnicas { get; set; }
+        public DbSet<FichaTecnicaItem> FichaTecnicaItens { get; set; }
+        public DbSet<RoteiroProducao> RoteirosProducao { get; set; }
+        public DbSet<RoteiroProducaoEtapa> RoteiroProducaoEtapas { get; set; }
+        public DbSet<LogSistema> LogsSistema { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Produto>()
+                .HasIndex(p => p.CodigoInternoProduto)
+                .IsUnique();
+
+            modelBuilder.Entity<CategoriaProduto>()
+                .HasIndex(c => c.Codigo)
+                .IsUnique()
+                .HasFilter("\"Codigo\" IS NOT NULL");
+
+            modelBuilder.Entity<LogSistema>()
+                .HasOne(l => l.Usuario)
+                .WithMany()
+                .HasForeignKey(l => l.UsuarioId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<OrdemDeProducao>()
+                .HasOne(o => o.SolicitacaoProducao)
+                .WithOne(s => s.OrdemDeProducao)
+                .HasForeignKey<OrdemDeProducao>(o => o.SolicitacaoProducaoId)
+                .IsRequired(false);
+
+            modelBuilder.Entity<Movimentacao>()
+                .HasOne(m => m.OrdemDeProducao)
+                .WithMany()
+                .HasForeignKey(m => m.OrdemDeProducaoId)
+                .IsRequired(false);
+
+            modelBuilder.Entity<Movimentacao>()
+                .HasOne(m => m.AlmoxarifadoOrigem)
+                .WithMany()
+                .HasForeignKey(m => m.AlmoxarifadoOrigemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Movimentacao>()
+                .HasOne(m => m.AlmoxarifadoDestino)
+                .WithMany()
+                .HasForeignKey(m => m.AlmoxarifadoDestinoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Movimentacao>()
+                .HasOne(m => m.Usuario)
+                .WithMany()
+                .HasForeignKey(m => m.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SolicitacaoProducao>()
+                .HasOne(s => s.Encarregado)
+                .WithMany()
+                .HasForeignKey(s => s.EncarregadoId)
+                .IsRequired(false);
+
+            modelBuilder.Entity<FichaTecnica>()
+                .HasOne(f => f.Produto)
+                .WithMany()
+                .HasForeignKey(f => f.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FichaTecnicaItem>()
+                .HasOne(i => i.FichaTecnica)
+                .WithMany(f => f.Itens)
+                .HasForeignKey(i => i.FichaTecnicaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FichaTecnicaItem>()
+                .HasOne(i => i.ProdutoComponente)
+                .WithMany()
+                .HasForeignKey(i => i.ProdutoComponenteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RoteiroProducao>()
+                .HasOne(r => r.Produto)
+                .WithMany()
+                .HasForeignKey(r => r.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RoteiroProducaoEtapa>()
+                .HasOne(e => e.RoteiroProducao)
+                .WithMany(r => r.Etapas)
+                .HasForeignKey(e => e.RoteiroProducaoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RoteiroProducaoEtapa>()
+                .HasOne(e => e.FaseProducao)
+                .WithMany()
+                .HasForeignKey(e => e.FaseProducaoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Perfil>()
+                .Property(p => p.Acessos)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
+                );
+
+            // Seed Data
+            modelBuilder.Entity<Perfil>().HasData(
+                new Perfil
+                {
+                    Id = AdminProfileId,
+                    Ativo = true,
+                    DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    Nome = "Administrador"
+                }
+            );
+
+            modelBuilder.Entity<Usuario>().HasData(
+                new Usuario
+                {
+                    Id = AdminUserId,
+                    Ativo = true,
+                    DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    Nome = "Administrador Master",
+                    Email = "admin@valisys.com",
+                    SenhaHash = "$2a$12$ceV2TtMQV.UXqYGXoyMt.eV9s2YcTh0SVykcjMPxxDxjci9hoYzeG",
+                    PerfilId = AdminProfileId
+                }
+            );
+
+            modelBuilder.Entity<Almoxarifado>().HasData(
+                new Almoxarifado
+                {
+                    Id = SampleAlmoxarifadoId,
+                    Ativo = true,
+                    DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    Nome = "Almoxarifado Geral",
+                    Descricao = "Almoxarifado principal",
+                    Localizacao = "Galpão 1",
+                    Responsavel = "Sistema",
+                    Contato = "(67) 99999-9999",
+                    Email = "almoxarifado@empresa.com"
+                }
+            );
+
+            modelBuilder.Entity<UnidadeMedida>().HasData(
+                new UnidadeMedida { Id = UnitId, Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Unidade", Sigla = "UN", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1, EhUnidadeBase = true },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000020"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Peça", Sigla = "PC", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000021"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Caixa", Sigla = "CX", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000022"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Kit", Sigla = "KIT", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000023"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Dúzia", Sigla = "DZ", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 12, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000024"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Milheiro", Sigla = "MIL", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1000, EhUnidadeBase = false },
+                new UnidadeMedida { Id = KgId, Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Kilograma", Sigla = "KG", Grandeza = GrandezaUnidade.Massa, FatorConversao = 1, EhUnidadeBase = true },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000099"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Grama", Sigla = "G", Grandeza = GrandezaUnidade.Massa, FatorConversao = 0.001m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000031"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Miligrama", Sigla = "MG", Grandeza = GrandezaUnidade.Massa, FatorConversao = 0.000001m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000032"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Tonelada", Sigla = "TON", Grandeza = GrandezaUnidade.Massa, FatorConversao = 1000m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000012"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Metro", Sigla = "M", Grandeza = GrandezaUnidade.Comprimento, FatorConversao = 1, EhUnidadeBase = true },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000040"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Centímetro", Sigla = "CM", Grandeza = GrandezaUnidade.Comprimento, FatorConversao = 0.01m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000041"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Milímetro", Sigla = "MM", Grandeza = GrandezaUnidade.Comprimento, FatorConversao = 0.001m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000042"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Quilômetro", Sigla = "KM", Grandeza = GrandezaUnidade.Comprimento, FatorConversao = 1000m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000050"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Litro", Sigla = "L", Grandeza = GrandezaUnidade.Volume, FatorConversao = 1, EhUnidadeBase = true },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000051"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Mililitro", Sigla = "ML", Grandeza = GrandezaUnidade.Volume, FatorConversao = 0.001m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000052"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Metro Cúbico", Sigla = "M3", Grandeza = GrandezaUnidade.Volume, FatorConversao = 1000m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000060"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Metro Quadrado", Sigla = "M2", Grandeza = GrandezaUnidade.Area, FatorConversao = 1, EhUnidadeBase = true },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000061"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Centímetro Quadrado", Sigla = "CM2", Grandeza = GrandezaUnidade.Area, FatorConversao = 0.0001m, EhUnidadeBase = false },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000070"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Hora", Sigla = "H", Grandeza = GrandezaUnidade.Tempo, FatorConversao = 1, EhUnidadeBase = true },
+                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000071"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Minuto", Sigla = "MIN", Grandeza = GrandezaUnidade.Tempo, FatorConversao = 0.0166667m, EhUnidadeBase = false }
+            );
+
+            modelBuilder.Entity<TipoOrdemDeProducao>().HasData(
+                new TipoOrdemDeProducao
+                {
+                    Id = SampleTipoOrdemDeProducaoId,
+                    Ativo = true,
+                    DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    Nome = "Normal",
+                    Descricao = "Ordem de Produção Padrão",
+                    Codigo = "NOR"
+                }
+            );
+        }
+    }
+}
