@@ -39,29 +39,36 @@ namespace Valisys_Production.Services
 
         public async Task<string> ObterProximoCodigoAsync() => await GerarProximoCodigoAsync();
 
-        public async Task<FichaTecnica> CreateAsync(FichaTecnica ficha)
+        public async Task<FichaTecnica> CreateAsync(FichaTecnicaCreateDto dto)
         {
-            var produtoPai = await _produtoRepository.GetByIdAsync(ficha.ProdutoId);
-            if (produtoPai == null) throw new KeyNotFoundException("Produto pai não encontrado.");
+            var produtoPai = await _produtoRepository.GetByIdAsync(dto.ProdutoId)
+                ?? throw new KeyNotFoundException("Produto pai não encontrado.");
 
             if (produtoPai.Classificacao == ClassificacaoEnum.MateriaPrima ||
                 produtoPai.Classificacao == ClassificacaoEnum.MaterialConsumo)
                 throw new InvalidOperationException($"Não é possível criar ficha técnica para produto classificado como {produtoPai.Classificacao}.");
 
-            if (string.IsNullOrEmpty(ficha.CodigoFicha))
-                ficha.DefinirCodigo(await GerarProximoCodigoAsync());
+            var ficha = new FichaTecnica(dto.ProdutoId, dto.Versao, dto.Descricao);
 
-            if (ficha.Itens != null)
+            var codigo = string.IsNullOrEmpty(dto.Codigo)
+                ? await GerarProximoCodigoAsync()
+                : dto.Codigo;
+            ficha.DefinirCodigo(codigo);
+
+            if (dto.Itens != null)
             {
-                foreach (var item in ficha.Itens)
+                foreach (var itemDto in dto.Itens)
                 {
-                    var componente = await _produtoRepository.GetByIdAsync(item.ProdutoComponenteId);
+                    var componente = await _produtoRepository.GetByIdAsync(itemDto.ProdutoComponenteId);
                     if (componente == null)
-                        throw new KeyNotFoundException($"Componente {item.ProdutoComponenteId} não encontrado.");
+                        throw new KeyNotFoundException($"Componente {itemDto.ProdutoComponenteId} não encontrado.");
                     if (!componente.Ativo)
                         throw new InvalidOperationException($"Produto '{componente.Nome}' está INATIVO.");
-                    if (item.ProdutoComponenteId == ficha.ProdutoId)
+                    if (itemDto.ProdutoComponenteId == dto.ProdutoId)
                         throw new InvalidOperationException("Referência circular detectada.");
+
+                    ficha.AdicionarItem(new FichaTecnicaItem(
+                        itemDto.ProdutoComponenteId, itemDto.Quantidade, itemDto.PerdaPercentual));
                 }
             }
 

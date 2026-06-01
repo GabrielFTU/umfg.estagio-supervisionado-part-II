@@ -65,8 +65,7 @@ namespace Valisys_Production.Controllers
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
-                var lote = _mapper.Map<Lote>(dto);
-                var ok = await _service.UpdateAsync(lote);
+                var ok = await _service.UpdateAsync(dto);
                 if (!ok) return NotFoundProblem($"Lote '{id}' não encontrado.");
                 return NoContent();
             }

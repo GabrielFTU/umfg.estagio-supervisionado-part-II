@@ -2,18 +2,23 @@ using Valisys_Production.Models.Common;
 
 namespace Valisys_Production.Models
 {
-    public class TipoOrdemDeProducao : BaseModels
+    public sealed class TipoOrdemDeProducao : BaseModels
     {
-        public string Nome { get; private set; }
-        public string Codigo { get; private set; }
+        private readonly List<OrdemDeProducao> _ordensDeProducao = new();
+
+        public string Nome { get; private set; } = string.Empty;
+        public string Codigo { get; private set; } = string.Empty;
         public string? Descricao { get; private set; }
 
-        public List<OrdemDeProducao> OrdensDeProducao { get; private set; } = new();
+        public IReadOnlyCollection<OrdemDeProducao> OrdensDeProducao => _ordensDeProducao.AsReadOnly();
 
         protected TipoOrdemDeProducao() { }
 
         public TipoOrdemDeProducao(string nome, string codigo, string? descricao = null)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(nome);
+            ArgumentException.ThrowIfNullOrWhiteSpace(codigo);
+
             Nome = nome;
             Codigo = codigo;
             Descricao = descricao;
@@ -21,10 +26,14 @@ namespace Valisys_Production.Models
 
         public void Atualizar(string nome, string codigo, string? descricao, bool ativo)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(nome);
+            ArgumentException.ThrowIfNullOrWhiteSpace(codigo);
+
             Nome = nome;
             Codigo = codigo;
             Descricao = descricao;
             DefinirAtivo(ativo);
+            RegistrarAtualizacao();
         }
     }
 }

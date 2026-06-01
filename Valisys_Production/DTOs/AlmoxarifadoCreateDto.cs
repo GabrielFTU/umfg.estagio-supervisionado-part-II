@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Valisys_Production.DTOs
 {
@@ -14,18 +14,17 @@ namespace Valisys_Production.DTOs
 
         [Required(ErrorMessage = "A localização é obrigatória.")]
         [MaxLength(100)]
-        public string Localizacao { get; set; } 
+        public string Localizacao { get; set; }
 
         [Required(ErrorMessage = "O responsável é obrigatório.")]
         [MaxLength(100)]
         public string Responsavel { get; set; }
 
         [MaxLength(20)]
-        public string? Contato { get; set; } 
+        public string? Contato { get; set; }
+
         [EmailAddress(ErrorMessage = "E-mail inválido.")]
         [MaxLength(100)]
-        public string? Email { get; set; } 
-
-        public bool Ativo { get; set; } = true; 
+        public string? Email { get; set; }
     }
 }

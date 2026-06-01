@@ -52,8 +52,7 @@ namespace Valisys_Production.Controllers
         {
             try
             {
-                var ficha = _mapper.Map<FichaTecnica>(dto);
-                var criada = await _service.CreateAsync(ficha);
+                var criada = await _service.CreateAsync(dto);
                 var readDto = _mapper.Map<FichaTecnicaReadDto>(criada);
                 return CreatedAtAction(nameof(GetById), new { id = readDto.Id }, readDto);
             }

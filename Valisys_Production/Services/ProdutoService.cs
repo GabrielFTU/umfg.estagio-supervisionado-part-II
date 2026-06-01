@@ -18,7 +18,7 @@ namespace Valisys_Production.Services
 
         public async Task<Produto> CreateAsync(ProdutoCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Nome))
+            if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome do produto não pode ser vazio.");
 
             var produto = new Produto(dto.Nome, dto.Descricao, dto.Classificacao,
@@ -33,33 +33,21 @@ namespace Valisys_Production.Services
             return criado;
         }
 
-        private async Task<string> GerarProximoCodigoSequencialAsync()
-        {
-            var produtos = await _repository.GetAllAsync();
-            var codigosNumericos = produtos
-                .Select(p => p.CodigoInternoProduto)
-                .Where(c => int.TryParse(c, out _))
-                .Select(c => int.Parse(c))
-                .ToList();
-
-            int proximoNumero = codigosNumericos.Any() ? codigosNumericos.Max() + 1 : 1;
-            return proximoNumero.ToString("D4");
-        }
-
         public async Task<Produto?> GetByIdAsync(Guid id)
         {
             if (id == Guid.Empty) throw new ArgumentException("ID inválido.");
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Produto>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<Produto>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(ProdutoUpdateDto dto)
         {
             if (dto.Id == Guid.Empty) throw new ArgumentException("ID ausente.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException("Produto não encontrado.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Produto não encontrado.");
 
             existing.Atualizar(dto.Nome, dto.Descricao, dto.Classificacao, dto.ControlarPorLote,
                 dto.EstoqueMinimo, dto.UnidadeMedidaId, dto.CategoriaProdutoId, dto.Observacoes, dto.Ativo);
@@ -68,7 +56,7 @@ namespace Valisys_Production.Services
 
             if (updated)
                 await _logService.RegistrarAsync("Edição", "Produtos",
-                    $"Editou o produto '{existing.Nome}' (ID: {existing.Id})");
+                    $"Editou o produto '{existing.Nome}'");
 
             return updated;
         }
@@ -78,13 +66,20 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            var deleted = await _repository.DeleteAsync(id);
+            existing.Desativar();
+            var deleted = await _repository.UpdateAsync(existing);
 
             if (deleted)
-                await _logService.RegistrarAsync("Exclusão", "Produtos",
-                    $"Inativou/Excluiu o produto '{existing.Nome}'");
+                await _logService.RegistrarAsync("Inativação", "Produtos",
+                    $"Inativou o produto '{existing.Nome}'");
 
             return deleted;
+        }
+
+        private async Task<int> GerarProximoCodigoSequencialAsync()
+        {
+            var ultimo = await _repository.GetUltimoCodigoAsync();
+            return (ultimo ?? 0) + 1;
         }
     }
 }

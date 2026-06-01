@@ -16,7 +16,7 @@ namespace Valisys_Production.Services
 
         public async Task<Perfil> CreateAsync(PerfilCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Nome))
+            if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome do perfil não pode ser vazio.");
 
             var perfil = new Perfil(dto.Nome, dto.Acessos);
@@ -29,28 +29,31 @@ namespace Valisys_Production.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Perfil>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<Perfil>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(PerfilUpdateDto dto)
         {
-            if (dto.Id == Guid.Empty) throw new ArgumentException("ID do Perfil ausente para atualização.");
-            if (string.IsNullOrEmpty(dto.Nome)) throw new ArgumentException("O nome do perfil não pode ser vazio.");
+            if (dto.Id == Guid.Empty) throw new ArgumentException("ID do Perfil ausente.");
+            if (string.IsNullOrWhiteSpace(dto.Nome)) throw new ArgumentException("O nome do perfil não pode ser vazio.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException($"Perfil com ID {dto.Id} não encontrado.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException($"Perfil {dto.Id} não encontrado.");
 
             existing.Atualizar(dto.Nome, dto.Ativo);
+            existing.AtualizarAcessos(dto.Acessos);
             return await _repository.UpdateAsync(existing);
         }
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            if (id == Guid.Empty) throw new ArgumentException("ID do Perfil inválido para exclusão.");
+            if (id == Guid.Empty) throw new ArgumentException("ID do Perfil inválido.");
 
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            return await _repository.DeleteAsync(id);
+            existing.Desativar();
+            return await _repository.UpdateAsync(existing);
         }
     }
 }

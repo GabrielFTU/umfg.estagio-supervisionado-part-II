@@ -1,16 +1,10 @@
 namespace Valisys_Production.Models.Enums
 {
-    public enum TipoPessoa
+    public enum PapelPessoa
     {
-        Fisica = 0,
-        Juridica = 1,
-    }
-
-    public enum TipoDocumento
-    {
-        CPF = 0,
-        CNPJ = 1,
-        RG = 2,
-        Outro = 3
+        Cliente = 0,
+        Colaborador = 1,
+        Fornecedor = 2,
+        Vendedor = 3
     }
 }

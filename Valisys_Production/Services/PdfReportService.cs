@@ -202,7 +202,7 @@ namespace Valisys_Production.Services
                                 {
                                     var qtdTotal = item.Quantidade * ordem.Quantidade;
 
-                                    table.Cell().Element(EstiloLinhaBorda).Text(item.ProdutoComponente?.CodigoInternoProduto ?? "?");
+                                    table.Cell().Element(EstiloLinhaBorda).Text(item.ProdutoComponente?.CodigoInternoProduto.ToString() ?? "?");
                                     table.Cell().Element(EstiloLinhaBorda).Text(item.ProdutoComponente?.Nome ?? "Item Removido").FontSize(9);
                                     table.Cell().Element(EstiloLinhaBorda).AlignCenter().Text(item.ProdutoComponente?.UnidadeMedida?.Sigla ?? "UN");
                                     table.Cell().Element(EstiloLinhaBorda).AlignRight().Text(item.Quantidade.ToString("N3"));
@@ -365,7 +365,7 @@ namespace Valisys_Production.Services
                         foreach (var produto in produtos)
                         {
                             Func<IContainer, IContainer> style = (i % 2 == 0) ? EstiloLinhaPar : EstiloLinhaImpar;
-                            table.Cell().Element(style).Text(produto.CodigoInternoProduto).Bold();
+                            table.Cell().Element(style).Text(produto.CodigoInternoProduto.ToString()).Bold();
                             table.Cell().Element(style).Text(produto.Nome);
                             table.Cell().Element(style).Text(produto.CategoriaProduto?.Nome ?? "N/A");
                             table.Cell().Element(style).Text(produto.UnidadeMedida?.Sigla ?? "N/A");

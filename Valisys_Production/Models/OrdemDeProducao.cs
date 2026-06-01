@@ -13,25 +13,25 @@ namespace Valisys_Production.Models
         public string? Observacoes { get; private set; }
 
         public Guid ProdutoId { get; private set; }
-        public Produto Produto { get; private set; }
+        public Produto Produto { get; private set; } = null!;
 
         public Guid AlmoxarifadoId { get; private set; }
-        public Almoxarifado Almoxarifado { get; private set; }
+        public Almoxarifado Almoxarifado { get; private set; } = null!;
 
         public Guid FaseAtualId { get; private set; }
-        public FaseProducao FaseAtual { get; private set; }
+        public FaseProducao FaseAtual { get; private set; } = null!;
 
         public Guid? LoteId { get; private set; }
-        public Lote Lote { get; private set; }
+        public Lote? Lote { get; private set; }
 
         public Guid? RoteiroProducaoId { get; private set; }
-        public RoteiroProducao RoteiroProducao { get; private set; }
+        public RoteiroProducao? RoteiroProducao { get; private set; }
 
         public Guid TipoOrdemDeProducaoId { get; private set; }
-        public TipoOrdemDeProducao TipoOrdemDeProducao { get; private set; }
+        public TipoOrdemDeProducao TipoOrdemDeProducao { get; private set; } = null!;
 
         public Guid? SolicitacaoProducaoId { get; private set; }
-        public SolicitacaoProducao SolicitacaoProducao { get; private set; }
+        public SolicitacaoProducao? SolicitacaoProducao { get; private set; }
 
         protected OrdemDeProducao() { }
 
@@ -68,7 +68,11 @@ namespace Valisys_Production.Models
             DataFim = DateTime.UtcNow;
         }
 
-        public void Cancelar() => Status = StatusOrdemDeProducao.Cancelada;
+        public void Cancelar()
+        {
+            Status = StatusOrdemDeProducao.Cancelada;
+            DataFim = DateTime.UtcNow;
+        }
 
         public void Atualizar(int quantidade, string? observacoes, Guid almoxarifadoId,
             StatusOrdemDeProducao status, Guid? loteId)
@@ -78,15 +82,7 @@ namespace Valisys_Production.Models
             AlmoxarifadoId = almoxarifadoId;
             Status = status;
             if (loteId.HasValue) LoteId = loteId;
-        }
-
-        public void LimparNavegacoes()
-        {
-            Produto = null;
-            Almoxarifado = null;
-            FaseAtual = null;
-            Lote = null;
-            RoteiroProducao = null;
+            RegistrarAtualizacao();
         }
     }
 }

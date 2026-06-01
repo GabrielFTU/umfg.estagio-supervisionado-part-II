@@ -26,12 +26,12 @@ namespace Valisys_Production.Services
 
         public async Task<RoteiroProducao> CreateAsync(RoteiroProducaoCreateDto dto)
         {
-            var produto = await _produtoRepository.GetByIdAsync(dto.ProdutoId);
-            if (produto == null) throw new KeyNotFoundException("Produto não encontrado.");
+            var produto = await _produtoRepository.GetByIdAsync(dto.ProdutoId)
+                ?? throw new KeyNotFoundException("Produto não encontrado.");
 
-            var codigo = dto.Codigo;
-            if (string.IsNullOrEmpty(codigo) || codigo.StartsWith("RASCUNHO-"))
-                codigo = $"RT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}";
+            var codigo = string.IsNullOrEmpty(dto.Codigo) || dto.Codigo.StartsWith("RASCUNHO-")
+                ? $"RT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..4].ToUpper()}"
+                : dto.Codigo;
 
             var roteiro = new RoteiroProducao(dto.ProdutoId, codigo, dto.Versao, dto.Descricao);
 
@@ -39,10 +39,10 @@ namespace Valisys_Production.Services
             {
                 foreach (var etapaDto in dto.Etapas)
                 {
-                    var fase = await _faseRepository.GetByIdAsync(etapaDto.FaseProducaoId);
-                    if (fase == null) throw new KeyNotFoundException($"Fase {etapaDto.FaseProducaoId} não encontrada.");
+                    _ = await _faseRepository.GetByIdAsync(etapaDto.FaseProducaoId)
+                        ?? throw new KeyNotFoundException($"Fase {etapaDto.FaseProducaoId} não encontrada.");
 
-                    roteiro.Etapas.Add(new RoteiroProducaoEtapa(
+                    roteiro.AdicionarEtapa(new RoteiroProducaoEtapa(
                         etapaDto.FaseProducaoId, etapaDto.Ordem, etapaDto.TempoDias, etapaDto.Instrucoes));
                 }
             }
@@ -55,20 +55,23 @@ namespace Valisys_Production.Services
             return created;
         }
 
+        public async Task<RoteiroProducao?> GetByIdAsync(Guid id) => await _repository.GetByIdAsync(id);
+        public async Task<IEnumerable<RoteiroProducao>> GetAllAsync() => await _repository.GetAllAsync();
+
         public async Task<bool> UpdateAsync(RoteiroProducaoUpdateDto dto)
         {
             if (dto.Id == Guid.Empty) throw new ArgumentException("ID inválido.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException("Roteiro não encontrado.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Roteiro não encontrado.");
 
             var novasEtapas = new List<RoteiroProducaoEtapa>();
             if (dto.Etapas != null)
             {
                 foreach (var etapaDto in dto.Etapas)
                 {
-                    var fase = await _faseRepository.GetByIdAsync(etapaDto.FaseProducaoId);
-                    if (fase == null) throw new KeyNotFoundException($"Fase {etapaDto.FaseProducaoId} não encontrada.");
+                    _ = await _faseRepository.GetByIdAsync(etapaDto.FaseProducaoId)
+                        ?? throw new KeyNotFoundException($"Fase {etapaDto.FaseProducaoId} não encontrada.");
 
                     novasEtapas.Add(new RoteiroProducaoEtapa(
                         etapaDto.FaseProducaoId, etapaDto.Ordem, etapaDto.TempoDias, etapaDto.Instrucoes));
@@ -85,9 +88,6 @@ namespace Valisys_Production.Services
             return updated;
         }
 
-        public async Task<RoteiroProducao?> GetByIdAsync(Guid id) => await _repository.GetByIdAsync(id);
-        public async Task<IEnumerable<RoteiroProducao>> GetAllAsync() => await _repository.GetAllAsync();
-
         public async Task<bool> DeleteAsync(Guid id)
         {
             var existing = await _repository.GetByIdAsync(id);
@@ -96,7 +96,7 @@ namespace Valisys_Production.Services
             var deleted = await _repository.DeleteAsync(id);
 
             if (deleted)
-                await _logService.RegistrarAsync("Exclusão", "Engenharia",
+                await _logService.RegistrarAsync("Inativação", "Engenharia",
                     $"Inativou Roteiro de Produção {existing.Codigo}");
 
             return deleted;

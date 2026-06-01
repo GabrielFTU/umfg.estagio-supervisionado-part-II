@@ -1,0 +1,123 @@
+using Valisys_Production.DTOs;
+using Valisys_Production.Models;
+using Valisys_Production.Models.Enums;
+using Valisys_Production.Repositories.Interfaces;
+using Valisys_Production.Services.Interfaces;
+
+namespace Valisys_Production.Services
+{
+    public class ContaPagarService : IContaPagarService
+    {
+        private readonly IContaPagarRepository _repository;
+        private readonly ILogSistemaService _logService;
+
+        public ContaPagarService(IContaPagarRepository repository, ILogSistemaService logService)
+        {
+            _repository = repository;
+            _logService = logService;
+        }
+
+        public async Task<ContaPagar> CreateAsync(ContaPagarCreateDto dto)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(dto.Descricao);
+
+            if (dto.ValorTotal <= 0)
+                throw new ArgumentException("O valor total deve ser maior que zero.");
+
+            var conta = new ContaPagar(dto.Descricao, dto.ValorTotal, dto.DataVencimento,
+                dto.Observacoes, dto.NumeroDocumento, dto.FornecedorId);
+
+            var nParcelas = Math.Max(1, dto.NumeroParcelas);
+            var valorParcela = Math.Round(dto.ValorTotal / nParcelas, 2);
+
+            for (int i = 1; i <= nParcelas; i++)
+            {
+                var vencimentoParcela = dto.DataVencimento.AddMonths(i - 1);
+                var valor = i == nParcelas
+                    ? dto.ValorTotal - valorParcela * (nParcelas - 1)
+                    : valorParcela;
+
+                conta.AdicionarParcela(new ParcelaPagar(i, valor, vencimentoParcela));
+            }
+
+            var created = await _repository.AddAsync(conta);
+
+            var sequencial = await _repository.ContarAsync();
+            created.DefinirCodigo($"CP-{DateTime.UtcNow.Year}-{sequencial:D4}");
+            await _repository.UpdateAsync(created);
+
+            await _logService.RegistrarAsync("Criação", "ContasPagar",
+                $"Cadastrou conta a pagar '{created.Descricao}' ({nParcelas}x) no valor de {created.ValorTotal:N2}");
+
+            return created;
+        }
+
+        public async Task<ContaPagar?> GetByIdAsync(Guid id)
+        {
+            if (id == Guid.Empty) throw new ArgumentException("ID inválido.");
+            return await _repository.GetByIdAsync(id);
+        }
+
+        public async Task<IEnumerable<ContaPagar>> GetAllAsync()
+            => await _repository.GetAllAsync();
+
+        public async Task<IEnumerable<ContaPagar>> GetByPeriodoAsync(DateTime inicio, DateTime fim)
+            => await _repository.GetByPeriodoAsync(inicio, fim);
+
+        public async Task<bool> UpdateAsync(ContaPagarUpdateDto dto)
+        {
+            if (dto.Id == Guid.Empty) throw new ArgumentException("ID ausente.");
+
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Conta a pagar não encontrada.");
+
+            existing.Atualizar(dto.Descricao, dto.DataVencimento, dto.Observacoes, dto.NumeroDocumento);
+
+            var result = await _repository.UpdateAsync(existing);
+
+            if (result)
+                await _logService.RegistrarAsync("Edição", "ContasPagar",
+                    $"Atualizou conta a pagar '{existing.Descricao}'");
+
+            return result;
+        }
+
+        public async Task<bool> DeleteAsync(Guid id)
+        {
+            var existing = await _repository.GetByIdAsync(id);
+            if (existing is null) return false;
+
+            existing.Desativar();
+            var result = await _repository.UpdateAsync(existing);
+
+            if (result)
+                await _logService.RegistrarAsync("Cancelamento", "ContasPagar",
+                    $"Cancelou conta a pagar '{existing.Descricao}'");
+
+            return result;
+        }
+
+        public async Task<bool> BaixarParcelaAsync(ParcelaBaixaDto dto)
+        {
+            if (dto.ValorPago <= 0)
+                throw new ArgumentException("O valor pago deve ser maior que zero.");
+
+            var result = await _repository.BaixarParcelaAsync(
+                dto.ContaId, dto.ParcelaId, dto.ValorPago, dto.DataPagamento,
+                (FormaPagamentoEnum)dto.FormaPagamento, dto.Juros, dto.Multa, dto.Observacoes);
+
+            if (result)
+                await _logService.RegistrarAsync("Baixa", "ContasPagar",
+                    $"Baixou parcela da conta {dto.ContaId} no valor de {dto.ValorPago:N2}");
+
+            return result;
+        }
+
+        public async Task VerificarVencimentosAsync()
+        {
+            await _repository.VerificarVencimentosAsync();
+            await _logService.RegistrarAsync("Verificação", "ContasPagar",
+                "Verificação de vencimentos de contas a pagar executada.");
+        }
+    }
+}

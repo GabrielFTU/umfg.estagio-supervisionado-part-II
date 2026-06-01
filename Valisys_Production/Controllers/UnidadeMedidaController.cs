@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Valisys_Production.Models;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Valisys_Production.DTOs;
 using Valisys_Production.Services.Interfaces;
 
 namespace Valisys_Production.Controllers
@@ -9,47 +10,44 @@ namespace Valisys_Production.Controllers
     public class UnidadesMedidaController : ControllerBase
     {
         private readonly IUnidadeMedidaService _service;
+        private readonly IMapper _mapper;
 
-        public UnidadesMedidaController(IUnidadeMedidaService service)
+        public UnidadesMedidaController(IUnidadeMedidaService service, IMapper mapper)
         {
             _service = service;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<UnidadeMedida>), 200)]
-        public async Task<ActionResult<IEnumerable<UnidadeMedida>>> GetAll()
+        [ProducesResponseType(typeof(IEnumerable<UnidadeMedidaReadDto>), 200)]
+        public async Task<ActionResult<IEnumerable<UnidadeMedidaReadDto>>> GetAll()
         {
-            var unidadesMedida = await _service.GetAllAsync();
-            return Ok(unidadesMedida);
+            var unidades = await _service.GetAllAsync();
+            return Ok(_mapper.Map<IEnumerable<UnidadeMedidaReadDto>>(unidades));
         }
 
         [HttpGet("{id:guid}")]
-        [ProducesResponseType(typeof(UnidadeMedida), 200)]
+        [ProducesResponseType(typeof(UnidadeMedidaReadDto), 200)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<UnidadeMedida>> GetById(Guid id)
+        public async Task<ActionResult<UnidadeMedidaReadDto>> GetById(Guid id)
         {
-            var unidadeMedida = await _service.GetByIdAsync(id);
-            if (unidadeMedida == null)
-            {
-                return NotFound();
-            }
-            return Ok(unidadeMedida);
+            var unidade = await _service.GetByIdAsync(id);
+            if (unidade == null) return NotFound();
+            return Ok(_mapper.Map<UnidadeMedidaReadDto>(unidade));
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(UnidadeMedida), 201)]
+        [ProducesResponseType(typeof(UnidadeMedidaReadDto), 201)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<UnidadeMedida>> PostUnidadeMedida(UnidadeMedida unidadeMedida)
+        public async Task<ActionResult<UnidadeMedidaReadDto>> PostUnidadeMedida([FromBody] UnidadeMedidaCreateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                var newUnidadeMedida = await _service.CreateAsync(unidadeMedida);
-                return CreatedAtAction(nameof(GetById), new { id = newUnidadeMedida.Id }, newUnidadeMedida);
+                var criada = await _service.CreateAsync(dto);
+                var readDto = _mapper.Map<UnidadeMedidaReadDto>(criada);
+                return CreatedAtAction(nameof(GetById), new { id = readDto.Id }, readDto);
             }
             catch (ArgumentException ex)
             {
@@ -61,50 +59,38 @@ namespace Valisys_Production.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> PutUnidadeMedida(Guid id, UnidadeMedida unidadeMedida)
+        public async Task<IActionResult> PutUnidadeMedida(Guid id, [FromBody] UnidadeMedidaUpdateDto dto)
         {
-            if (id != unidadeMedida.Id)
-            {
+            if (id != dto.Id)
                 return BadRequest(new { message = "O ID da rota não corresponde ao ID da unidade de medida no corpo da requisição." });
-            }
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                var updated = await _service.UpdateAsync(unidadeMedida);
-
-                if (!updated)
-                {
-                    return NotFound();
-                }
-
+                var updated = await _service.UpdateAsync(dto);
+                if (!updated) return NotFound();
                 return NoContent();
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         [HttpDelete("{id:guid}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(409)]
         public async Task<IActionResult> DeleteUnidadeMedida(Guid id)
         {
             try
             {
                 var deleted = await _service.DeleteAsync(id);
-
-                if (!deleted)
-                {
-                    return NotFound();
-                }
-
+                if (!deleted) return NotFound();
                 return NoContent();
             }
             catch (InvalidOperationException ex)

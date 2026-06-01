@@ -85,8 +85,7 @@ namespace Valisys_Production.Controllers
 
             try
             {
-                var fornecedor = _mapper.Map<Fornecedor>(fornecedorDto);
-                var updated = await _service.UpdateAsync(fornecedor);
+                var updated = await _service.UpdateAsync(fornecedorDto);
 
                 if (!updated)
                 {

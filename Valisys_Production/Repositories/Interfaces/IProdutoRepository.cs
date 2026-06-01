@@ -1,14 +1,9 @@
-﻿using Valisys_Production.Models;
+using Valisys_Production.Models;
 
 namespace Valisys_Production.Repositories.Interfaces
 {
-    public interface IProdutoRepository
+    public interface IProdutoRepository : IRepository<Produto>
     {
-        Task <Produto> AddAsync(Produto produto);
-        Task<Produto> GetByIdAsync(Guid id);
-        Task<IEnumerable<Produto>> GetAllAsync();
-        Task<string?> GetUltimoCodigoAsync();
-        Task<bool> UpdateAsync(Produto produto);
-        Task<bool> DeleteAsync (Guid id);
+        Task<int?> GetUltimoCodigoAsync();
     }
 }

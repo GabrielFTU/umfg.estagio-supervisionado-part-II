@@ -130,7 +130,6 @@ namespace Valisys_Production.Services
                     ordem.Id);
                 await _movimentacaoRepository.AddAsync(mov);
 
-                ordem.LimparNavegacoes();
                 await _repository.UpdateAsync(ordem);
                 await transaction.CommitAsync();
 
@@ -154,8 +153,6 @@ namespace Valisys_Production.Services
 
             var etapas = roteiro.Etapas.OrderBy(e => e.Ordem).ToList();
             var etapaAtual = etapas.FirstOrDefault(e => e.FaseProducaoId == ordem.FaseAtualId);
-
-            ordem.LimparNavegacoes();
 
             if (etapaAtual == null)
             {
@@ -189,8 +186,6 @@ namespace Valisys_Production.Services
             if (ordem == null) throw new KeyNotFoundException("Ordem não encontrada.");
 
             ordem.AvancarFase(novaFaseId);
-            ordem.LimparNavegacoes();
-
             await _repository.UpdateAsync(ordem);
             await _logService.RegistrarAsync("Movimentação Manual", "Produção",
                 $"Moveu OP {ordem.CodigoOrdem} manualmente no Kanban");
@@ -224,10 +219,9 @@ namespace Valisys_Production.Services
             if (ordem.LoteId.HasValue)
             {
                 var lote = await _loteRepository.GetByIdAsync(ordem.LoteId.Value);
-                if (lote != null && lote.statusLote == StatusLote.EmProducao)
+                if (lote != null && lote.Status == StatusLote.EmProducao)
                 {
-                    lote.DefinirStatusLote(StatusLote.Pendente);
-                    lote.DefinirDataConclusao(null);
+                    lote.RevertarParaPendente();
                     await _loteRepository.UpdateAsync(lote);
                 }
             }

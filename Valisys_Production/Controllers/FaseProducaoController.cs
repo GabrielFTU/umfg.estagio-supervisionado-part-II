@@ -66,8 +66,7 @@ namespace Valisys_Production.Controllers
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
-                var fase = _mapper.Map<FaseProducao>(dto);
-                var ok = await _service.UpdateAsync(fase);
+                var ok = await _service.UpdateAsync(dto);
                 if (!ok) return NotFoundProblem($"Fase '{id}' não encontrada.");
                 return NoContent();
             }

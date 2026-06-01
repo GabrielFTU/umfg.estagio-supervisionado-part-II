@@ -1,89 +1,45 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Valisys_Production.Data;
 using Valisys_Production.Models;
 using Valisys_Production.Repositories.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
-using System;
 
 namespace Valisys_Production.Repositories
 {
-    public class RoteiroProducaoRepository : IRoteiroProducaoRepository
+    public class RoteiroProducaoRepository : Repository<RoteiroProducao>, IRoteiroProducaoRepository
     {
-        private readonly ApplicationDbContext _context;
+        public RoteiroProducaoRepository(ApplicationDbContext context) : base(context) { }
 
-        public RoteiroProducaoRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-        public async Task<RoteiroProducao> AddAsync(RoteiroProducao roteiro)
-        {
-            _context.RoteirosProducao.Add(roteiro);
-            await _context.SaveChangesAsync();
-            return roteiro;
-        }
-
-        public async Task<RoteiroProducao?> GetByIdAsync(Guid id)
-        {
-            return await _context.RoteirosProducao
-                .AsNoTracking()
+        public override async Task<RoteiroProducao?> GetByIdAsync(Guid id)
+            => await _dbSet.AsNoTracking()
                 .Include(r => r.Produto)
                 .Include(r => r.Etapas.OrderBy(e => e.Ordem))
                     .ThenInclude(e => e.FaseProducao)
                 .FirstOrDefaultAsync(r => r.Id == id);
-        }
 
-        public async Task<IEnumerable<RoteiroProducao>> GetAllAsync()
-        {
-            return await _context.RoteirosProducao
-                .AsNoTracking()
+        public override async Task<IEnumerable<RoteiroProducao>> GetAllAsync()
+            => await _dbSet.AsNoTracking()
                 .Include(r => r.Produto)
                 .Include(r => r.Etapas)
                 .OrderBy(r => r.Produto.Nome)
                 .ToListAsync();
-        }
 
         public async Task<bool> UpdateWithEtapasAsync(RoteiroProducao roteiro, List<RoteiroProducaoEtapa> novasEtapas)
         {
-            var roteiroExistente = await _context.RoteirosProducao
+            var roteiroExistente = await _dbSet
                 .Include(r => r.Etapas)
                 .FirstOrDefaultAsync(r => r.Id == roteiro.Id);
 
-            if (roteiroExistente == null) return false;
+            if (roteiroExistente is null) return false;
 
             _context.Entry(roteiroExistente).CurrentValues.SetValues(roteiro);
-
-            if (roteiroExistente.Etapas != null)
-                _context.RoteiroProducaoEtapas.RemoveRange(roteiroExistente.Etapas);
+            _context.RoteiroProducaoEtapas.RemoveRange(roteiroExistente.Etapas);
+            roteiroExistente.LimparEtapas();
 
             foreach (var etapa in novasEtapas)
-            {
-                etapa.RoteiroProducaoId = roteiroExistente.Id;
-                _context.RoteiroProducaoEtapas.Add(etapa);
-            }
+                roteiroExistente.AdicionarEtapa(etapa);
 
-            try
-            {
-                return await _context.SaveChangesAsync() > 0;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        public async Task<bool> DeleteAsync(Guid id)
-        {
-            var roteiro = await _context.RoteirosProducao.FindAsync(id);
-            if (roteiro != null)
-            {
-                roteiro.Ativo = false;
-                _context.Entry(roteiro).State = EntityState.Modified;
-                return await _context.SaveChangesAsync() > 0;
-            }
-            return false;
+            try { return await _context.SaveChangesAsync() > 0; }
+            catch { return false; }
         }
     }
 }

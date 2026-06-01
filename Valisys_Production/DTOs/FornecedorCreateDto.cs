@@ -14,7 +14,7 @@ namespace Valisys_Production.DTOs
         public string Documento { get; set; }
 
         [Required]
-        public TipoDocumento TipoDocumento { get; set; }
+        public PapelPessoa PapelPessoa { get; set; }
 
         [MaxLength(255)]
         public string? Endereco { get; set; }
@@ -31,6 +31,5 @@ namespace Valisys_Production.DTOs
         [MaxLength(500)]
         public string? Observacoes { get; set; }
 
-        public bool Ativo { get; set; } = true;
     }
 }

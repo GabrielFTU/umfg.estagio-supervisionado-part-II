@@ -13,15 +13,24 @@ namespace Valisys_Production.DTOs
         [MaxLength(255)]
         public string Nome { get; set; }
 
+        [MaxLength(255)]
+        public string? NomeFantasia { get; set; }
+
+        [MaxLength(255)]
+        public string? RazaoSocial { get; set; }
+
+        [MaxLength(20)]
+        public string? Cnpj { get; set; }
+
         [Required(ErrorMessage = "O documento é obrigatório.")]
         [MaxLength(20)]
         public string Documento { get; set; }
 
         [Required]
-        public TipoDocumento TipoDocumento { get; set; }
+        public PapelPessoa PapelPessoa { get; set; }
 
         [MaxLength(255)]
-        public string? Endereco { get; set; } 
+        public string? Endereco { get; set; }
 
         [Required(ErrorMessage = "O e-mail é obrigatório.")]
         [EmailAddress(ErrorMessage = "E-mail inválido.")]
@@ -33,7 +42,7 @@ namespace Valisys_Production.DTOs
         public string Telefone { get; set; }
 
         [MaxLength(500)]
-        public string? Observacoes { get; set; } 
+        public string? Observacoes { get; set; }
 
         public bool Ativo { get; set; }
     }

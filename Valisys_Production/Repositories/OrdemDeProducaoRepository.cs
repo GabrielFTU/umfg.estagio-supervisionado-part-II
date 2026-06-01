@@ -1,50 +1,54 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Valisys_Production.Data;
-using Valisys_Production.Models;
-using Valisys_Production.Models.Enums;
-using Valisys_Production.Repositories.Interfaces;
 using Valisys_Production.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
+using Valisys_Production.Models;
+using Valisys_Production.Repositories.Interfaces;
 
 namespace Valisys_Production.Repositories
 {
-    public class OrdemDeProducaoRepository : IOrdemDeProducaoRepository
+    public class OrdemDeProducaoRepository : Repository<OrdemDeProducao>, IOrdemDeProducaoRepository
     {
-        private readonly ApplicationDbContext _context;
+        public OrdemDeProducaoRepository(ApplicationDbContext context) : base(context) { }
 
-        public OrdemDeProducaoRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-        public async Task<OrdemDeProducao> AddAsync(OrdemDeProducao ordemDeProducao)
-        {
-            _context.OrdensDeProducao.Add(ordemDeProducao);
-            await _context.SaveChangesAsync();
-            return ordemDeProducao;
-        }
-
-        public async Task<OrdemDeProducao?> GetByIdAsync(Guid id)
-        {
-            return await _context.OrdensDeProducao
-                .AsNoTracking()
+        public override async Task<OrdemDeProducao?> GetByIdAsync(Guid id)
+            => await _dbSet.AsNoTracking()
                 .Include(o => o.Lote)
-                .Include(o => o.Produto)
-                    .ThenInclude(p => p.UnidadeMedida)
+                .Include(o => o.Produto).ThenInclude(p => p.UnidadeMedida)
                 .Include(o => o.Almoxarifado)
                 .Include(o => o.FaseAtual)
                 .Include(o => o.TipoOrdemDeProducao)
                 .Include(o => o.RoteiroProducao)
                 .FirstOrDefaultAsync(o => o.Id == id);
+
+        public override async Task<IEnumerable<OrdemDeProducao>> GetAllAsync()
+            => await _dbSet.AsNoTracking()
+                .Include(o => o.Produto)
+                .Include(o => o.FaseAtual)
+                .Include(o => o.Almoxarifado)
+                .OrderByDescending(o => o.DataInicio)
+                .Take(100)
+                .ToListAsync();
+
+        public override async Task<bool> DeleteAsync(Guid id)
+        {
+            var entity = await _dbSet.FindAsync(id);
+            if (entity is null) return false;
+            entity.Cancelar();
+            _context.Entry(entity).State = EntityState.Modified;
+            try { return await _context.SaveChangesAsync() > 0; }
+            catch { return false; }
         }
 
+        public async Task<OrdemDeProducao?> GetByCodigoAsync(string codigo)
+            => await _dbSet.AsNoTracking()
+                .Include(o => o.Lote)
+                .Include(o => o.Produto)
+                .Include(o => o.FaseAtual)
+                .Include(o => o.RoteiroProducao)
+                .FirstOrDefaultAsync(o => o.CodigoOrdem == codigo);
+
         public async Task<IEnumerable<OrdemDeProducaoReadDto>> GetAllReadDtosAsync()
-        {
-            return await _context.OrdensDeProducao
-                .AsNoTracking()
+            => await _dbSet.AsNoTracking()
                 .OrderByDescending(o => o.DataInicio)
                 .Take(80)
                 .Select(o => new OrdemDeProducaoReadDto
@@ -68,88 +72,21 @@ namespace Valisys_Production.Repositories
                     RoteiroCodigo = o.RoteiroProducao != null ? o.RoteiroProducao.Codigo : null
                 })
                 .ToListAsync();
-        }
-
-        public async Task<OrdemDeProducao?> GetByCodigoAsync(string codigo)
-        {
-            return await _context.OrdensDeProducao
-                .AsNoTracking()
-                .Include(o => o.Lote)
-                .Include(o => o.Produto)
-                .Include(o => o.FaseAtual)
-                .Include(o => o.RoteiroProducao)
-                .FirstOrDefaultAsync(o => o.CodigoOrdem == codigo);
-        }
-
-        public async Task<IEnumerable<OrdemDeProducao>> GetAllAsync()
-        {
-            return await _context.OrdensDeProducao
-                .AsNoTracking()
-                .Include(o => o.Produto)
-                .Include(o => o.FaseAtual)
-                .Include(o => o.Almoxarifado)
-                .OrderByDescending(o => o.DataInicio)
-                .Take(100)
-                .ToListAsync();
-        }
-
-        public async Task<bool> UpdateAsync(OrdemDeProducao ordemDeProducao)
-        {
-            _context.OrdensDeProducao.Update(ordemDeProducao);
-            try
-            {
-                return await _context.SaveChangesAsync() > 0;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return false;
-            }
-        }
-
-        public async Task<bool> DeleteAsync(Guid id)
-        {
-            var ordem = await _context.OrdensDeProducao.FindAsync(id);
-            if (ordem == null) return false;
-
-            ordem.Status = StatusOrdemDeProducao.Cancelada;
-            ordem.DataFim = DateTime.UtcNow; 
-            
-            _context.Entry(ordem).State = EntityState.Modified;
-
-            try 
-            {
-                return await _context.SaveChangesAsync() > 0;
-            }
-            catch
-            {
-                return false;
-            }
-        }
 
         public async Task<int> ObterProximoSequencialAsync(int ano)
         {
             var prefixo = $"OP-{ano}-";
-            var tamanhoPrefixo = prefixo.Length;
-
-            var ultimoCodigo = await _context.OrdensDeProducao
-                .AsNoTracking()
+            var ultimoCodigo = await _dbSet.AsNoTracking()
                 .Where(o => o.CodigoOrdem.StartsWith(prefixo))
                 .OrderByDescending(o => o.CodigoOrdem)
                 .Select(o => o.CodigoOrdem)
                 .FirstOrDefaultAsync();
 
-            if (string.IsNullOrEmpty(ultimoCodigo))
-            {
-                return 1;
-            }
+            if (string.IsNullOrEmpty(ultimoCodigo)) return 1;
 
-            if (ultimoCodigo.Length > tamanhoPrefixo &&
-                int.TryParse(ultimoCodigo.Substring(tamanhoPrefixo), out int sequencialAtual))
-            {
-                return sequencialAtual + 1;
-            }
-
-            return 1;
+            return ultimoCodigo.Length > prefixo.Length &&
+                   int.TryParse(ultimoCodigo[prefixo.Length..], out int seq)
+                ? seq + 1 : 1;
         }
     }
 }

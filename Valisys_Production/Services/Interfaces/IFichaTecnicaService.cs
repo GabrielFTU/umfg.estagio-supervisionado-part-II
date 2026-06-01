@@ -7,7 +7,7 @@ namespace Valisys_Production.Services.Interfaces
 {
     public interface IFichaTecnicaService
     {
-        Task<FichaTecnica> CreateAsync(FichaTecnica ficha);
+        Task<FichaTecnica> CreateAsync(FichaTecnicaCreateDto dto);
         Task<FichaTecnica?> GetByIdAsync(Guid id);
         Task<IEnumerable<FichaTecnica>> GetAllAsync();
         Task<IEnumerable<FichaTecnica>> GetByProdutoIdAsync(Guid produtoId);

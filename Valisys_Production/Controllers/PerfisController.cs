@@ -83,8 +83,7 @@ namespace Valisys_Production.Controllers
 
             try
             {
-                var perfil = _mapper.Map<Perfil>(perfilDto);
-                var updated = await _service.UpdateAsync(perfil);
+                var updated = await _service.UpdateAsync(perfilDto);
 
                 if (!updated)
                 {

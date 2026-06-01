@@ -54,7 +54,7 @@ namespace Valisys_Production.Controllers
                 }
 
                 var fichas = await _fichaService.GetByProdutoIdAsync(ordem.ProdutoId);
-                var fichaTecnica = fichas.FirstOrDefault(f => f.Ativa);
+                var fichaTecnica = fichas.FirstOrDefault(f => f.Ativo);
 
                 if (fichaTecnica != null)
                 {
@@ -269,7 +269,7 @@ namespace Valisys_Production.Controllers
                 }
 
                 var fichas = await _fichaService.GetByProdutoIdAsync(ordem.ProdutoId);
-                var fichaTecnica = fichas.FirstOrDefault(f => f.Ativa);
+                var fichaTecnica = fichas.FirstOrDefault(f => f.Ativo);
 
                 if (fichaTecnica != null)
                 {

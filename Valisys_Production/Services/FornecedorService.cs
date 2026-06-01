@@ -18,10 +18,10 @@ namespace Valisys_Production.Services
 
         public async Task<Fornecedor> CreateAsync(FornecedorCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Nome))
+            if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("Nome do fornecedor não pode estar vazio.");
 
-            var fornecedor = new Fornecedor(dto.Nome, dto.Documento, dto.TipoDocumento, dto.Email, dto.Telefone);
+            var fornecedor = new Fornecedor(dto.Nome, dto.Documento, dto.PapelPessoa, dto.Email, dto.Telefone);
             var created = await _repository.AddAsync(fornecedor);
 
             await _logService.RegistrarAsync("Criação", "Fornecedores",
@@ -36,17 +36,19 @@ namespace Valisys_Production.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Fornecedor>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<Fornecedor>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(FornecedorUpdateDto dto)
         {
             if (dto.Id == Guid.Empty) throw new ArgumentException("ID ausente.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException("Fornecedor não encontrado.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Fornecedor não encontrado.");
 
-            existing.Atualizar(dto.Nome, dto.Documento, dto.TipoDocumento, dto.Endereco,
-                dto.Email, dto.Telefone, dto.Observacoes, null, null, null, dto.Ativo);
+            existing.Atualizar(dto.Nome, dto.Documento, dto.PapelPessoa, dto.Endereco,
+                dto.Email, dto.Telefone, dto.Observacoes, dto.NomeFantasia, dto.RazaoSocial,
+                dto.Cnpj, dto.Ativo);
 
             var result = await _repository.UpdateAsync(existing);
 
@@ -62,11 +64,12 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            var result = await _repository.DeleteAsync(id);
+            existing.Desativar();
+            var result = await _repository.UpdateAsync(existing);
 
             if (result)
-                await _logService.RegistrarAsync("Exclusão", "Fornecedores",
-                    $"Excluiu/Inativou o fornecedor '{existing.Nome}'");
+                await _logService.RegistrarAsync("Inativação", "Fornecedores",
+                    $"Inativou o fornecedor '{existing.Nome}'");
 
             return result;
         }

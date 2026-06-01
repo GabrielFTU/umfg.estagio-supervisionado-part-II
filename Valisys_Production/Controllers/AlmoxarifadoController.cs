@@ -83,8 +83,7 @@ namespace Valisys_Production.Controllers
 
             try
             {
-                var almoxarifado = _mapper.Map<Almoxarifado>(almoxarifadoDto);
-                var updated = await _service.UpdateAsync(almoxarifado);
+                var updated = await _service.UpdateAsync(almoxarifadoDto);
 
                 if (!updated)
                 {

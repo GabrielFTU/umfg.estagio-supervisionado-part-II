@@ -25,7 +25,7 @@ namespace Valisys_Production.Controllers
                 .AsNoTracking()
                 .Include(l => l.Produto)
                 .ThenInclude(p => p.UnidadeMedida)
-                .Where(l => l.statusLote == StatusLote.Concluido)
+                .Where(l => l.Status == StatusLote.Concluido)
                 .ToListAsync();
 
             var estoque = lotesConcluidos
@@ -34,7 +34,7 @@ namespace Valisys_Production.Controllers
                 {
                     ProdutoId = g.Key,
                     ProdutoNome = g.First().Produto.Nome,
-                    CodigoProduto = g.First().Produto.CodigoInternoProduto,
+                    CodigoProduto = g.First().Produto.CodigoInternoProduto.ToString(),
                     UnidadeMedida = g.First().Produto.UnidadeMedida.Sigla,
                     QuantidadeTotal = g.Count() 
                 })
@@ -49,7 +49,7 @@ namespace Valisys_Production.Controllers
                 .AsNoTracking()
                 .Include(l => l.Produto)
                 .Include(l => l.Almoxarifado)
-                .Where(l => l.statusLote == StatusLote.Concluido)
+                .Where(l => l.Status == StatusLote.Concluido)
                 .Select(l => new EstoqueAnaliticoDto
                 {
                     LoteId = l.Id,

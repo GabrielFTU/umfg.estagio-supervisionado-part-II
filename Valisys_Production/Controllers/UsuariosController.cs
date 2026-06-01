@@ -98,9 +98,7 @@ namespace Valisys_Production.Controllers
 
             try
             {
-         
-                var usuario = _mapper.Map<Usuario>(usuarioDto);
-                var updated = await _service.UpdateAsync(usuario);
+                var updated = await _service.UpdateAsync(usuarioDto);
 
                 if (!updated)
                 {

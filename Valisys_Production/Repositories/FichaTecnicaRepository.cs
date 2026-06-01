@@ -1,116 +1,60 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Valisys_Production.Data;
 using Valisys_Production.Models;
 using Valisys_Production.Repositories.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
-using System;
 
 namespace Valisys_Production.Repositories
 {
-    public class FichaTecnicaRepository : IFichaTecnicaRepository
+    public class FichaTecnicaRepository : Repository<FichaTecnica>, IFichaTecnicaRepository
     {
-        private readonly ApplicationDbContext _context;
+        public FichaTecnicaRepository(ApplicationDbContext context) : base(context) { }
 
-        public FichaTecnicaRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-        public async Task<FichaTecnica> AddAsync(FichaTecnica fichaTecnica)
-        {
-            _context.FichasTecnicas.Add(fichaTecnica);
-            await _context.SaveChangesAsync();
-            return fichaTecnica;
-        }
-
-        public async Task<FichaTecnica?> GetByIdAsync(Guid id)
-        {
-            return await _context.FichasTecnicas
-                .AsNoTracking()
+        public override async Task<FichaTecnica?> GetByIdAsync(Guid id)
+            => await _dbSet.AsNoTracking()
                 .Include(f => f.Produto)
                 .Include(f => f.Itens)
                     .ThenInclude(i => i.ProdutoComponente)
                         .ThenInclude(p => p.UnidadeMedida)
                 .FirstOrDefaultAsync(f => f.Id == id);
-        }
 
-        public async Task<string?> GetUltimoCodigoAsync()
-        {
-            return await _context.FichasTecnicas
-                .AsNoTracking()
-                .OrderByDescending(f => f.CodigoFicha)
-                .Select(f => f.CodigoFicha)
-                .FirstOrDefaultAsync();
-        }
-
-        public async Task<IEnumerable<FichaTecnica>> GetAllAsync()
-        {
-            return await _context.FichasTecnicas
-                .AsNoTracking()
+        public override async Task<IEnumerable<FichaTecnica>> GetAllAsync()
+            => await _dbSet.AsNoTracking()
                 .Include(f => f.Produto)
                 .OrderBy(f => f.Produto.Nome)
                 .ToListAsync();
-        }
 
-        public async Task<bool> UpdateAsync(FichaTecnica fichaTecnica)
+        public override async Task<bool> DeleteAsync(Guid id)
         {
-            _context.Entry(fichaTecnica).State = EntityState.Modified;
-            try
-            {
-                return await _context.SaveChangesAsync() > 0;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return false;
-            }
+            var entity = await _dbSet.FindAsync(id);
+            if (entity is null) return false;
+            entity.Inativar();
+            _context.Entry(entity).State = EntityState.Modified;
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> UpdateWithItemsAsync(FichaTecnica ficha, List<FichaTecnicaItem> novosItens)
         {
-            var fichaExistente = await _context.FichasTecnicas
+            var fichaExistente = await _dbSet
                 .Include(f => f.Itens)
                 .FirstOrDefaultAsync(f => f.Id == ficha.Id);
 
-            if (fichaExistente == null) return false;
+            if (fichaExistente is null) return false;
 
             _context.Entry(fichaExistente).CurrentValues.SetValues(ficha);
-
-            if (fichaExistente.Itens != null)
-            {
-                _context.FichaTecnicaItens.RemoveRange(fichaExistente.Itens);
-            }
+            _context.FichaTecnicaItens.RemoveRange(fichaExistente.Itens);
+            fichaExistente.LimparItens();
 
             foreach (var item in novosItens)
-            {
-                item.FichaTecnicaId = fichaExistente.Id; 
-                _context.FichaTecnicaItens.Add(item);
-            }
+                fichaExistente.AdicionarItem(item);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            try { return await _context.SaveChangesAsync() > 0; }
+            catch { return false; }
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
-        {
-            var ficha = await _context.FichasTecnicas.FindAsync(id);
-
-            if (ficha != null)
-            {
-                ficha.Ativa = false;
-                _context.Entry(ficha).State = EntityState.Modified;
-                return await _context.SaveChangesAsync() > 0;
-            }
-
-            return false;
-        }
+        public async Task<string?> GetUltimoCodigoAsync()
+            => await _dbSet.AsNoTracking()
+                .OrderByDescending(f => f.CodigoFicha)
+                .Select(f => f.CodigoFicha)
+                .FirstOrDefaultAsync();
     }
 }

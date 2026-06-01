@@ -67,8 +67,7 @@ namespace Valisys_Production.Controllers
             if (id != dto.Id) return Problem("O ID da rota não corresponde ao ID do corpo.");
             try
             {
-                var mov = _mapper.Map<Movimentacao>(dto);
-                var ok = await _service.UpdateAsync(mov);
+                var ok = await _service.UpdateAsync(dto);
                 if (!ok) return NotFoundProblem($"Movimentação '{id}' não encontrada.");
                 return NoContent();
             }

@@ -5,7 +5,9 @@ namespace Valisys_Production.Models
 {
     public class SolicitacaoProducao : BaseModels
     {
-        public string CodigoSolicitacao { get; private set; }
+        private readonly List<SolicitacaoProducaoItem> _itens = new();
+
+        public string CodigoSolicitacao { get; private set; } = string.Empty;
         public StatusSolicitacaoProducao Status { get; private set; }
         public DateTime DataSolicitacao { get; private set; }
         public DateTime? DataAprovacao { get; private set; }
@@ -13,20 +15,20 @@ namespace Valisys_Production.Models
         public int Quantidade { get; private set; }
 
         public Guid? EncarregadoId { get; private set; }
-        public Usuario Encarregado { get; private set; }
+        public Usuario? Encarregado { get; private set; }
 
         public Guid? UsuarioAprovacaoId { get; private set; }
-        public Usuario UsuarioAprovacao { get; private set; }
+        public Usuario? UsuarioAprovacao { get; private set; }
 
         public Guid ProdutoId { get; private set; }
-        public Produto Produto { get; private set; }
+        public Produto Produto { get; private set; } = null!;
 
         public Guid? TipoOrdemDeProducaoId { get; private set; }
-        public TipoOrdemDeProducao TipoOrdemDeProducao { get; private set; }
+        public TipoOrdemDeProducao? TipoOrdemDeProducao { get; private set; }
 
-        public OrdemDeProducao OrdemDeProducao { get; private set; }
+        public OrdemDeProducao? OrdemDeProducao { get; private set; }
 
-        public List<SolicitacaoProducaoItem> Itens { get; private set; } = new();
+        public IReadOnlyCollection<SolicitacaoProducaoItem> Itens => _itens.AsReadOnly();
 
         protected SolicitacaoProducao() { }
 
@@ -50,7 +52,11 @@ namespace Valisys_Production.Models
             DataAprovacao = DateTime.UtcNow;
         }
 
-        public void DefinirStatus(StatusSolicitacaoProducao status) => Status = status;
+        public void IniciarProducao() => Status = StatusSolicitacaoProducao.EmProducao;
+
+        public void Concluir() => Status = StatusSolicitacaoProducao.Concluida;
+
+        public void Cancelar() => Status = StatusSolicitacaoProducao.Cancelada;
 
         public void Atualizar(string codigoSolicitacao, int quantidade, Guid produtoId,
             Guid? tipoOrdemDeProducaoId, string? observacoes)
@@ -60,6 +66,7 @@ namespace Valisys_Production.Models
             ProdutoId = produtoId;
             TipoOrdemDeProducaoId = tipoOrdemDeProducaoId;
             Observacoes = observacoes;
+            RegistrarAtualizacao();
         }
     }
 }

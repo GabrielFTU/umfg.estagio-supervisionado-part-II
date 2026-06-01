@@ -11,6 +11,8 @@ namespace Valisys_Production.DTOs
         [StringLength(50)]
         public string Nome { get; set; }
 
+        public List<string> Acessos { get; set; } = new();
+
         public bool Ativo { get; set; } = true;
     }
 }

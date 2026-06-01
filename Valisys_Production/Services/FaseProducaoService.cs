@@ -18,7 +18,7 @@ namespace Valisys_Production.Services
 
         public async Task<FaseProducao> CreateAsync(FaseProducaoCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Nome))
+            if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome da fase de produção é obrigatório.");
 
             var fase = new FaseProducao(dto.Nome, dto.Ordem, dto.Descricao, dto.TempoPadraoDias);
@@ -36,14 +36,15 @@ namespace Valisys_Production.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<FaseProducao>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<FaseProducao>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(FaseProducaoUpdateDto dto)
         {
             if (dto.Id == Guid.Empty) throw new ArgumentException("ID ausente.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException("Fase de Produção não encontrada.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Fase de Produção não encontrada.");
 
             existing.Atualizar(dto.Nome, dto.Ordem, dto.Descricao, dto.TempoPadraoDias, dto.Ativo);
             var updated = await _repository.UpdateAsync(existing);
@@ -60,11 +61,12 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            var deleted = await _repository.DeleteAsync(id);
+            existing.Desativar();
+            var deleted = await _repository.UpdateAsync(existing);
 
             if (deleted)
-                await _logService.RegistrarAsync("Exclusão", "Fases de Produção",
-                    $"Excluiu a fase '{existing.Nome}'");
+                await _logService.RegistrarAsync("Inativação", "Fases de Produção",
+                    $"Inativou a fase '{existing.Nome}'");
 
             return deleted;
         }

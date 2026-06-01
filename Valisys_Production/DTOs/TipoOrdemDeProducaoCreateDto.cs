@@ -15,6 +15,5 @@ namespace Valisys_Production.DTOs
         [StringLength(500)]
         public string? Descricao { get; set; } 
 
-        public bool Ativo { get; set; } = true;
     }
 }

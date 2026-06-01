@@ -18,7 +18,7 @@ namespace Valisys_Production.Services
 
         public async Task<CategoriaProduto> CreateAsync(CategoriaProdutoCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Nome))
+            if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome da categoria é obrigatório.");
 
             var categoria = new CategoriaProduto(dto.Nome, dto.Descricao);
@@ -27,22 +27,9 @@ namespace Valisys_Production.Services
             var created = await _repository.AddAsync(categoria);
 
             await _logService.RegistrarAsync("Criação", "Categoria de Produto",
-                $"Criou a categoria '{created.Nome}' ({created.Codigo})");
+                $"Criou a categoria '{created.Nome}' ({created.CodigoInterno})");
 
             return created;
-        }
-
-        private async Task<string> GerarProximoCodigoAsync()
-        {
-            var categorias = await _repository.GetAllAsync();
-            var codigosNumericos = categorias
-                .Select(c => c.Codigo)
-                .Where(c => int.TryParse(c, out _))
-                .Select(c => int.Parse(c))
-                .ToList();
-
-            int proximo = codigosNumericos.Any() ? codigosNumericos.Max() + 1 : 1;
-            return proximo.ToString("D3");
         }
 
         public async Task<CategoriaProduto?> GetByIdAsync(Guid id)
@@ -51,14 +38,15 @@ namespace Valisys_Production.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<CategoriaProduto>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<CategoriaProduto>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(CategoriaProdutoUpdateDto dto)
         {
             if (dto.Id == Guid.Empty) throw new ArgumentException("ID ausente.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException("Categoria não encontrada.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Categoria não encontrada.");
 
             existing.Atualizar(dto.Nome, dto.Codigo, dto.Ativo);
 
@@ -76,13 +64,27 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            var result = await _repository.DeleteAsync(id);
+            existing.Desativar();
+            var result = await _repository.UpdateAsync(existing);
 
             if (result)
                 await _logService.RegistrarAsync("Inativação", "Categoria de Produto",
                     $"Inativou a categoria '{existing.Nome}'");
 
             return result;
+        }
+
+        private async Task<string> GerarProximoCodigoAsync()
+        {
+            var categorias = await _repository.GetAllAsync();
+            var codigosNumericos = categorias
+                .Select(c => c.CodigoInterno)
+                .Where(c => int.TryParse(c, out _))
+                .Select(c => int.Parse(c!))
+                .ToList();
+
+            int proximo = codigosNumericos.Count != 0 ? codigosNumericos.Max() + 1 : 1;
+            return proximo.ToString("D3");
         }
     }
 }

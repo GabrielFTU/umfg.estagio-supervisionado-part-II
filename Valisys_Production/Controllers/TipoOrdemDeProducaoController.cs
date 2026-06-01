@@ -86,8 +86,7 @@ namespace Valisys_Production.Controllers
 
             try
             {
-                var tipoOrdemDeProducao = _mapper.Map<TipoOrdemDeProducao>(tipoOrdemDeProducaoDto);
-                var updated = await _service.UpdateAsync(tipoOrdemDeProducao);
+                var updated = await _service.UpdateAsync(tipoOrdemDeProducaoDto);
 
                 if (!updated)
                 {

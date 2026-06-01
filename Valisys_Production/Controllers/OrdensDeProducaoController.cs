@@ -64,8 +64,7 @@ namespace Valisys_Production.Controllers
             try
             {
                 var usuarioId = GetAuthenticatedUserId();
-                var ordem = _mapper.Map<OrdemDeProducao>(dto);
-                var criada = await _service.CreateAsync(ordem, usuarioId);
+                var criada = await _service.CreateAsync(dto, usuarioId);
                 var readDto = _mapper.Map<OrdemDeProducaoReadDto>(criada);
                 return CreatedAtAction(nameof(GetById), new { id = readDto.Id }, readDto);
             }
@@ -86,8 +85,7 @@ namespace Valisys_Production.Controllers
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
-                var ordem = _mapper.Map<OrdemDeProducao>(dto);
-                var ok = await _service.UpdateAsync(ordem);
+                var ok = await _service.UpdateAsync(dto);
                 if (!ok) return NotFoundProblem($"Ordem '{id}' não encontrada.");
                 return NoContent();
             }

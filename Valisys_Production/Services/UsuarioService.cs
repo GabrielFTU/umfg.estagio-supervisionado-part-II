@@ -28,7 +28,7 @@ namespace Valisys_Production.Services
 
             var senhaHash = BCrypt.Net.BCrypt.HashPassword(dto.Senha);
             var usuario = new Usuario(dto.Nome, dto.Email, senhaHash, dto.PerfilId);
-            if (!dto.Ativo) usuario.DefinirAtivo(false);
+            if (!dto.Ativo) usuario.Desativar();
 
             var created = await _repository.AddAsync(usuario);
 

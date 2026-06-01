@@ -24,10 +24,8 @@ namespace Valisys_Production.Services
 
         public async Task<SolicitacaoProducao> CreateAsync(SolicitacaoProducaoCreateDto dto)
         {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
-
-            var produto = await _produtoRepository.GetByIdAsync(dto.ProdutoId);
-            if (produto == null) throw new KeyNotFoundException($"Produto com ID {dto.ProdutoId} não encontrado.");
+            _ = await _produtoRepository.GetByIdAsync(dto.ProdutoId)
+                ?? throw new KeyNotFoundException($"Produto {dto.ProdutoId} não encontrado.");
 
             var solicitacao = new SolicitacaoProducao(dto.Codigo, dto.ProdutoId, (int)dto.QuantidadeSolicitada);
             return await _repository.AddAsync(solicitacao);
@@ -39,20 +37,19 @@ namespace Valisys_Production.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<SolicitacaoProducao>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<SolicitacaoProducao>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(SolicitacaoProducaoUpdateDto dto)
         {
-            if (dto == null || dto.Id == Guid.Empty)
-                throw new ArgumentException("Dados da Solicitação inválidos ou ID ausente.");
+            if (dto.Id == Guid.Empty) throw new ArgumentException("ID ausente.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null)
-                throw new KeyNotFoundException($"Solicitação com ID {dto.Id} não encontrada.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException($"Solicitação {dto.Id} não encontrada.");
 
             if (existing.Status != StatusSolicitacaoProducao.Pendente &&
                 existing.Status != StatusSolicitacaoProducao.EmProducao)
-                throw new InvalidOperationException($"A solicitação não pode ser alterada no status '{existing.Status}'.");
+                throw new InvalidOperationException($"Solicitação não pode ser alterada no status '{existing.Status}'.");
 
             existing.Atualizar(dto.Codigo, (int)dto.QuantidadeSolicitada,
                 dto.ProdutoId, existing.TipoOrdemDeProducaoId, null);
@@ -62,7 +59,7 @@ namespace Valisys_Production.Services
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            if (id == Guid.Empty) throw new ArgumentException("ID da Solicitação inválido.");
+            if (id == Guid.Empty) throw new ArgumentException("ID inválido.");
 
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
@@ -71,7 +68,8 @@ namespace Valisys_Production.Services
                 existing.Status == StatusSolicitacaoProducao.EmProducao)
                 throw new InvalidOperationException("Solicitações aprovadas ou em produção não podem ser excluídas.");
 
-            return await _repository.DeleteAsync(id);
+            existing.Cancelar();
+            return await _repository.UpdateAsync(existing);
         }
 
         public async Task<List<OrdemDeProducao>> AprovarSolicitacaoAsync(Guid solicitacaoId, Guid usuarioAprovadorId)
@@ -79,8 +77,8 @@ namespace Valisys_Production.Services
             if (usuarioAprovadorId == Guid.Empty)
                 throw new ArgumentException("ID do usuário aprovador inválido.");
 
-            var solicitacao = await _repository.GetByIdAsync(solicitacaoId);
-            if (solicitacao == null) throw new KeyNotFoundException("Solicitação de produção não encontrada.");
+            var solicitacao = await _repository.GetByIdAsync(solicitacaoId)
+                ?? throw new KeyNotFoundException("Solicitação de produção não encontrada.");
 
             if (solicitacao.Status != StatusSolicitacaoProducao.Pendente)
                 throw new InvalidOperationException($"Somente solicitações pendentes podem ser aprovadas. Status atual: {solicitacao.Status}.");
@@ -102,8 +100,7 @@ namespace Valisys_Production.Services
                     FaseAtualId = null
                 };
 
-                var ordem = await _ordemDeProducaoService.CreateAsync(dto, usuarioAprovadorId);
-                ordensGeradas.Add(ordem);
+                ordensGeradas.Add(await _ordemDeProducaoService.CreateAsync(dto, usuarioAprovadorId));
             }
 
             return ordensGeradas;

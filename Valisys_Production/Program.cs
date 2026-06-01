@@ -8,6 +8,7 @@ using Valisys_Production.Common;
 using Valisys_Production.Data;
 using Valisys_Production.Helpers;
 using Valisys_Production.Infrastructure.Authorization;
+using Valisys_Production.Middleware;
 using Valisys_Production.Repositories;
 using Valisys_Production.Repositories.Interfaces;
 using Valisys_Production.Services;
@@ -122,6 +123,11 @@ builder.Services.AddScoped<IRoteiroProducaoService, RoteiroProducaoService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ILogSistemaRepository, LogSistemaRepository>();
 builder.Services.AddScoped<ILogSistemaService, LogSistemaService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IContaReceberRepository, ContaReceberRepository>();
+builder.Services.AddScoped<IContaReceberService, ContaReceberService>();
+builder.Services.AddScoped<IContaPagarRepository, ContaPagarRepository>();
+builder.Services.AddScoped<IContaPagarService, ContaPagarService>();
 
 builder.Services.AddCors(options =>
 {
@@ -149,6 +155,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($" Erro ao migrar banco: {ex.Message}");
     }
 }
+
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

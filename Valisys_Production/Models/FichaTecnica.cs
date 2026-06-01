@@ -4,15 +4,16 @@ namespace Valisys_Production.Models
 {
     public class FichaTecnica : BaseModels
     {
+        private readonly List<FichaTecnicaItem> _itens = new();
+
         public string? CodigoFicha { get; private set; }
-        public string Versao { get; private set; }
+        public string Versao { get; private set; } = string.Empty;
         public string? Descricao { get; private set; }
-        public bool Ativa { get; private set; }
 
         public Guid ProdutoId { get; private set; }
-        public Produto Produto { get; private set; }
+        public Produto Produto { get; private set; } = null!;
 
-        public List<FichaTecnicaItem> Itens { get; private set; } = new();
+        public IReadOnlyCollection<FichaTecnicaItem> Itens => _itens.AsReadOnly();
 
         protected FichaTecnica() { }
 
@@ -21,17 +22,23 @@ namespace Valisys_Production.Models
             ProdutoId = produtoId;
             Versao = versao;
             Descricao = descricao;
-            Ativa = true;
         }
 
         public void DefinirCodigo(string codigo) => CodigoFicha = codigo;
+
+        public void AdicionarItem(FichaTecnicaItem item) => _itens.Add(item);
+
+        public void LimparItens() => _itens.Clear();
+
+        public void Inativar() => Desativar();
 
         public void Atualizar(string codigoFicha, string versao, string? descricao, bool ativa)
         {
             CodigoFicha = codigoFicha;
             Versao = versao;
             Descricao = descricao;
-            Ativa = ativa;
+            DefinirAtivo(ativa);
+            RegistrarAtualizacao();
         }
     }
 }

@@ -88,9 +88,7 @@ namespace Valisys_Production.Controllers
 
             try
             {
-                var categoriaProduto = _mapper.Map<CategoriaProduto>(categoriaProdutoDto);
-
-                var updated = await _service.UpdateAsync(categoriaProduto);
+                var updated = await _service.UpdateAsync(categoriaProdutoDto);
 
                 if (!updated)
                 {
@@ -103,9 +101,9 @@ namespace Valisys_Production.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Erro interno no servidor.", details = ex.Message });
+                return NotFound(new { message = ex.Message });
             }
         }
 

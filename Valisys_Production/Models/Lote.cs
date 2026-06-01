@@ -5,32 +5,36 @@ namespace Valisys_Production.Models
 {
     public class Lote : BaseModels
     {
-        public string CodigoLote { get; private set; }
+        private readonly List<OrdemDeProducao> _ordensDeProducao = new();
+
+        public string CodigoLote { get; private set; } = string.Empty;
         public string? Descricao { get; private set; }
         public string? Observacoes { get; private set; }
-        public StatusLote statusLote { get; private set; }
+        public StatusLote Status { get; private set; }
         public DateTime DataAbertura { get; private set; }
         public DateTime? DataConclusao { get; private set; }
 
         public Guid ProdutoId { get; private set; }
-        public Produto Produto { get; private set; }
+        public Produto Produto { get; private set; } = null!;
 
         public Guid AlmoxarifadoId { get; private set; }
-        public Almoxarifado Almoxarifado { get; private set; }
+        public Almoxarifado Almoxarifado { get; private set; } = null!;
 
-        public List<OrdemDeProducao> OrdensDeProducao { get; private set; } = new();
+        public IReadOnlyCollection<OrdemDeProducao> OrdensDeProducao => _ordensDeProducao.AsReadOnly();
 
         protected Lote() { }
 
         public Lote(string codigoLote, Guid produtoId, Guid almoxarifadoId,
             string? descricao = null, string? observacoes = null)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(codigoLote);
+
             CodigoLote = codigoLote;
             ProdutoId = produtoId;
             AlmoxarifadoId = almoxarifadoId;
             Descricao = descricao;
             Observacoes = observacoes;
-            statusLote = StatusLote.Pendente;
+            Status = StatusLote.Pendente;
             DataAbertura = DateTime.UtcNow;
         }
 
@@ -40,19 +44,23 @@ namespace Valisys_Production.Models
             DataAbertura = dataAbertura;
             DataConclusao = dataConclusao;
             DefinirAtivo(ativo);
+            RegistrarAtualizacao();
         }
 
-        public void IniciarProducao() => statusLote = StatusLote.EmProducao;
+        public void IniciarProducao() => Status = StatusLote.EmProducao;
 
         public void Concluir()
         {
-            statusLote = StatusLote.Concluido;
+            Status = StatusLote.Concluido;
             DataConclusao = DateTime.UtcNow;
         }
 
-        public void Cancelar() => statusLote = StatusLote.Cancelado;
+        public void Cancelar() => Status = StatusLote.Cancelado;
 
-        public void DefinirStatusLote(StatusLote status) => statusLote = status;
-        public void DefinirDataConclusao(DateTime? data) => DataConclusao = data;
+        public void RevertarParaPendente()
+        {
+            Status = StatusLote.Pendente;
+            DataConclusao = null;
+        }
     }
 }

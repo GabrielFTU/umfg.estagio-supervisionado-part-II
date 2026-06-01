@@ -18,7 +18,7 @@ namespace Valisys_Production.Services
 
         public async Task<TipoOrdemDeProducao> CreateAsync(TipoOrdemDeProducaoCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Nome))
+            if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome do tipo de ordem de produção é obrigatório.");
 
             var tipo = new TipoOrdemDeProducao(dto.Nome, dto.Codigo, dto.Descricao);
@@ -36,14 +36,15 @@ namespace Valisys_Production.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<TipoOrdemDeProducao>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<TipoOrdemDeProducao>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(TipoOrdemDeProducaoUpdateDto dto)
         {
             if (dto.Id == Guid.Empty) throw new ArgumentException("ID ausente.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException("Tipo de OP não encontrado.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Tipo de OP não encontrado.");
 
             existing.Atualizar(dto.Nome, dto.Codigo, dto.Descricao, dto.Ativo);
             var updated = await _repository.UpdateAsync(existing);
@@ -60,11 +61,12 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            var deleted = await _repository.DeleteAsync(id);
+            existing.Desativar();
+            var deleted = await _repository.UpdateAsync(existing);
 
             if (deleted)
-                await _logService.RegistrarAsync("Exclusão", "Tipos de OP",
-                    $"Excluiu o tipo de OP '{existing.Nome}'");
+                await _logService.RegistrarAsync("Inativação", "Tipos de OP",
+                    $"Inativou o tipo de OP '{existing.Nome}'");
 
             return deleted;
         }

@@ -51,8 +51,7 @@ namespace Valisys_Production.Controllers
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
-                var solicitacao = _mapper.Map<SolicitacaoProducao>(dto);
-                var criada = await _service.CreateAsync(solicitacao);
+                var criada = await _service.CreateAsync(dto);
                 var readDto = _mapper.Map<SolicitacaoProducaoReadDto>(criada);
                 return CreatedAtAction(nameof(GetById), new { id = readDto.Id }, readDto);
             }
@@ -70,15 +69,14 @@ namespace Valisys_Production.Controllers
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
-                var solicitacao = _mapper.Map<SolicitacaoProducao>(dto);
-                var ok = await _service.UpdateAsync(solicitacao);
+                var ok = await _service.UpdateAsync(dto);
                 if (!ok) return NotFoundProblem($"Solicitação '{id}' não encontrada.");
                 return NoContent();
             }
             catch (ArgumentException ex) { return Problem(ex.Message); }
-            catch (InvalidOperationException ex) 
-            { 
-                return Problem(ex.Message); 
+            catch (InvalidOperationException ex)
+            {
+                return Problem(ex.Message);
             }
         }
 

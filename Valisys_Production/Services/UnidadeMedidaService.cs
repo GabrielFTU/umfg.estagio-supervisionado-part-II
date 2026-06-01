@@ -18,7 +18,7 @@ namespace Valisys_Production.Services
 
         public async Task<UnidadeMedida> CreateAsync(UnidadeMedidaCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Nome) || string.IsNullOrEmpty(dto.Sigla))
+            if (string.IsNullOrWhiteSpace(dto.Nome) || string.IsNullOrWhiteSpace(dto.Sigla))
                 throw new ArgumentException("Nome e sigla da unidade de medida são obrigatórios.");
 
             var unidade = new UnidadeMedida(dto.Nome, dto.Sigla, dto.Grandeza, dto.FatorConversao, dto.EhUnidadeBase);
@@ -36,16 +36,17 @@ namespace Valisys_Production.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<UnidadeMedida>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<UnidadeMedida>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(UnidadeMedidaUpdateDto dto)
         {
             if (dto.Id == Guid.Empty) throw new ArgumentException("ID ausente.");
-            if (string.IsNullOrEmpty(dto.Nome) || string.IsNullOrEmpty(dto.Sigla))
+            if (string.IsNullOrWhiteSpace(dto.Nome) || string.IsNullOrWhiteSpace(dto.Sigla))
                 throw new ArgumentException("Nome e sigla são obrigatórios.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException("Unidade de Medida não encontrada.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Unidade de Medida não encontrada.");
 
             existing.Atualizar(dto.Nome, dto.Sigla, dto.Grandeza, dto.FatorConversao, dto.EhUnidadeBase, dto.Ativo);
             var updated = await _repository.UpdateAsync(existing);
@@ -62,11 +63,12 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            var deleted = await _repository.DeleteAsync(id);
+            existing.Desativar();
+            var deleted = await _repository.UpdateAsync(existing);
 
             if (deleted)
-                await _logService.RegistrarAsync("Exclusão", "Unidades de Medida",
-                    $"Excluiu unidade '{existing.Nome}'");
+                await _logService.RegistrarAsync("Inativação", "Unidades de Medida",
+                    $"Inativou unidade '{existing.Nome}'");
 
             return deleted;
         }

@@ -18,7 +18,7 @@ namespace Valisys_Production.Services
 
         public async Task<Lote> CreateAsync(LoteCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.CodigoLote))
+            if (string.IsNullOrWhiteSpace(dto.CodigoLote))
                 throw new ArgumentException("Código do lote obrigatório.");
 
             var lote = new Lote(dto.CodigoLote, dto.ProdutoId, dto.AlmoxarifadoId,
@@ -37,10 +37,10 @@ namespace Valisys_Production.Services
 
         public async Task<bool> UpdateAsync(LoteUpdateDto dto)
         {
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException("Lote não encontrado.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException("Lote não encontrado.");
 
-            existing.Atualizar(dto.NumeroLote, dto.DataFabricacao, dto.DataVencimento, dto.Ativo);
+            existing.Atualizar(dto.CodigoLote, dto.DataAbertura, dto.DataConclusao, dto.Ativo);
 
             var result = await _repository.UpdateAsync(existing);
 
@@ -56,11 +56,12 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            var result = await _repository.DeleteAsync(id);
+            existing.Cancelar();
+            var result = await _repository.UpdateAsync(existing);
 
             if (result)
-                await _logService.RegistrarAsync("Exclusão", "Lotes",
-                    $"Excluiu o Lote: {existing.CodigoLote}");
+                await _logService.RegistrarAsync("Cancelamento", "Lotes",
+                    $"Cancelou o Lote: {existing.CodigoLote}");
 
             return result;
         }

@@ -16,7 +16,7 @@ namespace Valisys_Production.Services
 
         public async Task<Almoxarifado> CreateAsync(AlmoxarifadoCreateDto dto)
         {
-            if (string.IsNullOrEmpty(dto.Nome))
+            if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome do almoxarifado não pode ser vazio.");
 
             var almoxarifado = new Almoxarifado(dto.Nome, dto.Descricao, dto.Localizacao,
@@ -31,15 +31,16 @@ namespace Valisys_Production.Services
             return await _repository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Almoxarifado>> GetAllAsync() => await _repository.GetAllAsync();
+        public async Task<IEnumerable<Almoxarifado>> GetAllAsync()
+            => await _repository.GetAllAsync();
 
         public async Task<bool> UpdateAsync(AlmoxarifadoUpdateDto dto)
         {
-            if (dto.Id == Guid.Empty) throw new ArgumentException("ID do Almoxarifado ausente para atualização.");
-            if (string.IsNullOrEmpty(dto.Nome)) throw new ArgumentException("O nome do almoxarifado não pode ser vazio.");
+            if (dto.Id == Guid.Empty) throw new ArgumentException("ID do Almoxarifado ausente.");
+            if (string.IsNullOrWhiteSpace(dto.Nome)) throw new ArgumentException("O nome não pode ser vazio.");
 
-            var existing = await _repository.GetByIdAsync(dto.Id);
-            if (existing == null) throw new KeyNotFoundException($"Almoxarifado com ID {dto.Id} não encontrado.");
+            var existing = await _repository.GetByIdAsync(dto.Id)
+                ?? throw new KeyNotFoundException($"Almoxarifado {dto.Id} não encontrado.");
 
             existing.Atualizar(dto.Nome, dto.Descricao, dto.Localizacao, dto.Responsavel,
                 dto.Contato, dto.Email, dto.Ativo);
@@ -49,12 +50,13 @@ namespace Valisys_Production.Services
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            if (id == Guid.Empty) throw new ArgumentException("ID do Almoxarifado inválido para exclusão.");
+            if (id == Guid.Empty) throw new ArgumentException("ID do Almoxarifado inválido.");
 
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            return await _repository.DeleteAsync(id);
+            existing.Desativar();
+            return await _repository.UpdateAsync(existing);
         }
     }
 }

@@ -37,6 +37,10 @@ namespace Valisys_Production.Data
         public DbSet<RoteiroProducao> RoteirosProducao { get; set; }
         public DbSet<RoteiroProducaoEtapa> RoteiroProducaoEtapas { get; set; }
         public DbSet<LogSistema> LogsSistema { get; set; }
+        public DbSet<ContaReceber> ContasReceber { get; set; }
+        public DbSet<ParcelaReceber> ParcelasReceber { get; set; }
+        public DbSet<ContaPagar> ContasPagar { get; set; }
+        public DbSet<ParcelaPagar> ParcelasPagar { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,9 +51,9 @@ namespace Valisys_Production.Data
                 .IsUnique();
 
             modelBuilder.Entity<CategoriaProduto>()
-                .HasIndex(c => c.Codigo)
+                .HasIndex(c => c.CodigoInterno)
                 .IsUnique()
-                .HasFilter("\"Codigo\" IS NOT NULL");
+                .HasFilter("\"CodigoInterno\" IS NOT NULL");
 
             modelBuilder.Entity<LogSistema>()
                 .HasOne(l => l.Usuario)
@@ -136,80 +140,97 @@ namespace Valisys_Production.Data
                     v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
                 );
 
+            modelBuilder.Entity<ParcelaReceber>()
+                .HasOne(p => p.ContaReceber)
+                .WithMany(c => c.Parcelas)
+                .HasForeignKey(p => p.ContaReceberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ContaReceber>()
+                .Navigation(c => c.Parcelas)
+                .HasField("_parcelas");
+
+            modelBuilder.Entity<ContaReceber>()
+                .HasOne(c => c.Pessoa)
+                .WithMany()
+                .HasForeignKey(c => c.PessoaId)
+                .IsRequired(false);
+
+            modelBuilder.Entity<ContaReceber>()
+                .HasOne(c => c.PedidoVenda)
+                .WithMany()
+                .HasForeignKey(c => c.PedidoVendaId)
+                .IsRequired(false);
+
+            modelBuilder.Entity<ParcelaPagar>()
+                .HasOne(p => p.ContaPagar)
+                .WithMany(c => c.Parcelas)
+                .HasForeignKey(p => p.ContaPagarId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ContaPagar>()
+                .Navigation(c => c.Parcelas)
+                .HasField("_parcelas");
+
+            modelBuilder.Entity<ContaPagar>()
+                .HasOne(c => c.Fornecedor)
+                .WithMany()
+                .HasForeignKey(c => c.FornecedorId)
+                .IsRequired(false);
+
             // Seed Data
-            modelBuilder.Entity<Perfil>().HasData(
-                new Perfil
-                {
-                    Id = AdminProfileId,
-                    Ativo = true,
-                    DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                    Nome = "Administrador"
-                }
-            );
+            var seedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            modelBuilder.Entity<Usuario>().HasData(
-                new Usuario
-                {
-                    Id = AdminUserId,
-                    Ativo = true,
-                    DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                    Nome = "Administrador Master",
-                    Email = "admin@valisys.com",
-                    SenhaHash = "$2a$12$ceV2TtMQV.UXqYGXoyMt.eV9s2YcTh0SVykcjMPxxDxjci9hoYzeG",
-                    PerfilId = AdminProfileId
-                }
-            );
+            var adminPerfil = new Perfil("Administrador");
+            adminPerfil.InicializarParaSeed(AdminProfileId, seedDate);
+            modelBuilder.Entity<Perfil>().HasData(adminPerfil);
 
-            modelBuilder.Entity<Almoxarifado>().HasData(
-                new Almoxarifado
-                {
-                    Id = SampleAlmoxarifadoId,
-                    Ativo = true,
-                    DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                    Nome = "Almoxarifado Geral",
-                    Descricao = "Almoxarifado principal",
-                    Localizacao = "Galpão 1",
-                    Responsavel = "Sistema",
-                    Contato = "(67) 99999-9999",
-                    Email = "almoxarifado@empresa.com"
-                }
-            );
+            var adminUsuario = new Usuario("Administrador Master", "admin@valisys.com",
+                "$2a$12$ceV2TtMQV.UXqYGXoyMt.eV9s2YcTh0SVykcjMPxxDxjci9hoYzeG", AdminProfileId);
+            adminUsuario.InicializarParaSeed(AdminUserId, seedDate);
+            modelBuilder.Entity<Usuario>().HasData(adminUsuario);
 
-            modelBuilder.Entity<UnidadeMedida>().HasData(
-                new UnidadeMedida { Id = UnitId, Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Unidade", Sigla = "UN", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1, EhUnidadeBase = true },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000020"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Peça", Sigla = "PC", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000021"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Caixa", Sigla = "CX", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000022"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Kit", Sigla = "KIT", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000023"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Dúzia", Sigla = "DZ", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 12, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000024"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Milheiro", Sigla = "MIL", Grandeza = GrandezaUnidade.Unidade, FatorConversao = 1000, EhUnidadeBase = false },
-                new UnidadeMedida { Id = KgId, Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Kilograma", Sigla = "KG", Grandeza = GrandezaUnidade.Massa, FatorConversao = 1, EhUnidadeBase = true },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000099"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Grama", Sigla = "G", Grandeza = GrandezaUnidade.Massa, FatorConversao = 0.001m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000031"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Miligrama", Sigla = "MG", Grandeza = GrandezaUnidade.Massa, FatorConversao = 0.000001m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000032"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Tonelada", Sigla = "TON", Grandeza = GrandezaUnidade.Massa, FatorConversao = 1000m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000012"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Metro", Sigla = "M", Grandeza = GrandezaUnidade.Comprimento, FatorConversao = 1, EhUnidadeBase = true },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000040"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Centímetro", Sigla = "CM", Grandeza = GrandezaUnidade.Comprimento, FatorConversao = 0.01m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000041"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Milímetro", Sigla = "MM", Grandeza = GrandezaUnidade.Comprimento, FatorConversao = 0.001m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000042"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Quilômetro", Sigla = "KM", Grandeza = GrandezaUnidade.Comprimento, FatorConversao = 1000m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000050"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Litro", Sigla = "L", Grandeza = GrandezaUnidade.Volume, FatorConversao = 1, EhUnidadeBase = true },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000051"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Mililitro", Sigla = "ML", Grandeza = GrandezaUnidade.Volume, FatorConversao = 0.001m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000052"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Metro Cúbico", Sigla = "M3", Grandeza = GrandezaUnidade.Volume, FatorConversao = 1000m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000060"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Metro Quadrado", Sigla = "M2", Grandeza = GrandezaUnidade.Area, FatorConversao = 1, EhUnidadeBase = true },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000061"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Centímetro Quadrado", Sigla = "CM2", Grandeza = GrandezaUnidade.Area, FatorConversao = 0.0001m, EhUnidadeBase = false },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000070"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Hora", Sigla = "H", Grandeza = GrandezaUnidade.Tempo, FatorConversao = 1, EhUnidadeBase = true },
-                new UnidadeMedida { Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000071"), Ativo = true, DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), Nome = "Minuto", Sigla = "MIN", Grandeza = GrandezaUnidade.Tempo, FatorConversao = 0.0166667m, EhUnidadeBase = false }
-            );
+            var almoxarifadoGeral = new Almoxarifado("Almoxarifado Geral", "Almoxarifado principal",
+                "Galpão 1", "Sistema", "(67) 99999-9999", "almoxarifado@empresa.com");
+            almoxarifadoGeral.InicializarParaSeed(SampleAlmoxarifadoId, seedDate);
+            modelBuilder.Entity<Almoxarifado>().HasData(almoxarifadoGeral);
 
-            modelBuilder.Entity<TipoOrdemDeProducao>().HasData(
-                new TipoOrdemDeProducao
-                {
-                    Id = SampleTipoOrdemDeProducaoId,
-                    Ativo = true,
-                    DataCadastro = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                    Nome = "Normal",
-                    Descricao = "Ordem de Produção Padrão",
-                    Codigo = "NOR"
-                }
-            );
+            var unidades = new (Guid Id, string Nome, string Sigla, GrandezaUnidade Grandeza, decimal Fator, bool EhBase)[]
+            {
+                (UnitId,                                         "Unidade",            "UN",  GrandezaUnidade.Unidade,     1m,          true),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000020"), "Peça",           "PC",  GrandezaUnidade.Unidade,     1m,          false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000021"), "Caixa",          "CX",  GrandezaUnidade.Unidade,     1m,          false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000022"), "Kit",            "KIT", GrandezaUnidade.Unidade,     1m,          false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000023"), "Dúzia",          "DZ",  GrandezaUnidade.Unidade,     12m,         false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000024"), "Milheiro",       "MIL", GrandezaUnidade.Unidade,     1000m,       false),
+                (KgId,                                           "Kilograma",          "KG",  GrandezaUnidade.Massa,       1m,          true),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000099"), "Grama",          "G",   GrandezaUnidade.Massa,       0.001m,      false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000031"), "Miligrama",      "MG",  GrandezaUnidade.Massa,       0.000001m,   false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000032"), "Tonelada",       "TON", GrandezaUnidade.Massa,       1000m,       false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000012"), "Metro",          "M",   GrandezaUnidade.Comprimento, 1m,          true),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000040"), "Centímetro",     "CM",  GrandezaUnidade.Comprimento, 0.01m,       false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000041"), "Milímetro",      "MM",  GrandezaUnidade.Comprimento, 0.001m,      false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000042"), "Quilômetro",     "KM",  GrandezaUnidade.Comprimento, 1000m,       false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000050"), "Litro",          "L",   GrandezaUnidade.Volume,      1m,          true),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000051"), "Mililitro",      "ML",  GrandezaUnidade.Volume,      0.001m,      false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000052"), "Metro Cúbico",   "M3",  GrandezaUnidade.Volume,      1000m,       false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000060"), "Metro Quadrado", "M2",  GrandezaUnidade.Area,        1m,          true),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000061"), "Centímetro Quadrado", "CM2", GrandezaUnidade.Area,  0.0001m,     false),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000070"), "Hora",           "H",   GrandezaUnidade.Tempo,       1m,          true),
+                (Guid.Parse("C0DE0000-0000-0000-0000-000000000071"), "Minuto",         "MIN", GrandezaUnidade.Tempo,       0.0166667m,  false),
+            };
+
+            var unidadesSeeded = unidades.Select(u =>
+            {
+                var um = new UnidadeMedida(u.Nome, u.Sigla, u.Grandeza, u.Fator, u.EhBase);
+                um.InicializarParaSeed(u.Id, seedDate);
+                return um;
+            }).ToArray();
+            modelBuilder.Entity<UnidadeMedida>().HasData(unidadesSeeded);
+
+            var tipoOrdem = new TipoOrdemDeProducao("Normal", "NOR", "Ordem de Produção Padrão");
+            tipoOrdem.InicializarParaSeed(SampleTipoOrdemDeProducaoId, seedDate);
+            modelBuilder.Entity<TipoOrdemDeProducao>().HasData(tipoOrdem);
         }
     }
 }

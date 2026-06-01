@@ -71,8 +71,7 @@ namespace Valisys_Production.Controllers
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
-                var produto = _mapper.Map<Produto>(dto);
-                var ok = await _service.UpdateAsync(produto);
+                var ok = await _service.UpdateAsync(dto);
                 if (!ok) return NotFoundProblem($"Produto '{id}' não encontrado.");
                 return NoContent();
             }

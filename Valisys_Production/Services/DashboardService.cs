@@ -31,7 +31,7 @@ namespace Valisys_Production.Services
                 .CountAsync(o => o.Status == StatusOrdemDeProducao.Finalizada);
 
             stats.TotalLotesAtivos = await _context.Lotes
-                .CountAsync(l => l.statusLote == StatusLote.Pendente || l.statusLote == StatusLote.EmProducao);
+                .CountAsync(l => l.Status == StatusLote.Pendente || l.Status == StatusLote.EmProducao);
 
             var opsAtivas = await _context.OrdensDeProducao
                 .AsNoTracking()

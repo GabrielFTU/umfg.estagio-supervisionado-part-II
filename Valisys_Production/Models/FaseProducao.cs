@@ -4,7 +4,7 @@ namespace Valisys_Production.Models
 {
     public class FaseProducao : BaseModels
     {
-        public string Nome { get; private set; }
+        public string Nome { get; private set; } = string.Empty;
         public string? Descricao { get; private set; }
         public int Ordem { get; private set; }
         public int TempoPadraoDias { get; private set; }
@@ -13,6 +13,8 @@ namespace Valisys_Production.Models
 
         public FaseProducao(string nome, int ordem, string? descricao = null, int tempoPadraoDias = 0)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(nome);
+
             Nome = nome;
             Ordem = ordem;
             Descricao = descricao;
@@ -21,11 +23,14 @@ namespace Valisys_Production.Models
 
         public void Atualizar(string nome, int ordem, string? descricao, int tempoPadraoDias, bool ativo)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(nome);
+
             Nome = nome;
             Ordem = ordem;
             Descricao = descricao;
             TempoPadraoDias = tempoPadraoDias;
             DefinirAtivo(ativo);
+            RegistrarAtualizacao();
         }
     }
 }
