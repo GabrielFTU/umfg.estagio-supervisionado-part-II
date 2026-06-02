@@ -41,11 +41,11 @@ services:
         condition: service_healthy
     networks:
       - valisys_network
-    entrypoint: /bin/sh -c "sleep 10 && dotnet Valisys_Production.dll"
+    entrypoint: ["/bin/sh", "-c", "sleep 10 && dotnet Valisys_Production.dll"]
 
   frontend:
     build:
-      context: ./Valisys_Frontend
+      context: ./valisys-web
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=http://localhost:5019/api

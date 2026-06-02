@@ -178,6 +178,11 @@ namespace Valisys_Production.Data
                 .HasForeignKey(c => c.FornecedorId)
                 .IsRequired(false);
 
+            modelBuilder.Entity<LimiteCredito>()
+                .HasOne(l => l.Pessoa)
+                .WithOne(p => p.LimiteCredito)
+                .HasForeignKey<LimiteCredito>(l => l.PessoaId);
+
             // Seed Data
             var seedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
