@@ -26,6 +26,8 @@ namespace Valisys_Production.Data
         public DbSet<Fornecedor> Fornecedores { get; set; }
         public DbSet<Almoxarifado> Almoxarifados { get; set; }
         public DbSet<Produto> Produtos { get; set; }
+        public DbSet<ProdutoFornecedor> ProdutoFornecedores { get; set; }
+        public DbSet<ProdutoVariacao> ProdutoVariacoes { get; set; }
         public DbSet<Lote> Lotes { get; set; }
         public DbSet<OrdemDeProducao> OrdensDeProducao { get; set; }
         public DbSet<Movimentacao> Movimentacoes { get; set; }
@@ -78,6 +80,24 @@ namespace Valisys_Production.Data
             modelBuilder.Entity<Produto>()
                 .HasIndex(p => p.CodigoInternoProduto)
                 .IsUnique();
+
+            modelBuilder.Entity<Produto>()
+                .Navigation(p => p.Fornecedores).HasField("_fornecedores");
+
+            modelBuilder.Entity<Produto>()
+                .Navigation(p => p.Variacoes).HasField("_variacoes");
+
+            modelBuilder.Entity<ProdutoFornecedor>()
+                .HasOne(pf => pf.Produto)
+                .WithMany()
+                .HasForeignKey(pf => pf.ProdutoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProdutoVariacao>()
+                .HasOne(pv => pv.Produto)
+                .WithMany()
+                .HasForeignKey(pv => pv.ProdutoId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<CategoriaProduto>()
                 .HasIndex(c => c.CodigoInterno)

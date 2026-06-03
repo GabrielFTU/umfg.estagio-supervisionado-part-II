@@ -5,6 +5,8 @@ import { FinanceiroPage } from './pages/financeiro';
 import { ComercialPage } from './pages/comercial';
 import { PessoasPage } from './pages/cadastros/PessoasPage';
 import { PessoaFormPage } from './pages/cadastros/PessoaForm';
+import { ProdutosPage } from './pages/cadastros/ProdutosPage';
+import { ProdutoFormPage } from './pages/cadastros/ProdutoForm';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -74,6 +76,11 @@ const App = () => (
           </PrivateRoute>
         }
       />
+
+      <Route path="/cadastros/produtos" element={<PrivateRoute><AppLayout><ProdutosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/produtos/novo" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/produtos/:id/editar" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/produtos/:id" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

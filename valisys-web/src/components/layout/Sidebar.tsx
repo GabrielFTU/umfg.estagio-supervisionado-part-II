@@ -72,9 +72,8 @@ const NAV_ITEMS: NavItemDef[] = [
       {
         label: 'Avançados',
         items: [
-          { label: 'Pessoas',      href: '/cadastros/pessoas' },
-          { label: 'Produtos',     href: '/cadastros/produtos' },
-          { label: 'Fornecedores', href: '/cadastros/fornecedores' },
+          { label: 'Pessoas',  href: '/cadastros/pessoas' },
+          { label: 'Produtos', href: '/cadastros/produtos' },
         ],
       },
     ],

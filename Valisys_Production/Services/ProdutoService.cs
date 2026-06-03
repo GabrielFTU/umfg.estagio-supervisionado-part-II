@@ -21,9 +21,19 @@ namespace Valisys_Production.Services
             if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome do produto não pode ser vazio.");
 
-            var produto = new Produto(dto.Nome, dto.Descricao, dto.Classificacao,
-                dto.ControlarPorLote, dto.UnidadeMedidaId, dto.CategoriaProdutoId, dto.Observacoes);
+            var produto = new Produto(
+                dto.Nome, dto.Descricao, dto.Classificacao,
+                dto.ControlarPorLote, dto.UnidadeMedidaId, dto.CategoriaProdutoId,
+                dto.Observacoes, dto.ImagemUrl);
+
             produto.DefinirCodigo(await GerarProximoCodigoSequencialAsync());
+
+            // campos fiscais e custos exigem Atualizar; ativo=true por padrão no create
+            produto.Atualizar(
+                dto.Nome, dto.Descricao, dto.Classificacao, dto.ControlarPorLote, 0,
+                dto.UnidadeMedidaId, dto.CategoriaProdutoId, dto.Observacoes, true, dto.ImagemUrl,
+                dto.Ncm, dto.TipoItem, dto.OrigemMercadoria,
+                dto.CustoPadrao, dto.CustoUltimaCompra, dto.DataUltimaCompra);
 
             var criado = await _repository.AddAsync(produto);
 
@@ -49,8 +59,12 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(dto.Id)
                 ?? throw new KeyNotFoundException("Produto não encontrado.");
 
-            existing.Atualizar(dto.Nome, dto.Descricao, dto.Classificacao, dto.ControlarPorLote,
-                dto.EstoqueMinimo, dto.UnidadeMedidaId, dto.CategoriaProdutoId, dto.Observacoes, dto.Ativo);
+            existing.Atualizar(
+                dto.Nome, dto.Descricao, dto.Classificacao, dto.ControlarPorLote,
+                dto.EstoqueMinimo, dto.UnidadeMedidaId, dto.CategoriaProdutoId,
+                dto.Observacoes, dto.Ativo, dto.ImagemUrl,
+                dto.Ncm, dto.TipoItem, dto.OrigemMercadoria,
+                dto.CustoPadrao, dto.CustoUltimaCompra, dto.DataUltimaCompra);
 
             var updated = await _repository.UpdateAsync(existing);
 

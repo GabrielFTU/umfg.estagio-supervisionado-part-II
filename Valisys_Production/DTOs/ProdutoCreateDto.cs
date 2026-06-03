@@ -1,30 +1,28 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Valisys_Production.Models.Enums;
 
 namespace Valisys_Production.DTOs
 {
     public class ProdutoCreateDto
     {
-        [Required(ErrorMessage = "O nome é obrigatório.")]
-        [MaxLength(150)]
-        public string Nome { get; set; }
-
-        [Required(ErrorMessage = "A descrição é obrigatória.")]
-        [MaxLength(255)]
-        public string Descricao { get; set; }
-
-        [Required(ErrorMessage = "A classificação é obrigatória.")]
-        public ClassificacaoEnum Classificacao { get; set; }
-
+        [Required, MaxLength(150)] public string Nome { get; set; } = string.Empty;
+        [Required, MaxLength(500)] public string Descricao { get; set; } = string.Empty;
+        [Required] public ClassificacaoEnum Classificacao { get; set; }
         public bool ControlarPorLote { get; set; }
+        [MaxLength(500)] public string? Observacoes { get; set; }
+        public string? ImagemUrl { get; set; }
 
-        [MaxLength(500)]
-        public string Observacoes { get; set; }
+        [Required] public Guid UnidadeMedidaId { get; set; }
+        [Required] public Guid CategoriaProdutoId { get; set; }
 
-        [Required]
-        public Guid UnidadeMedidaId { get; set; }
+        // Fiscal
+        [MaxLength(10)] public string? Ncm { get; set; }
+        public TipoItem? TipoItem { get; set; }
+        public OrigemMercadoria OrigemMercadoria { get; set; }
 
-        [Required]
-        public Guid CategoriaProdutoId { get; set; }
+        // Custos
+        [Range(0, double.MaxValue)] public decimal CustoPadrao { get; set; }
+        [Range(0, double.MaxValue)] public decimal CustoUltimaCompra { get; set; }
+        public DateTime? DataUltimaCompra { get; set; }
     }
 }

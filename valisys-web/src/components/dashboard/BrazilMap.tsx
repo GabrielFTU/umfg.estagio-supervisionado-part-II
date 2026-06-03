@@ -68,8 +68,8 @@ export interface BrazilMapProps {
 
 interface Hovered { name: string; sigla: string; value: number }
 
-const W = 300;
-const H = 250;
+const W = 380;
+const H = 320;
 
 export function BrazilMap({ data }: BrazilMapProps) {
   const [features, setFeatures] = useState<StateFeature[]>([]);
@@ -89,7 +89,7 @@ export function BrazilMap({ data }: BrazilMapProps) {
   const maxVal = useMemo(() => Math.max(...Object.values(data), 1), [data]);
 
   const projection = useMemo(
-    () => geoMercator().scale(530).center([-54, -15]).translate([W / 2, H / 2]),
+    () => geoMercator().scale(430).center([-52, -13]).translate([W / 2, H / 2]),
     [],
   );
   const pathGen = useMemo(() => geoPath().projection(projection), [projection]);

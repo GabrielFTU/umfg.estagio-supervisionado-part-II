@@ -417,7 +417,7 @@ export function DashboardPage() {
   const hidden  = panels.filter(p => !p.visible);
 
   return (
-    <div className="p-4 md:p-6 max-w-[1600px] mx-auto">
+    <div className="p-4 md:p-6">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">

@@ -1,6 +1,8 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Valisys_Production.Common;
+using Valisys_Production.Data;
 using Valisys_Production.DTOs;
 using Valisys_Production.Infrastructure.Authorization;
 using Valisys_Production.Models;
@@ -15,16 +17,21 @@ namespace Valisys_Production.Controllers
     {
         private readonly IProdutoService _service;
         private readonly IMapper _mapper;
+        private readonly IWebHostEnvironment _env;
+        private readonly ApplicationDbContext _ctx;
 
-        public ProdutosController(IProdutoService service, IMapper mapper)
+        public ProdutosController(
+            IProdutoService service, IMapper mapper,
+            IWebHostEnvironment env, ApplicationDbContext ctx)
         {
             _service = service;
-            _mapper = mapper;
+            _mapper  = mapper;
+            _env     = env;
+            _ctx     = ctx;
         }
 
         [HttpGet]
         [HasPermission(Permissions.Produtos.Visualizar)]
-        [ProducesResponseType(typeof(IEnumerable<ProdutoReadDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<ProdutoReadDto>>> GetAll(
             [FromQuery] bool apenasAtivos = false)
         {
@@ -35,36 +42,35 @@ namespace Valisys_Production.Controllers
 
         [HttpGet("{id:guid}")]
         [HasPermission(Permissions.Produtos.Visualizar)]
-        [ProducesResponseType(typeof(ProdutoReadDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProdutoReadDto>> GetById(Guid id)
         {
-            var produto = await _service.GetByIdAsync(id);
+            var produto = await _ctx.Produtos
+                .Include(p => p.CategoriaProduto)
+                .Include(p => p.UnidadeMedida)
+                .Include(p => p.Fornecedores)
+                .Include(p => p.Variacoes)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (produto is null) return NotFoundProblem($"Produto '{id}' não encontrado.");
             return Ok(_mapper.Map<ProdutoReadDto>(produto));
         }
 
         [HttpPost]
         [HasPermission(Permissions.Produtos.Criar)]
-        [ProducesResponseType(typeof(ProdutoReadDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<ProdutoReadDto>> Create([FromBody] ProdutoCreateDto dto)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
                 var criado = await _service.CreateAsync(dto);
-                var readDto = _mapper.Map<ProdutoReadDto>(criado);
-                return CreatedAtAction(nameof(GetById), new { id = readDto.Id }, readDto);
+                var result = _mapper.Map<ProdutoReadDto>(criado);
+                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
             }
             catch (ArgumentException ex) { return Problem(ex.Message); }
         }
 
         [HttpPut("{id:guid}")]
         [HasPermission(Permissions.Produtos.Editar)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(Guid id, [FromBody] ProdutoUpdateDto dto)
         {
             if (id != dto.Id) return Problem("O ID da rota não corresponde ao ID do corpo.");
@@ -81,9 +87,6 @@ namespace Valisys_Production.Controllers
 
         [HttpDelete("{id:guid}")]
         [HasPermission(Permissions.Produtos.Inativar)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Delete(Guid id)
         {
             try
@@ -93,6 +96,129 @@ namespace Valisys_Production.Controllers
                 return NoContent();
             }
             catch (InvalidOperationException ex) { return ConflictProblem(ex.Message); }
+        }
+
+        // ── Upload de imagem ──────────────────────────────────────────────────
+
+        [HttpPost("imagem")]
+        public async Task<IActionResult> UploadImagem([FromForm] IFormFile arquivo)
+        {
+            if (arquivo is null || arquivo.Length == 0)
+                return BadRequest(new { message = "Nenhum arquivo enviado." });
+
+            var ext = Path.GetExtension(arquivo.FileName).ToLowerInvariant();
+            if (!new[] { ".jpg", ".jpeg", ".png", ".webp" }.Contains(ext))
+                return BadRequest(new { message = "Use JPG, PNG ou WebP." });
+
+            if (arquivo.Length > 5 * 1024 * 1024)
+                return BadRequest(new { message = "Arquivo excede 5 MB." });
+
+            var dir = Path.Combine(_env.ContentRootPath, "uploads", "produtos");
+            Directory.CreateDirectory(dir);
+
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            await using var stream = new FileStream(Path.Combine(dir, fileName), FileMode.Create);
+            await arquivo.CopyToAsync(stream);
+
+            return Ok(new { url = $"/uploads/produtos/{fileName}" });
+        }
+
+        // ── Fornecedores ──────────────────────────────────────────────────────
+
+        [HttpPost("{id:guid}/fornecedores")]
+        [HasPermission(Permissions.Produtos.Editar)]
+        public async Task<IActionResult> AddFornecedor(Guid id, [FromBody] ProdutoFornecedorCreateDto dto)
+        {
+            var produto = await _ctx.Produtos.Include(p => p.Fornecedores).FirstOrDefaultAsync(p => p.Id == id);
+            if (produto is null) return NotFoundProblem("Produto não encontrado.");
+
+            if (dto.Principal)
+                foreach (var f in produto.Fornecedores)
+                    f.DefinirPrincipal(false);
+
+            var link = new ProdutoFornecedor(id, dto.PessoaId, dto.FornecedorNome,
+                dto.Principal, dto.CodigoFornecedor, dto.PrecoUltimaCompra);
+
+            _ctx.ProdutoFornecedores.Add(link);
+            await _ctx.SaveChangesAsync();
+            return Ok(_mapper.Map<ProdutoFornecedorReadDto>(link));
+        }
+
+        [HttpPut("{id:guid}/fornecedores/{fornecedorId:guid}")]
+        [HasPermission(Permissions.Produtos.Editar)]
+        public async Task<IActionResult> UpdateFornecedor(Guid id, Guid fornecedorId, [FromBody] ProdutoFornecedorUpdateDto dto)
+        {
+            var link = await _ctx.ProdutoFornecedores.FirstOrDefaultAsync(f => f.Id == fornecedorId && f.ProdutoId == id);
+            if (link is null) return NotFoundProblem("Fornecedor não encontrado.");
+
+            link.Atualizar(dto.CodigoFornecedor, dto.PrecoUltimaCompra);
+            await _ctx.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpPatch("{id:guid}/fornecedores/{fornecedorId:guid}/principal")]
+        [HasPermission(Permissions.Produtos.Editar)]
+        public async Task<IActionResult> SetPrincipal(Guid id, Guid fornecedorId)
+        {
+            var fornecedores = await _ctx.ProdutoFornecedores.Where(f => f.ProdutoId == id).ToListAsync();
+            if (!fornecedores.Any()) return NotFoundProblem("Produto sem fornecedores.");
+
+            foreach (var f in fornecedores)
+                f.DefinirPrincipal(f.Id == fornecedorId);
+
+            await _ctx.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("{id:guid}/fornecedores/{fornecedorId:guid}")]
+        [HasPermission(Permissions.Produtos.Editar)]
+        public async Task<IActionResult> RemoveFornecedor(Guid id, Guid fornecedorId)
+        {
+            var link = await _ctx.ProdutoFornecedores.FirstOrDefaultAsync(f => f.Id == fornecedorId && f.ProdutoId == id);
+            if (link is null) return NotFoundProblem("Fornecedor não encontrado.");
+
+            _ctx.ProdutoFornecedores.Remove(link);
+            await _ctx.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // ── Variações ─────────────────────────────────────────────────────────
+
+        [HttpPost("{id:guid}/variacoes")]
+        [HasPermission(Permissions.Produtos.Editar)]
+        public async Task<IActionResult> AddVariacao(Guid id, [FromBody] ProdutoVariacaoCreateDto dto)
+        {
+            if (!await _ctx.Produtos.AnyAsync(p => p.Id == id))
+                return NotFoundProblem("Produto não encontrado.");
+
+            var variacao = new ProdutoVariacao(id, dto.Nome, dto.Valor, dto.CodigoHex);
+            _ctx.ProdutoVariacoes.Add(variacao);
+            await _ctx.SaveChangesAsync();
+            return Ok(_mapper.Map<ProdutoVariacaoReadDto>(variacao));
+        }
+
+        [HttpPut("{id:guid}/variacoes/{variacaoId:guid}")]
+        [HasPermission(Permissions.Produtos.Editar)]
+        public async Task<IActionResult> UpdateVariacao(Guid id, Guid variacaoId, [FromBody] ProdutoVariacaoUpdateDto dto)
+        {
+            var variacao = await _ctx.ProdutoVariacoes.FirstOrDefaultAsync(v => v.Id == variacaoId && v.ProdutoId == id);
+            if (variacao is null) return NotFoundProblem("Variação não encontrada.");
+
+            variacao.Atualizar(dto.Nome, dto.Valor, dto.CodigoHex);
+            await _ctx.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("{id:guid}/variacoes/{variacaoId:guid}")]
+        [HasPermission(Permissions.Produtos.Editar)]
+        public async Task<IActionResult> RemoveVariacao(Guid id, Guid variacaoId)
+        {
+            var variacao = await _ctx.ProdutoVariacoes.FirstOrDefaultAsync(v => v.Id == variacaoId && v.ProdutoId == id);
+            if (variacao is null) return NotFoundProblem("Variação não encontrada.");
+
+            _ctx.ProdutoVariacoes.Remove(variacao);
+            await _ctx.SaveChangesAsync();
+            return NoContent();
         }
     }
 }
