@@ -1,6 +1,12 @@
 import type { LoginResponse } from '@/types';
 
-const API_BASE = 'http://localhost:5019/api';
+// Dev (npm run dev):  NODE_ENV = 'development' → '/api' → proxiado pelo Rsbuild para localhost:5019.
+//                     O browser faz requisição same-origin, zero CORS, sem precisar rebuildar o Docker.
+// Prod (Docker build): NODE_ENV = 'production'  → usa VITE_API_URL injetado via build-arg.
+const API_BASE: string =
+  process.env.NODE_ENV === 'development'
+    ? '/api'
+    : process.env.VITE_API_URL || 'http://localhost:5019/api';
 
 export async function login(email: string, senha: string): Promise<LoginResponse> {
   const res = await fetch(`${API_BASE}/Auth/login`, {
@@ -10,10 +16,16 @@ export async function login(email: string, senha: string): Promise<LoginResponse
   });
 
   if (!res.ok) {
-    throw new Error('Email ou senha inválidos.');
+    // Tenta ler a mensagem de erro do backend para mostrar ao usuário
+    let message = 'Email ou senha invalidos.';
+    try {
+      const body = await res.json() as { message?: string; detail?: string };
+      message = body.message ?? body.detail ?? message;
+    } catch { /* mantém a mensagem padrão */ }
+    throw new Error(message);
   }
 
-  return res.json();
+  return res.json() as Promise<LoginResponse>;
 }
 
 export function saveSession(data: LoginResponse): void {

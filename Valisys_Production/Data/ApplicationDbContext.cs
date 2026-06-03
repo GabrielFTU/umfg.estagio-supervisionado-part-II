@@ -18,6 +18,11 @@ namespace Valisys_Production.Data
         private static readonly Guid SampleAlmoxarifadoId = Guid.Parse("C0DE0000-0000-0000-0000-000000000009");
         private static readonly Guid AdminUserId = Guid.Parse("C0DE0000-0000-0000-0000-000000000000");
 
+        // ─── Pessoa ───────────────────────────────────────────────────────────
+        public DbSet<Pessoa> Pessoas { get; set; }
+        public DbSet<PessoaFisica> PessoasFisicas { get; set; }
+        public DbSet<PessoaJuridica> PessoasJuridicas { get; set; }
+
         public DbSet<Fornecedor> Fornecedores { get; set; }
         public DbSet<Almoxarifado> Almoxarifados { get; set; }
         public DbSet<Produto> Produtos { get; set; }
@@ -45,6 +50,30 @@ namespace Valisys_Production.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // ─── Pessoa TPT ───────────────────────────────────────────────────
+            // Pessoas → tabela base, PessoasFisicas / PessoasJuridicas → tabelas filhas (TPT)
+            modelBuilder.Entity<Pessoa>().UseTptMappingStrategy();
+
+            modelBuilder.Entity<Pessoa>()
+                .OwnsOne(p => p.Endereco, e =>
+                {
+                    e.Property(a => a.Uf).HasMaxLength(2);
+                    e.Property(a => a.Cep).HasMaxLength(9);
+                });
+
+            modelBuilder.Entity<Pessoa>()
+                .HasIndex(p => p.PapelPessoa);
+
+            modelBuilder.Entity<PessoaFisica>()
+                .HasIndex(pf => pf.Cpf)
+                .IsUnique();
+
+            modelBuilder.Entity<PessoaJuridica>()
+                .HasIndex(pj => pj.Cnpj)
+                .IsUnique();
+
+            // ─────────────────────────────────────────────────────────────────
 
             modelBuilder.Entity<Produto>()
                 .HasIndex(p => p.CodigoInternoProduto)

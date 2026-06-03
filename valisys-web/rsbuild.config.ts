@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 
@@ -10,6 +11,20 @@ export default defineConfig({
     title: 'Althel ERP',
   },
   plugins: [pluginReact()],
+  source: {
+    define: {
+      'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL ?? ''),
+    },
+  },
+  server: {
+    // Em dev: toda chamada /api/* vai para o backend sem passar pelo CORS do browser.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5019',
+        changeOrigin: true,
+      },
+    },
+  },
 });
 
 

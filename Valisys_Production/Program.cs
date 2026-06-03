@@ -128,15 +128,28 @@ builder.Services.AddScoped<IContaReceberRepository, ContaReceberRepository>();
 builder.Services.AddScoped<IContaReceberService, ContaReceberService>();
 builder.Services.AddScoped<IContaPagarRepository, ContaPagarRepository>();
 builder.Services.AddScoped<IContaPagarService, ContaPagarService>();
+builder.Services.AddScoped<IPessoaFisicaRepository, PessoaFisicaRepository>();
+builder.Services.AddScoped<IPessoaFisicaService, PessoaFisicaService>();
+builder.Services.AddScoped<IPessoaJuridicaRepository, PessoaJuridicaRepository>();
+builder.Services.AddScoped<IPessoaJuridicaService, PessoaJuridicaService>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("MyAllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://31.97.27.244:5173", "https://www.valisys.com.br")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy
+            .SetIsOriginAllowed(origin =>
+            {
+                // Aceita qualquer porta de localhost (desenvolvimento) + domínios de produção
+                if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                    return uri.Host == "localhost" ||
+                           origin == "http://31.97.27.244:5173" ||
+                           origin == "https://www.valisys.com.br";
+                return false;
+            })
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 

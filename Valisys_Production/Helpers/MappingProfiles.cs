@@ -10,6 +10,37 @@ namespace Valisys_Production.Helpers
     {
         public MappingProfiles()
         {
+            // Pessoa Física
+            CreateMap<PessoaFisica, PessoaFisicaReadDto>()
+                .ForMember(dest => dest.Endereco, opt => opt.MapFrom(src =>
+                    src.Endereco == null ? null : new EnderecoDto
+                    {
+                        Cep = src.Endereco.Cep,
+                        Logradouro = src.Endereco.Logradouro,
+                        Numero = src.Endereco.Numero,
+                        Complemento = src.Endereco.Complemento,
+                        Bairro = src.Endereco.Bairro,
+                        Cidade = src.Endereco.Cidade,
+                        Uf = src.Endereco.Uf,
+                        CodigoIbge = src.Endereco.CodigoIbge,
+                    }));
+
+            // Pessoa Jurídica
+            CreateMap<PessoaJuridica, PessoaJuridicaReadDto>()
+                .ForMember(dest => dest.RazaoSocial, opt => opt.MapFrom(src => src.Nome))
+                .ForMember(dest => dest.Endereco, opt => opt.MapFrom(src =>
+                    src.Endereco == null ? null : new EnderecoDto
+                    {
+                        Cep = src.Endereco.Cep,
+                        Logradouro = src.Endereco.Logradouro,
+                        Numero = src.Endereco.Numero,
+                        Complemento = src.Endereco.Complemento,
+                        Bairro = src.Endereco.Bairro,
+                        Cidade = src.Endereco.Cidade,
+                        Uf = src.Endereco.Uf,
+                        CodigoIbge = src.Endereco.CodigoIbge,
+                    }));
+
             // Almoxarifado
             CreateMap<Almoxarifado, AlmoxarifadoReadDto>();
 
