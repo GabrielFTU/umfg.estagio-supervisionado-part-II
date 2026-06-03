@@ -82,6 +82,11 @@ namespace Valisys_Production.Helpers
             // Perfil
             CreateMap<Perfil, PerfilReadDto>();
 
+            // ProdutoFornecedor
+            CreateMap<ProdutoFornecedor, ProdutoFornecedorReadDto>()
+                .ForMember(dest => dest.UnidadeMedidaCompraSigla, opt => opt.MapFrom(src =>
+                    src.UnidadeMedidaCompra != null ? src.UnidadeMedidaCompra.Sigla : null));
+
             // Produto
             CreateMap<Produto, ProdutoReadDto>()
                 .ForMember(dest => dest.Codigo, opt => opt.MapFrom(src => src.CodigoInternoProduto.ToString()))
@@ -92,7 +97,7 @@ namespace Valisys_Production.Helpers
                 .ForMember(dest => dest.UnidadeMedidaSigla, opt => opt.MapFrom(src => src.UnidadeMedida.Sigla))
                 .ForMember(dest => dest.AlmoxarifadoEstoqueId, opt => opt.Ignore())
                 .ForMember(dest => dest.AlmoxarifadoEstoqueNome, opt => opt.Ignore())
-                .ForMember(dest => dest.ImagemUrl, opt => opt.MapFrom(src => src.ImagemUrl));
+                .ForMember(dest => dest.ImagemUrl, opt => opt.MapFrom(src => src.ImagemUrl))
 
             // Solicitação de Produção
             CreateMap<SolicitacaoProducao, SolicitacaoProducaoReadDto>()

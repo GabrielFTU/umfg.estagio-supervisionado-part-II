@@ -24,5 +24,6 @@ namespace Valisys_Production.DTOs
         [Range(0, double.MaxValue)] public decimal CustoPadrao { get; set; }
         [Range(0, double.MaxValue)] public decimal CustoUltimaCompra { get; set; }
         public DateTime? DataUltimaCompra { get; set; }
+
     }
 }

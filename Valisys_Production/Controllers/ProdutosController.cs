@@ -47,7 +47,7 @@ namespace Valisys_Production.Controllers
             var produto = await _ctx.Produtos
                 .Include(p => p.CategoriaProduto)
                 .Include(p => p.UnidadeMedida)
-                .Include(p => p.Fornecedores)
+                .Include(p => p.Fornecedores).ThenInclude(f => f.UnidadeMedidaCompra)
                 .Include(p => p.Variacoes)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -137,10 +137,13 @@ namespace Valisys_Production.Controllers
                     f.DefinirPrincipal(false);
 
             var link = new ProdutoFornecedor(id, dto.PessoaId, dto.FornecedorNome,
-                dto.Principal, dto.CodigoFornecedor, dto.PrecoUltimaCompra);
+                dto.Principal, dto.CodigoFornecedor, dto.PrecoUltimaCompra,
+                dto.UnidadeMedidaCompraId, dto.FatorConversao);
 
             _ctx.ProdutoFornecedores.Add(link);
             await _ctx.SaveChangesAsync();
+
+            await _ctx.Entry(link).Reference(l => l.UnidadeMedidaCompra).LoadAsync();
             return Ok(_mapper.Map<ProdutoFornecedorReadDto>(link));
         }
 
@@ -151,7 +154,8 @@ namespace Valisys_Production.Controllers
             var link = await _ctx.ProdutoFornecedores.FirstOrDefaultAsync(f => f.Id == fornecedorId && f.ProdutoId == id);
             if (link is null) return NotFoundProblem("Fornecedor não encontrado.");
 
-            link.Atualizar(dto.CodigoFornecedor, dto.PrecoUltimaCompra);
+            link.Atualizar(dto.CodigoFornecedor, dto.PrecoUltimaCompra,
+                dto.UnidadeMedidaCompraId, dto.FatorConversao);
             await _ctx.SaveChangesAsync();
             return NoContent();
         }

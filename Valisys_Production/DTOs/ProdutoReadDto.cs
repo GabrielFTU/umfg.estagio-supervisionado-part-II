@@ -33,6 +33,7 @@ namespace Valisys_Production.DTOs
         public string CategoriaProdutoNome { get; set; } = string.Empty;
         public Guid UnidadeMedidaId { get; set; }
         public string UnidadeMedidaSigla { get; set; } = string.Empty;
+
         public Guid? AlmoxarifadoEstoqueId { get; set; }
         public string? AlmoxarifadoEstoqueNome { get; set; }
 

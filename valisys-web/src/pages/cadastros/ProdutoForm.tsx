@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Home, ChevronRight, ChevronLeft, Save, X, Pencil,
-  Loader2, Upload, Trash2, Plus, Star, Search, Check,
+  Loader2, Upload, Trash2, Plus, Search, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -69,6 +69,8 @@ function maskNcm(raw: string): string {
 interface FornecedorLocal {
   localId: string; id?: string; pessoaId: string; nome: string;
   principal: boolean; codigoFornecedor: string; precoUltimaCompra: string;
+  unidadeMedidaCompraId: string;
+  fatorConversao: string;
 }
 interface VariacaoLocal {
   localId: string; id?: string; nome: string;
@@ -324,7 +326,7 @@ export function ProdutoFormPage() {
   const handleAddFornecedor = useCallback((pessoa: Option) => {
     setFornecedores(prev => {
       if (prev.some(fn => fn.pessoaId === pessoa.id)) return prev;
-      return [...prev, { localId: crypto.randomUUID(), pessoaId: pessoa.id, nome: pessoa.nome, principal: prev.length === 0, codigoFornecedor: '', precoUltimaCompra: '' }];
+      return [...prev, { localId: crypto.randomUUID(), pessoaId: pessoa.id, nome: pessoa.nome, principal: prev.length === 0, codigoFornecedor: '', precoUltimaCompra: '', unidadeMedidaCompraId: '', fatorConversao: '1' }];
     });
     setPessoaQuery(''); setPessoaResults([]); setShowPessoaSearch(false);
   }, []);
@@ -342,7 +344,7 @@ export function ProdutoFormPage() {
   const handleSetPrincipal = useCallback((localId: string) =>
     setFornecedores(prev => prev.map(f => ({ ...f, principal: f.localId === localId }))), []);
 
-  const handleFornecedorField = useCallback((localId: string, field: 'codigoFornecedor' | 'precoUltimaCompra', value: string) =>
+  const handleFornecedorField = useCallback((localId: string, field: keyof FornecedorLocal, value: string) =>
     setFornecedores(prev => prev.map(f => f.localId === localId ? { ...f, [field]: value } : f)), []);
 
   // Variações
@@ -413,10 +415,12 @@ export function ProdutoFormPage() {
           dataUltimaCompra: d.dataUltimaCompra ? d.dataUltimaCompra.split('T')[0] : '',
         });
         setImagemUrl(d.imagemUrl ?? null);
-        setFornecedores((d.fornecedores ?? []).map((fn: { id: string; pessoaId: string; fornecedorNome: string; principal: boolean; codigoFornecedor: string | null; precoUltimaCompra: number | null }) => ({
+        setFornecedores((d.fornecedores ?? []).map((fn: { id: string; pessoaId: string; fornecedorNome: string; principal: boolean; codigoFornecedor: string | null; precoUltimaCompra: number | null; unidadeMedidaCompraId: string | null; fatorConversao: number }) => ({
           localId: fn.id, id: fn.id, pessoaId: fn.pessoaId, nome: fn.fornecedorNome,
           principal: fn.principal, codigoFornecedor: fn.codigoFornecedor ?? '',
           precoUltimaCompra: fn.precoUltimaCompra != null ? String(fn.precoUltimaCompra) : '',
+          unidadeMedidaCompraId: fn.unidadeMedidaCompraId ?? '',
+          fatorConversao: fn.fatorConversao ? String(fn.fatorConversao) : '1',
         })));
         setVariacoes((d.variacoes ?? []).map((v: { id: string; nome: string; codigoHex: string | null; valor: number; estoqueAtual: number }) => ({
           localId: v.id, id: v.id, nome: v.nome, codigoHex: v.codigoHex ?? '#3b82f6',
@@ -437,9 +441,27 @@ export function ProdutoFormPage() {
       setLoadingPessoas(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`/api/Pessoas?busca=${encodeURIComponent(pessoaQuery)}&tipo=Fornecedor`, { headers: { Authorization: `Bearer ${token}` } });
-        const data = await res.json();
-        setPessoaResults((Array.isArray(data) ? data : data.items ?? []).map((p: { id: string; nome: string }) => ({ id: p.id, nome: p.nome })));
+        const h: HeadersInit = { Authorization: `Bearer ${token}` };
+
+        const [resF, resJ] = await Promise.all([
+          fetch('/api/PessoasFisicas',   { headers: h }),
+          fetch('/api/PessoasJuridicas', { headers: h }),
+        ]);
+
+        const fisicas:   { id: string; nome: string; nomeFantasia?: string }[]       = resF.ok  ? await resF.json()  : [];
+        const juridicas: { id: string; razaoSocial: string; nomeFantasia?: string }[] = resJ.ok  ? await resJ.json()  : [];
+
+        const termo = pessoaQuery.trim().toLowerCase();
+
+        const combinados: Option[] = [
+          ...fisicas.map(p => ({ id: p.id, nome: p.nomeFantasia?.trim() || p.nome })),
+          ...juridicas.map(p => ({ id: p.id, nome: p.nomeFantasia?.trim() || p.razaoSocial })),
+        ]
+          .filter(p => p.nome.toLowerCase().includes(termo))
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+          .slice(0, 25);
+
+        setPessoaResults(combinados);
       } catch { setPessoaResults([]); } finally { setLoadingPessoas(false); }
     }, 350);
     return () => clearTimeout(t);
@@ -541,9 +563,9 @@ export function ProdutoFormPage() {
         await fetch(`/api/produtos/${produtoId}/fornecedores/${fId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       for (const forn of fornecedores) {
         if (!forn.id)
-          await fetch(`/api/produtos/${produtoId}/fornecedores`, { method: 'POST', headers: h, body: JSON.stringify({ pessoaId: forn.pessoaId, fornecedorNome: forn.nome, principal: forn.principal, codigoFornecedor: forn.codigoFornecedor || null, precoUltimaCompra: forn.precoUltimaCompra ? parseFloat(forn.precoUltimaCompra) : null }) });
+          await fetch(`/api/produtos/${produtoId}/fornecedores`, { method: 'POST', headers: h, body: JSON.stringify({ pessoaId: forn.pessoaId, fornecedorNome: forn.nome, principal: forn.principal, codigoFornecedor: forn.codigoFornecedor || null, precoUltimaCompra: forn.precoUltimaCompra ? parseFloat(forn.precoUltimaCompra) : null, unidadeMedidaCompraId: forn.unidadeMedidaCompraId || null, fatorConversao: parseFloat(forn.fatorConversao) || 1 }) });
         else
-          await fetch(`/api/produtos/${produtoId}/fornecedores/${forn.id}`, { method: 'PUT', headers: h, body: JSON.stringify({ codigoFornecedor: forn.codigoFornecedor || null, precoUltimaCompra: forn.precoUltimaCompra ? parseFloat(forn.precoUltimaCompra) : null }) });
+          await fetch(`/api/produtos/${produtoId}/fornecedores/${forn.id}`, { method: 'PUT', headers: h, body: JSON.stringify({ codigoFornecedor: forn.codigoFornecedor || null, precoUltimaCompra: forn.precoUltimaCompra ? parseFloat(forn.precoUltimaCompra) : null, unidadeMedidaCompraId: forn.unidadeMedidaCompraId || null, fatorConversao: parseFloat(forn.fatorConversao) || 1 }) });
       }
       const principalSalvo = fornecedores.find(f => f.principal && f.id);
       if (principalSalvo?.id)
@@ -634,13 +656,18 @@ export function ProdutoFormPage() {
                   <ChevronLeft size={13} /> Anterior
                 </button>
               )}
-              {isLastStep ? (
-                <button form="produto-form" type="submit" disabled={saving}
-                  className="flex items-center gap-1.5 h-8 px-4 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 disabled:opacity-60 shadow-sm shadow-blue-200 transition-colors">
-                  {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                  {saving ? 'Salvando…' : 'Salvar'}
-                </button>
-              ) : (
+              {/* Salvar sempre disponível — outline nos passos intermediários, sólido no último */}
+              <button form="produto-form" type="submit" disabled={saving}
+                className={cn(
+                  'flex items-center gap-1.5 h-8 px-4 rounded-lg text-sm font-medium transition-colors disabled:opacity-60',
+                  isLastStep
+                    ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm shadow-blue-200'
+                    : 'border border-blue-300 text-blue-600 hover:bg-blue-50',
+                )}>
+                {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                {saving ? 'Salvando…' : 'Salvar'}
+              </button>
+              {!isLastStep && (
                 <button type="button" onClick={goNext}
                   className="flex items-center gap-1.5 h-8 px-4 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 shadow-sm shadow-blue-200 transition-colors">
                   Próximo <ChevronRight size={13} />
@@ -906,6 +933,8 @@ export function ProdutoFormPage() {
                     <div className="space-y-2">
                       {fornecedores.map(forn => (
                         <FornecedorRow key={forn.localId} forn={forn} ro={ro}
+                          unidades={unidades}
+                          unidadeMedidaId={f.unidadeMedidaId}
                           onSetPrincipal={handleSetPrincipal}
                           onRemove={handleRemoveFornecedor}
                           onFieldChange={handleFornecedorField} />
@@ -948,7 +977,7 @@ export function ProdutoFormPage() {
                       </button>
                     )
                   )}
-                  <p className="text-[11px] text-gray-400">Apenas 1 fornecedor pode ser marcado como principal. Clique na estrela para definir.</p>
+                  <p className="text-[11px] text-gray-400">Apenas 1 fornecedor pode ser marcado como principal.</p>
                 </div>
               </Card>
             </div>
@@ -1076,32 +1105,44 @@ export function ProdutoFormPage() {
 // ─── Sub-componentes memoizados das listas ────────────────────────────────────
 
 const FornecedorRow = memo(function FornecedorRow({
-  forn, ro, onSetPrincipal, onRemove, onFieldChange,
+  forn, ro, unidades, unidadeMedidaId, onSetPrincipal, onRemove, onFieldChange,
 }: {
   forn: FornecedorLocal; ro: boolean;
+  unidades: Option[]; unidadeMedidaId: string;
   onSetPrincipal: (id: string) => void;
   onRemove: (id: string) => void;
-  onFieldChange: (id: string, field: 'codigoFornecedor' | 'precoUltimaCompra', value: string) => void;
+  onFieldChange: (id: string, field: keyof FornecedorLocal, value: string) => void;
 }) {
-  const handlePrincipal = useCallback(() => onSetPrincipal(forn.localId), [forn.localId, onSetPrincipal]);
+  const handlePrincipal = useCallback((_v: boolean) => onSetPrincipal(forn.localId), [forn.localId, onSetPrincipal]);
   const handleRemove    = useCallback(() => onRemove(forn.localId), [forn.localId, onRemove]);
   const handleCodigo    = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(forn.localId, 'codigoFornecedor', e.target.value), [forn.localId, onFieldChange]);
   const handlePreco     = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(forn.localId, 'precoUltimaCompra', e.target.value), [forn.localId, onFieldChange]);
+  const handleUnidade   = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => onFieldChange(forn.localId, 'unidadeMedidaCompraId', e.target.value), [forn.localId, onFieldChange]);
+  const handleFator     = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(forn.localId, 'fatorConversao', e.target.value), [forn.localId, onFieldChange]);
+
+  const temConversao = !!forn.unidadeMedidaCompraId && forn.unidadeMedidaCompraId !== unidadeMedidaId;
+  const ue = unidades.find(u => u.id === unidadeMedidaId);
+  const uc = unidades.find(u => u.id === forn.unidadeMedidaCompraId);
+  const fator = parseFloat(forn.fatorConversao) || 1;
 
   return (
-    <div className={cn('rounded-lg border p-3 space-y-2 transition-colors', forn.principal ? 'border-blue-200 bg-blue-50/40' : 'border-gray-200 bg-white')}>
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <button type="button" disabled={ro} onClick={handlePrincipal}
-            title={forn.principal ? 'Fornecedor principal' : 'Definir como principal'}
-            className={cn('shrink-0 transition-colors', forn.principal ? 'text-amber-400' : 'text-gray-300 hover:text-amber-300', ro && 'cursor-default')}>
-            <Star size={15} fill={forn.principal ? 'currentColor' : 'none'} />
-          </button>
-          <span className="text-sm font-medium text-gray-800 truncate">{forn.nome}</span>
-          {forn.principal && <span className="shrink-0 text-[10px] font-semibold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">Principal</span>}
+    <div className={cn('rounded-lg border p-3 space-y-3 transition-colors', forn.principal ? 'border-blue-200 bg-blue-50/40' : 'border-gray-200 bg-white')}>
+
+      {/* Cabeçalho: nome + principal + remover */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-medium text-gray-800 truncate">{forn.nome}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-gray-500">Principal</span>
+          <Toggle checked={forn.principal} onChange={handlePrincipal} disabled={ro} />
+          {!ro && (
+            <button type="button" onClick={handleRemove} className="text-gray-300 hover:text-red-400 transition-colors ml-1">
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
-        {!ro && <button type="button" onClick={handleRemove} className="shrink-0 text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>}
       </div>
+
+      {/* Campos principais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <Label>Código no fornecedor</Label>
@@ -1112,6 +1153,49 @@ const FornecedorRow = memo(function FornecedorRow({
           <Input ro={ro} type="number" min="0" step="0.01" value={forn.precoUltimaCompra} placeholder="0,00" onChange={handlePreco} />
         </div>
       </div>
+
+      {/* Conversão de unidades */}
+      <div className="border-t border-gray-100 pt-3 space-y-2">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Label>Unidade de compra deste fornecedor</Label>
+            <div className="relative">
+              <select
+                disabled={ro}
+                value={forn.unidadeMedidaCompraId}
+                onChange={handleUnidade}
+                className={cn(inputCls(false, ro), 'appearance-none pr-8', !ro && 'cursor-pointer')}
+              >
+                <option value="">Mesma que estoque{ue ? ` (${ue.extra})` : ''}</option>
+                {unidades.filter(u => u.id !== unidadeMedidaId).map(u => (
+                  <option key={u.id} value={u.id}>{u.nome} ({u.extra})</option>
+                ))}
+              </select>
+              <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" width="12" height="12" viewBox="0 0 12 12">
+                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+
+          {temConversao && (
+            <div className="w-32 shrink-0">
+              <Label>Fator</Label>
+              <Input ro={ro} type="number" min="0.0001" step="0.0001"
+                value={forn.fatorConversao} placeholder="1" onChange={handleFator} />
+            </div>
+          )}
+        </div>
+
+        {/* Fórmula visual */}
+        {temConversao && uc && ue && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-sm text-blue-700 font-medium w-fit">
+            <span>1 {uc.extra}</span>
+            <span className="text-blue-400 font-normal">=</span>
+            <span>{fator % 1 === 0 ? fator : Number(fator.toFixed(6)).toString()} {ue.extra}</span>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 });

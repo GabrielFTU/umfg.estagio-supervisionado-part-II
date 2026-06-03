@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Valisys_Production.Common
 {
@@ -13,6 +14,13 @@ namespace Valisys_Production.Common
             AuthorizationHandlerContext context,
             PermissaoRequirement requirement)
         {
+            // Administrador tem todas as permissões automaticamente
+            if (context.User.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == "Administrador"))
+            {
+                context.Succeed(requirement);
+                return Task.CompletedTask;
+            }
+
             var temPermissao = context.User.Claims
                 .Where(c => c.Type == "permissao")
                 .Any(c => c.Value == requirement.Permissao);
