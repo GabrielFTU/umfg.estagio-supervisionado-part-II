@@ -10,6 +10,7 @@ namespace Valisys_Production.DTOs
         public string? Descricao { get; set; }
         public string? Observacoes { get; set; }
         public string? ImagemUrl { get; set; }
+        public string? Sku { get; set; }
 
         public string Classificacao { get; set; } = string.Empty;
         public int ClassificacaoId { get; set; }

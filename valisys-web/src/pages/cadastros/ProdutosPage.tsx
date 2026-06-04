@@ -133,6 +133,7 @@ export function ProdutosPage() {
       const res = await fetch('/api/produtos', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 403) { setProdutos([]); return; }
       if (!res.ok) throw new Error();
       const data: any[] = await res.json();
       const lista: ProdutoItem[] = data.map(p => ({

@@ -15,8 +15,8 @@ node_modules/
 dist/
 wwwroot/dist/
 
-appsettings.json
 appsettings.Development.json
+appsettings.*.json
 .env
 .docker-compose.override.yml
 

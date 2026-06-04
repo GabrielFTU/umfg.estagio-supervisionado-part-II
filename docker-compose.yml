@@ -1,21 +1,19 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
     container_name: valisys_db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: FKQWEjd2d1jp04hanphciowq
-      POSTGRES_DB: ValisysProduction
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ValisysProduction"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,8 +30,12 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=ValisysProduction;Username=postgres;Password=FKQWEjd2d1jp04hanphciowq;Timeout=30;Command Timeout=30;
-      - JwtSettings__SecretKey=UmaChaveMuitoSeguraComMaisDe32CaracteresParaOJwt123
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};Timeout=30;Command Timeout=30;
+      - JwtSettings__SecretKey=${JWT_SECRET}
+      - Aws__BucketName=${AWS_BUCKET_NAME}
+      - Aws__Region=${AWS_REGION}
+      - AWS__AccessKey=${AWS_ACCESS_KEY}
+      - AWS__SecretKey=${AWS_SECRET_KEY}
     ports:
       - "5019:8080"
     depends_on:
@@ -41,6 +43,8 @@ services:
         condition: service_healthy
     networks:
       - valisys_network
+    volumes:
+      - uploads_data:/app/uploads
     entrypoint: ["/bin/sh", "-c", "sleep 10 && dotnet Valisys_Production.dll"]
 
   frontend:
@@ -60,6 +64,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  uploads_data:
     driver: local
 
 networks:

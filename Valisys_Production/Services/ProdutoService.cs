@@ -27,6 +27,7 @@ namespace Valisys_Production.Services
                 dto.Observacoes, dto.ImagemUrl);
 
             produto.DefinirCodigo(await GerarProximoCodigoSequencialAsync());
+            produto.DefinirSku(dto.Sku);
 
             // campos fiscais e custos exigem Atualizar; ativo=true por padrão no create
             produto.Atualizar(
@@ -65,6 +66,7 @@ namespace Valisys_Production.Services
                 dto.Observacoes, dto.Ativo, dto.ImagemUrl,
                 dto.Ncm, dto.TipoItem, dto.OrigemMercadoria,
                 dto.CustoPadrao, dto.CustoUltimaCompra, dto.DataUltimaCompra);
+            existing.DefinirSku(dto.Sku);
 
             var updated = await _repository.UpdateAsync(existing);
 

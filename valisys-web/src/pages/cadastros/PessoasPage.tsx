@@ -30,7 +30,6 @@ type Filtros = {
 
 const FILTROS_VAZIOS: Filtros = { tipo: '', papel: '', status: '' };
 
-// Enum [Flags]: Cliente=1, Colaborador=2, Fornecedor=4, Vendedor=8
 const PAPEL_BITS: [number, string][] = [
   [1, 'Cliente'], [2, 'Colaborador'], [4, 'Fornecedor'], [8, 'Vendedor'],
 ];

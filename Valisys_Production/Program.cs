@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Amazon.S3;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -112,8 +113,22 @@ builder.Services.AddScoped<IOrdemDeProducaoRepository, OrdemDeProducaoRepository
 builder.Services.AddScoped<IOrdemDeProducaoService, OrdemDeProducaoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPdfReportService, PdfReportService>();
+
+// AWS S3
+builder.Services.AddSingleton<IAmazonS3>(_ =>
+{
+    var cfg = builder.Configuration;
+    var accessKey = cfg["AWS__AccessKey"] ?? cfg["AWS:AccessKey"] ?? "";
+    var secretKey = cfg["AWS__SecretKey"] ?? cfg["AWS:SecretKey"] ?? "";
+    var region    = Amazon.RegionEndpoint.GetBySystemName(cfg["Aws:Region"] ?? "us-east-1");
+
+    return string.IsNullOrEmpty(accessKey)
+        ? new Amazon.S3.AmazonS3Client(region)                                    // usa credenciais do ambiente (IAM role)
+        : new Amazon.S3.AmazonS3Client(accessKey, secretKey, region);
+});
+builder.Services.AddScoped<IS3Service, S3Service>();
 builder.Services.AddScoped<PermissionAuthorizationFilter>();
-builder.Services.AddSingleton<IAuthorizationHandler, PermissaoHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissaoHandler>();
 builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(typeof(MappingProfiles));
 builder.Services.AddScoped<IFichaTecnicaRepository, FichaTecnicaRepository>();

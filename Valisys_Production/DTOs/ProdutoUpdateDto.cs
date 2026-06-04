@@ -12,6 +12,7 @@ namespace Valisys_Production.DTOs
         public bool ControlarPorLote { get; set; }
         [MaxLength(500)] public string? Observacoes { get; set; }
         public string? ImagemUrl { get; set; }
+        [MaxLength(50)] public string? Sku { get; set; }
 
         [Required, Range(0, double.MaxValue)] public decimal EstoqueMinimo { get; set; }
         public bool Ativo { get; set; }

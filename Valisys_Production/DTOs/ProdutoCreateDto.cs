@@ -11,6 +11,7 @@ namespace Valisys_Production.DTOs
         public bool ControlarPorLote { get; set; }
         [MaxLength(500)] public string? Observacoes { get; set; }
         public string? ImagemUrl { get; set; }
+        [MaxLength(50)] public string? Sku { get; set; }
 
         [Required] public Guid UnidadeMedidaId { get; set; }
         [Required] public Guid CategoriaProdutoId { get; set; }

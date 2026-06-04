@@ -7,6 +7,7 @@ using Valisys_Production.DTOs;
 using Valisys_Production.Infrastructure.Authorization;
 using Valisys_Production.Models;
 using Valisys_Production.Services.Interfaces;
+using Amazon.S3;
 
 namespace Valisys_Production.Controllers
 {
@@ -19,15 +20,18 @@ namespace Valisys_Production.Controllers
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _env;
         private readonly ApplicationDbContext _ctx;
+        private readonly IS3Service _s3;
 
         public ProdutosController(
             IProdutoService service, IMapper mapper,
-            IWebHostEnvironment env, ApplicationDbContext ctx)
+            IWebHostEnvironment env, ApplicationDbContext ctx,
+            IS3Service s3)
         {
             _service = service;
             _mapper  = mapper;
             _env     = env;
             _ctx     = ctx;
+            _s3      = s3;
         }
 
         [HttpGet]
@@ -113,14 +117,15 @@ namespace Valisys_Production.Controllers
             if (arquivo.Length > 5 * 1024 * 1024)
                 return BadRequest(new { message = "Arquivo excede 5 MB." });
 
-            var dir = Path.Combine(_env.ContentRootPath, "uploads", "produtos");
-            Directory.CreateDirectory(dir);
-
-            var fileName = $"{Guid.NewGuid()}{ext}";
-            await using var stream = new FileStream(Path.Combine(dir, fileName), FileMode.Create);
-            await arquivo.CopyToAsync(stream);
-
-            return Ok(new { url = $"/uploads/produtos/{fileName}" });
+            try
+            {
+                var url = await _s3.UploadAsync(arquivo, "produtos");
+                return Ok(new { url });
+            }
+            catch (AmazonS3Exception ex)
+            {
+                return Problem($"Erro ao enviar imagem: {ex.Message}");
+            }
         }
 
         // ── Fornecedores ──────────────────────────────────────────────────────

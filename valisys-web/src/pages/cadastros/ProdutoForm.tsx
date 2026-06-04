@@ -64,6 +64,23 @@ function maskNcm(raw: string): string {
   return `${d.slice(0, 4)}.${d.slice(4, 6)}.${d.slice(6)}`;
 }
 
+function maskCurrency(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  const num = parseInt(digits, 10);
+  return Math.floor(num / 100).toLocaleString('pt-BR') + ',' + String(num % 100).padStart(2, '0');
+}
+
+function parseCurrency(masked: string): number {
+  if (!masked) return 0;
+  return parseFloat(masked.replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function floatToMaskedCurrency(value: number | null | undefined): string {
+  if (value == null || value === 0) return '';
+  return maskCurrency(String(Math.round(value * 100)));
+}
+
 // ─── Tipos locais ─────────────────────────────────────────────────────────────
 
 interface FornecedorLocal {
@@ -222,7 +239,7 @@ const ImageUpload = memo(function ImageUpload({
 const emptyForm = {
   nome: '', descricao: '', observacoes: '', classificacao: 0,
   categoriaId: '', unidadeMedidaId: '', estoqueMinimo: '',
-  controlarPorLote: false, ativo: true, codigo: '',
+  controlarPorLote: false, ativo: true, codigo: '', sku: '',
   ncm: '', tipoItem: '', origemMercadoria: '0',
   custoPadrao: '', custoUltimaCompra: '', dataUltimaCompra: '',
 };
@@ -301,6 +318,12 @@ export function ProdutoFormPage() {
   // Handler para NCM (precisa aplicar máscara)
   const handleNcmChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setF(prev => ({ ...prev, ncm: maskNcm(e.target.value) }));
+  }, []);
+
+  // Handler para campos de valor monetário
+  const handleCurrencyChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setF(prev => ({ ...prev, [name]: maskCurrency(value) }));
   }, []);
 
   // Handler para selects
@@ -407,24 +430,25 @@ export function ProdutoFormPage() {
           classificacao: d.classificacaoId ?? 0, categoriaId: d.categoriaProdutoId ?? '',
           unidadeMedidaId: d.unidadeMedidaId ?? '', estoqueMinimo: String(d.estoqueMinimo ?? ''),
           controlarPorLote: d.controlarPorLote ?? false, ativo: d.ativo ?? true,
-          codigo: d.codigo ?? '', ncm: d.ncm ? maskNcm(d.ncm) : '',
+          codigo: d.codigo ?? '', sku: d.sku ?? '',
+          ncm: d.ncm ? maskNcm(d.ncm) : '',
           tipoItem: d.tipoItemId != null ? String(d.tipoItemId) : '',
           origemMercadoria: String(d.origemMercadoriaId ?? 0),
-          custoPadrao: d.custoPadrao ? String(d.custoPadrao) : '',
-          custoUltimaCompra: d.custoUltimaCompra ? String(d.custoUltimaCompra) : '',
+          custoPadrao: floatToMaskedCurrency(d.custoPadrao),
+          custoUltimaCompra: floatToMaskedCurrency(d.custoUltimaCompra),
           dataUltimaCompra: d.dataUltimaCompra ? d.dataUltimaCompra.split('T')[0] : '',
         });
         setImagemUrl(d.imagemUrl ?? null);
         setFornecedores((d.fornecedores ?? []).map((fn: { id: string; pessoaId: string; fornecedorNome: string; principal: boolean; codigoFornecedor: string | null; precoUltimaCompra: number | null; unidadeMedidaCompraId: string | null; fatorConversao: number }) => ({
           localId: fn.id, id: fn.id, pessoaId: fn.pessoaId, nome: fn.fornecedorNome,
           principal: fn.principal, codigoFornecedor: fn.codigoFornecedor ?? '',
-          precoUltimaCompra: fn.precoUltimaCompra != null ? String(fn.precoUltimaCompra) : '',
+          precoUltimaCompra: floatToMaskedCurrency(fn.precoUltimaCompra),
           unidadeMedidaCompraId: fn.unidadeMedidaCompraId ?? '',
           fatorConversao: fn.fatorConversao ? String(fn.fatorConversao) : '1',
         })));
         setVariacoes((d.variacoes ?? []).map((v: { id: string; nome: string; codigoHex: string | null; valor: number; estoqueAtual: number }) => ({
           localId: v.id, id: v.id, nome: v.nome, codigoHex: v.codigoHex ?? '#3b82f6',
-          valor: String(v.valor), estoqueAtual: v.estoqueAtual ?? 0,
+          valor: floatToMaskedCurrency(v.valor), estoqueAtual: v.estoqueAtual ?? 0,
         })));
       } catch {
         setErrors({ _global: 'Não foi possível carregar os dados.' });
@@ -538,14 +562,15 @@ export function ProdutoFormPage() {
       const body = {
         ...(id ? { id } : {}),
         nome: f.nome, descricao: f.descricao, observacoes: f.observacoes || null,
+        sku: f.sku.trim().toUpperCase() || null,
         classificacao: f.classificacao, categoriaProdutoId: f.categoriaId,
         unidadeMedidaId: f.unidadeMedidaId, estoqueMinimo: parseFloat(f.estoqueMinimo) || 0,
         controlarPorLote: f.controlarPorLote, ativo: f.ativo, imagemUrl: imagemUrl ?? null,
         ncm: f.ncm.replace(/\D/g, '') || null,
         tipoItem: f.tipoItem !== '' ? parseInt(f.tipoItem) : null,
         origemMercadoria: parseInt(f.origemMercadoria),
-        custoPadrao: parseFloat(f.custoPadrao) || 0,
-        custoUltimaCompra: parseFloat(f.custoUltimaCompra) || 0,
+        custoPadrao: parseCurrency(f.custoPadrao),
+        custoUltimaCompra: parseCurrency(f.custoUltimaCompra),
         dataUltimaCompra: null,
       };
 
@@ -563,9 +588,9 @@ export function ProdutoFormPage() {
         await fetch(`/api/produtos/${produtoId}/fornecedores/${fId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       for (const forn of fornecedores) {
         if (!forn.id)
-          await fetch(`/api/produtos/${produtoId}/fornecedores`, { method: 'POST', headers: h, body: JSON.stringify({ pessoaId: forn.pessoaId, fornecedorNome: forn.nome, principal: forn.principal, codigoFornecedor: forn.codigoFornecedor || null, precoUltimaCompra: forn.precoUltimaCompra ? parseFloat(forn.precoUltimaCompra) : null, unidadeMedidaCompraId: forn.unidadeMedidaCompraId || null, fatorConversao: parseFloat(forn.fatorConversao) || 1 }) });
+          await fetch(`/api/produtos/${produtoId}/fornecedores`, { method: 'POST', headers: h, body: JSON.stringify({ pessoaId: forn.pessoaId, fornecedorNome: forn.nome, principal: forn.principal, codigoFornecedor: forn.codigoFornecedor || null, precoUltimaCompra: forn.precoUltimaCompra ? parseCurrency(forn.precoUltimaCompra) : null, unidadeMedidaCompraId: forn.unidadeMedidaCompraId || null, fatorConversao: parseFloat(forn.fatorConversao) || 1 }) });
         else
-          await fetch(`/api/produtos/${produtoId}/fornecedores/${forn.id}`, { method: 'PUT', headers: h, body: JSON.stringify({ codigoFornecedor: forn.codigoFornecedor || null, precoUltimaCompra: forn.precoUltimaCompra ? parseFloat(forn.precoUltimaCompra) : null, unidadeMedidaCompraId: forn.unidadeMedidaCompraId || null, fatorConversao: parseFloat(forn.fatorConversao) || 1 }) });
+          await fetch(`/api/produtos/${produtoId}/fornecedores/${forn.id}`, { method: 'PUT', headers: h, body: JSON.stringify({ codigoFornecedor: forn.codigoFornecedor || null, precoUltimaCompra: forn.precoUltimaCompra ? parseCurrency(forn.precoUltimaCompra) : null, unidadeMedidaCompraId: forn.unidadeMedidaCompraId || null, fatorConversao: parseFloat(forn.fatorConversao) || 1 }) });
       }
       const principalSalvo = fornecedores.find(f => f.principal && f.id);
       if (principalSalvo?.id)
@@ -574,7 +599,7 @@ export function ProdutoFormPage() {
       for (const vId of deletedVariacaoIds)
         await fetch(`/api/produtos/${produtoId}/variacoes/${vId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       for (const vari of variacoes) {
-        const vb = { nome: vari.nome, codigoHex: vari.codigoHex || null, valor: parseFloat(vari.valor) || 0 };
+        const vb = { nome: vari.nome, codigoHex: vari.codigoHex || null, valor: parseCurrency(vari.valor) };
         if (!vari.id) await fetch(`/api/produtos/${produtoId}/variacoes`, { method: 'POST', headers: h, body: JSON.stringify(vb) });
         else          await fetch(`/api/produtos/${produtoId}/variacoes/${vari.id}`, { method: 'PUT', headers: h, body: JSON.stringify(vb) });
       }
@@ -736,6 +761,14 @@ export function ProdutoFormPage() {
                         onChange={handleChange} />
                       <FieldError msg={errors.nome} />
                     </div>
+                    <div>
+                      <Label>SKU</Label>
+                      <Input name="sku" value={f.sku} ro={ro}
+                        placeholder="Ex: ACO-1020-CH" maxLength={50}
+                        onChange={handleChange}
+                        className="uppercase placeholder:normal-case" />
+                      <p className="mt-1 text-[11px] text-gray-400">Código de referência do fabricante ou fornecedor (opcional).</p>
+                    </div>
                   </div>
                 </Card>
 
@@ -812,10 +845,20 @@ export function ProdutoFormPage() {
                       </div>
                       <Toggle checked={f.ativo} onChange={handleAtivo} disabled={ro} />
                     </div>
-                    {f.codigo && (
-                      <div className="pt-3 border-t border-gray-100">
-                        <p className="text-xs text-gray-400">Código interno</p>
-                        <p className="text-sm font-semibold text-gray-800 mt-0.5 tabular-nums">#{f.codigo}</p>
+                    {(f.codigo || f.sku) && (
+                      <div className="pt-3 border-t border-gray-100 space-y-2">
+                        {f.codigo && (
+                          <div>
+                            <p className="text-xs text-gray-400">Código interno</p>
+                            <p className="text-sm font-semibold text-gray-800 mt-0.5 tabular-nums">#{f.codigo}</p>
+                          </div>
+                        )}
+                        {f.sku && (
+                          <div>
+                            <p className="text-xs text-gray-400">SKU</p>
+                            <p className="text-sm font-semibold text-gray-800 mt-0.5 font-mono tracking-wide">{f.sku}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -998,8 +1041,8 @@ export function ProdutoFormPage() {
                     <div className="flex items-end gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
                       <div className="flex-1">
                         <Label>Aplicar valor a todas as variações (R$)</Label>
-                        <Input type="number" min="0" step="0.01" placeholder="0,00"
-                          value={valorAplicarTodos} onChange={e => setValorAplicarTodos(e.target.value)} />
+                        <Input type="text" inputMode="numeric" placeholder="0,00"
+                          value={valorAplicarTodos} onChange={e => setValorAplicarTodos(maskCurrency(e.target.value))} />
                       </div>
                       <button type="button" onClick={handleAplicarTodos}
                         className="h-9 px-4 rounded-md bg-gray-700 text-white text-sm font-medium hover:bg-gray-800 transition-colors shrink-0">
@@ -1050,14 +1093,14 @@ export function ProdutoFormPage() {
                 <div className="space-y-4">
                   <div>
                     <Label>Custo padrão (R$)</Label>
-                    <Input name="custoPadrao" ro={ro} type="number" min="0" step="0.01"
-                      value={f.custoPadrao} placeholder="0,00" onChange={handleChange} />
+                    <Input name="custoPadrao" ro={ro} type="text" inputMode="numeric"
+                      value={f.custoPadrao} placeholder="0,00" onChange={handleCurrencyChange} />
                     <p className="mt-1 text-[11px] text-gray-400">Custo médio calculado a partir das entradas de estoque. Ajuste manual permitido.</p>
                   </div>
                   <div className="border-t border-gray-100 pt-4">
                     <Label>Custo da última compra (R$)</Label>
-                    <Input name="custoUltimaCompra" ro={ro} type="number" min="0" step="0.01"
-                      value={f.custoUltimaCompra} placeholder="0,00" onChange={handleChange} />
+                    <Input name="custoUltimaCompra" ro={ro} type="text" inputMode="numeric"
+                      value={f.custoUltimaCompra} placeholder="0,00" onChange={handleCurrencyChange} />
                   </div>
                   {f.dataUltimaCompra ? (
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-100">
@@ -1077,7 +1120,7 @@ export function ProdutoFormPage() {
                         <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
                           <p className="text-[11px] text-blue-500 font-medium">Custo padrão (médio)</p>
                           <p className="text-lg font-bold text-blue-700 mt-0.5 tabular-nums">
-                            R$ {parseFloat(f.custoPadrao).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {parseCurrency(f.custoPadrao).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </p>
                         </div>
                       )}
@@ -1085,7 +1128,7 @@ export function ProdutoFormPage() {
                         <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                           <p className="text-[11px] text-gray-500 font-medium">Última compra</p>
                           <p className="text-lg font-bold text-gray-700 mt-0.5 tabular-nums">
-                            R$ {parseFloat(f.custoUltimaCompra).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {parseCurrency(f.custoUltimaCompra).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </p>
                         </div>
                       )}
@@ -1116,7 +1159,7 @@ const FornecedorRow = memo(function FornecedorRow({
   const handlePrincipal = useCallback((_v: boolean) => onSetPrincipal(forn.localId), [forn.localId, onSetPrincipal]);
   const handleRemove    = useCallback(() => onRemove(forn.localId), [forn.localId, onRemove]);
   const handleCodigo    = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(forn.localId, 'codigoFornecedor', e.target.value), [forn.localId, onFieldChange]);
-  const handlePreco     = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(forn.localId, 'precoUltimaCompra', e.target.value), [forn.localId, onFieldChange]);
+  const handlePreco     = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(forn.localId, 'precoUltimaCompra', maskCurrency(e.target.value)), [forn.localId, onFieldChange]);
   const handleUnidade   = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => onFieldChange(forn.localId, 'unidadeMedidaCompraId', e.target.value), [forn.localId, onFieldChange]);
   const handleFator     = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(forn.localId, 'fatorConversao', e.target.value), [forn.localId, onFieldChange]);
 
@@ -1150,7 +1193,7 @@ const FornecedorRow = memo(function FornecedorRow({
         </div>
         <div>
           <Label>Preço última compra (R$)</Label>
-          <Input ro={ro} type="number" min="0" step="0.01" value={forn.precoUltimaCompra} placeholder="0,00" onChange={handlePreco} />
+          <Input ro={ro} type="text" inputMode="numeric" value={forn.precoUltimaCompra} placeholder="0,00" onChange={handlePreco} />
         </div>
       </div>
 
@@ -1210,14 +1253,14 @@ const VariacaoRow = memo(function VariacaoRow({
   const handleRemove = useCallback(() => onRemove(vari.localId), [vari.localId, onRemove]);
   const handleCor    = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(vari.localId, 'codigoHex', e.target.value), [vari.localId, onFieldChange]);
   const handleNome   = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(vari.localId, 'nome', e.target.value), [vari.localId, onFieldChange]);
-  const handleValor  = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(vari.localId, 'valor', e.target.value), [vari.localId, onFieldChange]);
+  const handleValor  = useCallback((e: React.ChangeEvent<HTMLInputElement>) => onFieldChange(vari.localId, 'valor', maskCurrency(e.target.value)), [vari.localId, onFieldChange]);
 
   return (
     <div className={cn('grid gap-2 items-center py-1.5', showEstoque ? 'grid-cols-[32px_1fr_130px_100px_32px]' : 'grid-cols-[32px_1fr_130px_32px]')}>
       <input type="color" disabled={ro} value={vari.codigoHex} onChange={handleCor}
         className="w-8 h-8 rounded-md border border-gray-200 cursor-pointer p-0.5 bg-white disabled:cursor-default" title="Escolher cor" />
       <Input ro={ro} value={vari.nome} placeholder="Ex: Azul Royal" onChange={handleNome} />
-      <Input ro={ro} type="number" min="0" step="0.01" value={vari.valor} placeholder="0,00" onChange={handleValor} />
+      <Input ro={ro} type="text" inputMode="numeric" value={vari.valor} placeholder="0,00" onChange={handleValor} />
       {showEstoque && (
         <div className="text-right">
           <span className={cn('text-sm font-semibold tabular-nums', vari.estoqueAtual === 0 ? 'text-gray-300' : 'text-gray-700')}>

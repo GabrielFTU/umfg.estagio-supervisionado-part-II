@@ -10,6 +10,7 @@ namespace Valisys_Production.Models
         public string Descricao { get; private set; } = string.Empty;
         public string? Observacoes { get; private set; }
         public string? ImagemUrl { get; private set; }
+        public string? Sku { get; private set; }
 
         public ClassificacaoEnum Classificacao { get; private set; }
         public bool ControlarPorLote { get; private set; }
@@ -57,6 +58,7 @@ namespace Valisys_Production.Models
         }
 
         public void DefinirCodigo(int codigo) => CodigoInternoProduto = codigo;
+        public void DefinirSku(string? sku) => Sku = string.IsNullOrWhiteSpace(sku) ? null : sku.Trim().ToUpperInvariant();
 
         public void DefinirImagem(string? imagemUrl) => ImagemUrl = imagemUrl;
 
