@@ -63,6 +63,8 @@ const NAV_ITEMS: NavItemDef[] = [
       {
         label: 'Básicos',
         items: [
+          { label: 'Almoxarifados',         href: '/cadastros/almoxarifados' },
+          { label: 'Depósitos',             href: '/cadastros/depositos' },
           { label: 'Categorias de Produto', href: '/cadastros/categorias' },
           { label: 'Unidades de Medida',    href: '/cadastros/unidades' },
           { label: 'Fases de Produção',     href: '/cadastros/fases' },

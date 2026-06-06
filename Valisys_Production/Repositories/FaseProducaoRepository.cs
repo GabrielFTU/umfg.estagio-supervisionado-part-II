@@ -11,5 +11,9 @@ namespace Valisys_Production.Repositories
 
         public override async Task<IEnumerable<FaseProducao>> GetAllAsync()
             => await _dbSet.AsNoTracking().OrderBy(f => f.Ordem).ToListAsync();
+
+        public async Task<bool> HasActiveDependenciasAsync(Guid faseId)
+            => await _context.RoteiroProducaoEtapas.AnyAsync(e => e.FaseProducaoId == faseId && e.Ativo)
+            || await _context.OrdensDeProducao.AnyAsync(o => o.FaseAtualId == faseId && o.Ativo);
     }
 }

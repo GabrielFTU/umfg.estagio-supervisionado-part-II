@@ -64,6 +64,10 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
+            if (await _repository.HasActiveProdutosAsync(id))
+                throw new InvalidOperationException(
+                    $"A categoria '{existing.Nome}' possui produtos ativos e não pode ser desativada.");
+
             existing.Desativar();
             var result = await _repository.UpdateAsync(existing);
 

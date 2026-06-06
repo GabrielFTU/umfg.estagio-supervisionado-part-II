@@ -2,5 +2,8 @@ using Valisys_Production.Models;
 
 namespace Valisys_Production.Repositories.Interfaces
 {
-    public interface ICategoriaProdutoRepository : IRepository<CategoriaProduto> { }
+    public interface ICategoriaProdutoRepository : IRepository<CategoriaProduto>
+    {
+        Task<bool> HasActiveProdutosAsync(Guid categoriaId);
+    }
 }

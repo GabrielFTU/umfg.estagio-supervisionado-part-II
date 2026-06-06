@@ -5,6 +5,7 @@ namespace Valisys_Production.Models
     public sealed class Deposito : BaseModels
     {
         public Guid AlmoxarifadoId { get; private set; }
+        public Almoxarifado Almoxarifado { get; private set; } = null!;
         public int CodigoIdentificador { get; private set; }
         public string Nome { get; private set; } = string.Empty;
         public string? Descricao { get; private set; }

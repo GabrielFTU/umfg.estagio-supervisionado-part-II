@@ -7,6 +7,16 @@ import { PessoasPage } from './pages/cadastros/PessoasPage';
 import { PessoaFormPage } from './pages/cadastros/PessoaForm';
 import { ProdutosPage } from './pages/cadastros/ProdutosPage';
 import { ProdutoFormPage } from './pages/cadastros/ProdutoForm';
+import { CategoriasPage } from './pages/cadastros/CategoriasPage';
+import { CategoriaFormPage } from './pages/cadastros/CategoriaForm';
+import { FasesPage } from './pages/cadastros/FasesPage';
+import { FaseFormPage } from './pages/cadastros/FaseForm';
+import { AlmoxarifadosPage } from './pages/cadastros/AlmoxarifadosPage';
+import { AlmoxarifadoFormPage } from './pages/cadastros/AlmoxarifadoForm';
+import { DepositosPage } from './pages/cadastros/DepositosPage';
+import { DepositoFormPage } from './pages/cadastros/DepositoForm';
+import { UnidadesMedidaPage } from './pages/cadastros/UnidadesMedidaPage';
+import { UnidadeMedidaFormPage } from './pages/cadastros/UnidadeMedidaForm';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -81,6 +91,31 @@ const App = () => (
       <Route path="/cadastros/produtos/novo" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/cadastros/produtos/:id/editar" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/cadastros/produtos/:id" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/categorias" element={<PrivateRoute><AppLayout><CategoriasPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/categorias/novo" element={<PrivateRoute><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/categorias/:id/editar" element={<PrivateRoute><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/categorias/:id" element={<PrivateRoute><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/fases" element={<PrivateRoute><AppLayout><FasesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/fases/novo" element={<PrivateRoute><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/fases/:id/editar" element={<PrivateRoute><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/fases/:id" element={<PrivateRoute><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/almoxarifados" element={<PrivateRoute><AppLayout><AlmoxarifadosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/almoxarifados/novo" element={<PrivateRoute><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/almoxarifados/:id/editar" element={<PrivateRoute><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/almoxarifados/:id" element={<PrivateRoute><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/depositos" element={<PrivateRoute><AppLayout><DepositosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/depositos/novo" element={<PrivateRoute><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/depositos/:id/editar" element={<PrivateRoute><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/depositos/:id" element={<PrivateRoute><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/unidades" element={<PrivateRoute><AppLayout><UnidadesMedidaPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/unidades/novo" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/unidades/:id/editar" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/unidades/:id" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

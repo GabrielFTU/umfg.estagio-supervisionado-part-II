@@ -44,6 +44,11 @@ namespace Valisys_Production.Helpers
             // Almoxarifado
             CreateMap<Almoxarifado, AlmoxarifadoReadDto>();
 
+            // Depósito
+            CreateMap<Deposito, DepositoReadDto>()
+                .ForMember(dest => dest.AlmoxarifadoNome, opt => opt.MapFrom(src =>
+                    src.Almoxarifado != null ? src.Almoxarifado.Nome : "N/A"));
+
             // Categoria Produto
             CreateMap<CategoriaProduto, CategoriaProdutoReadDto>()
                 .ForMember(dest => dest.Codigo, opt => opt.MapFrom(src => src.CodigoInterno));

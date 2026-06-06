@@ -25,6 +25,7 @@ namespace Valisys_Production.Data
 
         public DbSet<Fornecedor> Fornecedores { get; set; }
         public DbSet<Almoxarifado> Almoxarifados { get; set; }
+        public DbSet<Deposito> Depositos { get; set; }
         public DbSet<Produto> Produtos { get; set; }
         public DbSet<ProdutoFornecedor> ProdutoFornecedores { get; set; }
         public DbSet<ProdutoVariacao> ProdutoVariacoes { get; set; }

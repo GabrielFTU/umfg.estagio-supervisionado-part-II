@@ -63,6 +63,10 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
+            if (await _repository.HasActiveProdutosAsync(id))
+                throw new InvalidOperationException(
+                    $"A unidade de medida '{existing.Nome}' possui produtos ativos e não pode ser desativada.");
+
             existing.Desativar();
             var deleted = await _repository.UpdateAsync(existing);
 
