@@ -139,6 +139,40 @@
             public const string Visualizar = "Estoque.Visualizar";
         }
 
+        public static class Finalidades
+        {
+            public const string Visualizar = "Finalidades.Visualizar";
+            public const string Criar      = "Finalidades.Criar";
+            public const string Editar     = "Finalidades.Editar";
+            public const string Inativar   = "Finalidades.Inativar";
+        }
+
+        public static class CondicoesPagamento
+        {
+            public const string Visualizar = "CondicoesPagamento.Visualizar";
+            public const string Criar      = "CondicoesPagamento.Criar";
+            public const string Editar     = "CondicoesPagamento.Editar";
+            public const string Inativar   = "CondicoesPagamento.Inativar";
+        }
+
+        public static class FormasPagamento
+        {
+            public const string Visualizar = "FormasPagamento.Visualizar";
+            public const string Criar      = "FormasPagamento.Criar";
+            public const string Editar     = "FormasPagamento.Editar";
+            public const string Inativar   = "FormasPagamento.Inativar";
+        }
+
+        public static class PedidosVenda
+        {
+            public const string Visualizar = "PedidosVenda.Visualizar";
+            public const string Criar = "PedidosVenda.Criar";
+            public const string Editar = "PedidosVenda.Editar";
+            public const string Confirmar = "PedidosVenda.Confirmar";
+            public const string Cancelar = "PedidosVenda.Cancelar";
+            public const string Concluir = "PedidosVenda.Concluir";
+        }
+
         public static class Logs
         {
             public const string Visualizar = "Logs.Visualizar";
@@ -146,6 +180,11 @@
 
         public static IReadOnlyList<string> Todas() =>
         [
+            Finalidades.Visualizar, Finalidades.Criar, Finalidades.Editar, Finalidades.Inativar,
+            CondicoesPagamento.Visualizar, CondicoesPagamento.Criar, CondicoesPagamento.Editar, CondicoesPagamento.Inativar,
+            FormasPagamento.Visualizar, FormasPagamento.Criar, FormasPagamento.Editar, FormasPagamento.Inativar,
+            PedidosVenda.Visualizar, PedidosVenda.Criar, PedidosVenda.Editar,
+            PedidosVenda.Confirmar, PedidosVenda.Cancelar, PedidosVenda.Concluir,
             Produtos.Visualizar, Produtos.Criar, Produtos.Editar, Produtos.Inativar,
             Categorias.Visualizar, Categorias.Criar, Categorias.Editar, Categorias.Inativar,
             Fornecedores.Visualizar, Fornecedores.Criar, Fornecedores.Editar, Fornecedores.Inativar,

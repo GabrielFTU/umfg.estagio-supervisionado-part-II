@@ -72,6 +72,14 @@ const NAV_ITEMS: NavItemDef[] = [
         ],
       },
       {
+        label: 'Comercial',
+        items: [
+          { label: 'Formas de Pagamento',    href: '/cadastros/formas-pagamento' },
+          { label: 'Condições de Pagamento', href: '/cadastros/condicoes-pagamento' },
+          { label: 'Finalidades de Pedido',  href: '/cadastros/finalidades' },
+        ],
+      },
+      {
         label: 'Avançados',
         items: [
           { label: 'Pessoas',  href: '/cadastros/pessoas' },

@@ -7,6 +7,7 @@ namespace Valisys_Production.Models
     {
         public Guid PedidoVendaId { get; private set; }
         public Guid ProdutoId { get; private set; }
+        public Produto Produto { get; private set; } = null!;
         public int Quantidade { get; private set; }
         public decimal ValorUnitario { get; private set; }
         public decimal DescontoUnitario { get; private set; }
@@ -57,7 +58,9 @@ namespace Valisys_Production.Models
 
         public int Codigo { get; private set; }
         public Guid ClienteId { get; private set; }
+        public Pessoa Cliente { get; private set; } = null!;
         public Guid RepresentanteId { get; private set; }
+        public Usuario Representante { get; private set; } = null!;
         public Guid FinalidadePedidoId { get; private set; }
         public Guid FormaPagamentoId { get; private set; }
         public Guid TabelaPrecoId { get; private set; }
@@ -136,5 +139,7 @@ namespace Valisys_Production.Models
             var item = _itens.FirstOrDefault(i => i.ProdutoId == produtoId);
             if (item != null) _itens.Remove(item);
         }
+
+        public void LimparItens() => _itens.Clear();
     }
 }

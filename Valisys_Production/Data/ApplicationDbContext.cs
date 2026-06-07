@@ -49,6 +49,13 @@ namespace Valisys_Production.Data
         public DbSet<ParcelaReceber> ParcelasReceber { get; set; }
         public DbSet<ContaPagar> ContasPagar { get; set; }
         public DbSet<ParcelaPagar> ParcelasPagar { get; set; }
+        public DbSet<PedidoVenda> PedidosVenda { get; set; }
+        public DbSet<ItemPedido> ItensPedido { get; set; }
+        public DbSet<FormaPagamento> FormasPagamento { get; set; }
+        public DbSet<FormaPagamentoVendedor> FormaPagamentoVendedores { get; set; }
+        public DbSet<Finalidade> Finalidades { get; set; }
+        public DbSet<CondicaoPagamento> CondicoesPagamento { get; set; }
+        public DbSet<ParcelaCondicao> ParcelasCondicao { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -232,6 +239,92 @@ namespace Valisys_Production.Data
                 .HasOne(l => l.Pessoa)
                 .WithOne(p => p.LimiteCredito)
                 .HasForeignKey<LimiteCredito>(l => l.PessoaId);
+
+            // ─── Forma de Pagamento ───────────────────────────────────────────
+
+            modelBuilder.Entity<FormaPagamento>()
+                .Navigation(f => f.Vendedores).HasField("_vendedores");
+
+            modelBuilder.Entity<FormaPagamento>()
+                .HasIndex(f => f.Codigo).IsUnique();
+
+            modelBuilder.Entity<FormaPagamentoVendedor>()
+                .HasOne(v => v.Vendedor)
+                .WithMany()
+                .HasForeignKey(v => v.VendedorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FormaPagamentoVendedor>()
+                .HasOne<FormaPagamento>()
+                .WithMany(f => f.Vendedores)
+                .HasForeignKey(v => v.FormaPagamentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FormaPagamentoVendedor>()
+                .HasIndex(v => new { v.FormaPagamentoId, v.VendedorId })
+                .IsUnique();
+
+            // ─── Finalidade ───────────────────────────────────────────────────
+
+            modelBuilder.Entity<Finalidade>()
+                .HasIndex(f => f.Codigo).IsUnique();
+
+            modelBuilder.Entity<Finalidade>()
+                .HasIndex(f => f.Nome).IsUnique();
+
+            // ─── Condição de Pagamento ────────────────────────────────────────
+
+            modelBuilder.Entity<CondicaoPagamento>()
+                .HasIndex(c => c.Codigo).IsUnique();
+
+            modelBuilder.Entity<CondicaoPagamento>()
+                .HasIndex(c => c.Nome).IsUnique();
+
+            modelBuilder.Entity<CondicaoPagamento>()
+                .Navigation(c => c.Parcelas).HasField("_parcelas");
+
+            modelBuilder.Entity<ParcelaCondicao>()
+                .HasOne(p => p.CondicaoPagamento)
+                .WithMany(c => c.Parcelas)
+                .HasForeignKey(p => p.CondicaoPagamentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ParcelaCondicao>()
+                .Property(p => p.Percentual)
+                .HasPrecision(8, 4);
+
+            // ─── Pedido de Venda ──────────────────────────────────────────────
+
+            modelBuilder.Entity<PedidoVenda>()
+                .Navigation(p => p.Itens).HasField("_itens");
+
+            modelBuilder.Entity<PedidoVenda>()
+                .HasIndex(p => p.Codigo)
+                .IsUnique();
+
+            modelBuilder.Entity<PedidoVenda>()
+                .HasOne(p => p.Cliente)
+                .WithMany()
+                .HasForeignKey(p => p.ClienteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PedidoVenda>()
+                .HasOne(p => p.Representante)
+                .WithMany()
+                .HasForeignKey(p => p.RepresentanteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ItemPedido>()
+                .HasOne(i => i.Produto)
+                .WithMany()
+                .HasForeignKey(i => i.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ItemPedido>()
+                .HasOne<PedidoVenda>()
+                .WithMany(p => p.Itens)
+                .HasForeignKey(i => i.PedidoVendaId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Seed Data
             var seedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);

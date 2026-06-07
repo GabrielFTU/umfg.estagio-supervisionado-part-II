@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Valisys_Production.Data;
@@ -11,9 +12,11 @@ using Valisys_Production.Data;
 namespace Valisys_Production.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260607152552_AddFinalidade")]
+    partial class AddFinalidade
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -139,63 +142,6 @@ namespace Valisys_Production.Migrations
                         .HasFilter("\"CodigoInterno\" IS NOT NULL");
 
                     b.ToTable("CategoriasProduto");
-                });
-
-            modelBuilder.Entity("Valisys_Production.Models.CondicaoPagamento", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("Ativo")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("AtualizadoPor")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Codigo")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CriadoPor")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("DataCadastro")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DesativadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DiasParaPrimeiroVencimento")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("DiastEntreParcelas")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("NumeroParcelas")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("VencimentoDiaFixo")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Codigo")
-                        .IsUnique();
-
-                    b.HasIndex("Nome")
-                        .IsUnique();
-
-                    b.ToTable("CondicoesPagamento");
                 });
 
             modelBuilder.Entity("Valisys_Production.Models.ContaPagar", b =>
@@ -1103,32 +1049,6 @@ namespace Valisys_Production.Migrations
                     b.HasIndex("TipoOrdemDeProducaoId");
 
                     b.ToTable("OrdensDeProducao");
-                });
-
-            modelBuilder.Entity("Valisys_Production.Models.ParcelaCondicao", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CondicaoPagamentoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Numero")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("NumeroDias")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("Percentual")
-                        .HasPrecision(8, 4)
-                        .HasColumnType("numeric(8,4)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CondicaoPagamentoId");
-
-                    b.ToTable("ParcelasCondicao");
                 });
 
             modelBuilder.Entity("Valisys_Production.Models.ParcelaPagar", b =>
@@ -2612,17 +2532,6 @@ namespace Valisys_Production.Migrations
                     b.Navigation("TipoOrdemDeProducao");
                 });
 
-            modelBuilder.Entity("Valisys_Production.Models.ParcelaCondicao", b =>
-                {
-                    b.HasOne("Valisys_Production.Models.CondicaoPagamento", "CondicaoPagamento")
-                        .WithMany("Parcelas")
-                        .HasForeignKey("CondicaoPagamentoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CondicaoPagamento");
-                });
-
             modelBuilder.Entity("Valisys_Production.Models.ParcelaPagar", b =>
                 {
                     b.HasOne("Valisys_Production.Models.ContaPagar", "ContaPagar")
@@ -2879,11 +2788,6 @@ namespace Valisys_Production.Migrations
             modelBuilder.Entity("Valisys_Production.Models.Almoxarifado", b =>
                 {
                     b.Navigation("Depositos");
-                });
-
-            modelBuilder.Entity("Valisys_Production.Models.CondicaoPagamento", b =>
-                {
-                    b.Navigation("Parcelas");
                 });
 
             modelBuilder.Entity("Valisys_Production.Models.ContaPagar", b =>

@@ -13,14 +13,18 @@
       "commandName": "Project",
       "applicationUrl": "http://localhost:5019",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5433;Database=ValisysProduction;Username=postgres;Password=FKQWEjd2d1jp04hanphciowq",
+        "JwtSettings__SecretKey": "61fac1d45522825333fed3a13081fafe02cf649030aa7e955f13399f288f90e3908ad975abad27a12e712b8e3a28a2dd05059d16eff1fa7a64429f46b598884b"
       }
     },
     "https": {
       "commandName": "Project",
       "applicationUrl": "https://localhost:7044;http://localhost:5019",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5433;Database=ValisysProduction;Username=postgres;Password=FKQWEjd2d1jp04hanphciowq",
+        "JwtSettings__SecretKey": "61fac1d45522825333fed3a13081fafe02cf649030aa7e955f13399f288f90e3908ad975abad27a12e712b8e3a28a2dd05059d16eff1fa7a64429f46b598884b"
       }
     },
     "IIS Express": {

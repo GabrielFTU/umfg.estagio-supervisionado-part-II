@@ -3,6 +3,8 @@ import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
 import { FinanceiroPage } from './pages/financeiro';
 import { ComercialPage } from './pages/comercial';
+import { PedidosVendaPage } from './pages/comercial/PedidosVendaPage';
+import { PedidoVendaFormPage } from './pages/comercial/PedidoVendaFormPage';
 import { PessoasPage } from './pages/cadastros/PessoasPage';
 import { PessoaFormPage } from './pages/cadastros/PessoaForm';
 import { ProdutosPage } from './pages/cadastros/ProdutosPage';
@@ -17,6 +19,12 @@ import { DepositosPage } from './pages/cadastros/DepositosPage';
 import { DepositoFormPage } from './pages/cadastros/DepositoForm';
 import { UnidadesMedidaPage } from './pages/cadastros/UnidadesMedidaPage';
 import { UnidadeMedidaFormPage } from './pages/cadastros/UnidadeMedidaForm';
+import { FormasPagamentoPage } from './pages/cadastros/FormasPagamentoPage';
+import { FormaPagamentoFormPage } from './pages/cadastros/FormaPagamentoForm';
+import { FinalidadesPage } from './pages/cadastros/FinalidadesPage';
+import { FinalidadeFormPage } from './pages/cadastros/FinalidadeFormPage';
+import { CondicoesPagamentoPage } from './pages/cadastros/CondicoesPagamentoPage';
+import { CondicaoPagamentoFormPage } from './pages/cadastros/CondicaoPagamentoFormPage';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -53,6 +61,11 @@ const App = () => (
           </PrivateRoute>
         }
       />
+
+      <Route path="/comercial/pedidos" element={<PrivateRoute><AppLayout><PedidosVendaPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/pedidos/novo" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/pedidos/:id/editar" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/pedidos/:id" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
 
       <Route
         path="/cadastros/pessoas"
@@ -116,6 +129,21 @@ const App = () => (
       <Route path="/cadastros/unidades/novo" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/cadastros/unidades/:id/editar" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/cadastros/unidades/:id" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/formas-pagamento" element={<PrivateRoute><AppLayout><FormasPagamentoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/formas-pagamento/novo" element={<PrivateRoute><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/formas-pagamento/:id/editar" element={<PrivateRoute><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/formas-pagamento/:id" element={<PrivateRoute><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/finalidades" element={<PrivateRoute><AppLayout><FinalidadesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/finalidades/novo" element={<PrivateRoute><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/finalidades/:id/editar" element={<PrivateRoute><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/finalidades/:id" element={<PrivateRoute><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/condicoes-pagamento" element={<PrivateRoute><AppLayout><CondicoesPagamentoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/condicoes-pagamento/novo" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/condicoes-pagamento/:id/editar" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/condicoes-pagamento/:id" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
