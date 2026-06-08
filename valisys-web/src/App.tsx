@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastProvider } from './contexts/ToastContext';
 import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
 import { FinanceiroPage } from './pages/financeiro';
@@ -39,6 +40,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => (
+  <ToastProvider>
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<LoginPage />} />
@@ -168,6 +170,7 @@ const App = () => (
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </BrowserRouter>
+  </ToastProvider>
 );
 
 export default App;

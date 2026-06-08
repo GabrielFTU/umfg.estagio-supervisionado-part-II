@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Home, Loader2, ChevronDown, Plus, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { useToast } from '@/contexts/ToastContext';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -48,6 +49,7 @@ export function ContaPagarFormPage() {
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const modo: Modo = !id
     ? 'criar'
@@ -166,6 +168,7 @@ export function ContaPagarFormPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? 'Erro ao salvar.');
       }
+      showToast();
       navigate('/financeiro/contas-pagar');
     } catch (err: any) {
       setError(err.message ?? 'Erro inesperado.');

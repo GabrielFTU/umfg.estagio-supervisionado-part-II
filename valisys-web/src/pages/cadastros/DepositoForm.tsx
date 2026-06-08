@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Home, Loader2, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 type AlmoxarifadoOption = { id: string; nome: string };
@@ -72,6 +73,7 @@ export function DepositoFormPage() {
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const modo: Modo = !id
     ? 'criar'
@@ -186,6 +188,7 @@ export function DepositoFormPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? 'Erro ao salvar depósito.');
       }
+      showToast();
       navigate('/cadastros/depositos');
     } catch (err: any) {
       setError(err.message ?? 'Erro inesperado. Tente novamente.');

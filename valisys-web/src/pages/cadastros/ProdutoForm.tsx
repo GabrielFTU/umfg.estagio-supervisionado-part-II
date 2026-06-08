@@ -5,6 +5,7 @@ import {
   Loader2, Upload, Trash2, Plus, Search, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 type Aba = 'geral' | 'fiscal' | 'fornecedores' | 'variacoes' | 'custos';
@@ -249,6 +250,7 @@ type FormState = typeof emptyForm;
 
 export function ProdutoFormPage() {
   const navigate  = useNavigate();
+  const { showToast } = useToast();
   const location  = useLocation();
   const { id }    = useParams<{ id?: string }>();
 
@@ -603,6 +605,7 @@ export function ProdutoFormPage() {
         if (!vari.id) await fetch(`/api/produtos/${produtoId}/variacoes`, { method: 'POST', headers: h, body: JSON.stringify(vb) });
         else          await fetch(`/api/produtos/${produtoId}/variacoes/${vari.id}`, { method: 'PUT', headers: h, body: JSON.stringify(vb) });
       }
+      showToast();
       navigate('/cadastros/produtos');
     } catch {
       setErrors(prev => ({ ...prev, _global: 'Não foi possível salvar. Tente novamente.' }));

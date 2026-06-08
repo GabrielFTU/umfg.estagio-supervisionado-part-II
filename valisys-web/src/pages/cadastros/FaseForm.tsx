@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Home, Loader2, Layers, Save, X, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -18,6 +19,7 @@ export function FaseFormPage() {
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const modo: Modo = !id
     ? 'criar'
@@ -114,6 +116,7 @@ export function FaseFormPage() {
         throw new Error(body.detail ?? body.message ?? 'Erro ao salvar fase de produção.');
       }
 
+      showToast();
       navigate('/cadastros/fases');
     } catch (err: any) {
       setError(err.message ?? 'Erro inesperado. Tente novamente.');

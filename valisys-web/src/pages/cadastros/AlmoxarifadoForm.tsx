@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronRight, Home, Loader2, Warehouse, Save, X, Pencil, MapPin, User, Phone, Mail } from 'lucide-react';
+import { ChevronRight, Home, Loader2, Save, X, Pencil } from 'lucide-react';
+import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -16,34 +18,40 @@ type AlmoxarifadoData = {
   ativo: boolean;
 };
 
-function Field({ label, required, error, children }: {
-  label: string;
-  required?: boolean;
-  error?: string;
-  children: React.ReactNode;
+function Toggle({ checked, onChange, disabled }: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
-    <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1.5">
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
-      {children}
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-    </div>
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={cn(
+        'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
+        checked ? 'bg-[#3B82F6]' : 'bg-gray-200',
+        disabled && 'opacity-60 cursor-default',
+      )}
+    >
+      <span className={cn(
+        'absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+        checked ? 'translate-x-[17px]' : 'translate-x-0',
+      )} />
+    </button>
   );
 }
 
-const inputCls = (error?: string, readonly?: boolean) => cn(
-  'w-full h-9 px-3 text-sm border rounded-md transition-all',
-  'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6]',
-  'placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-default',
-  error ? 'border-red-400' : 'border-gray-300',
+const underline = (error?: string) => cn(
+  'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
 );
 
 export function AlmoxarifadoFormPage() {
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const modo: Modo = !id
     ? 'criar'
@@ -56,13 +64,13 @@ export function AlmoxarifadoFormPage() {
   const [error, setError]     = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const [nome, setNome]             = useState('');
-  const [descricao, setDescricao]   = useState('');
+  const [nome, setNome]               = useState('');
+  const [descricao, setDescricao]     = useState('');
   const [localizacao, setLocalizacao] = useState('');
   const [responsavel, setResponsavel] = useState('');
-  const [contato, setContato]       = useState('');
-  const [email, setEmail]           = useState('');
-  const [ativo, setAtivo]           = useState(true);
+  const [contato, setContato]         = useState('');
+  const [email, setEmail]             = useState('');
+  const [ativo, setAtivo]             = useState(true);
 
   useEffect(() => {
     if (!id) return;
@@ -91,14 +99,16 @@ export function AlmoxarifadoFormPage() {
     fetchAlmoxarifado();
   }, [id]);
 
+  const clearErr = (f: string) => setFieldErrors(p => ({ ...p, [f]: '' }));
+
   const validate = (): boolean => {
     const erros: Record<string, string> = {};
     if (!nome.trim())        erros.nome        = 'O nome é obrigatório.';
     else if (nome.trim().length > 100) erros.nome = 'Máximo de 100 caracteres.';
-    if (!descricao.trim())   erros.descricao   = 'A descrição é obrigatória.';
-    else if (descricao.trim().length > 255) erros.descricao = 'Máximo de 255 caracteres.';
     if (!localizacao.trim()) erros.localizacao = 'A localização é obrigatória.';
     else if (localizacao.trim().length > 100) erros.localizacao = 'Máximo de 100 caracteres.';
+    if (!descricao.trim()) erros.descricao = 'A Descrição é obrigatória.';
+    else if (descricao.trim().length > 255) erros.descricao = 'Máximo de 255 caracteres.';
     if (!responsavel.trim()) erros.responsavel = 'O responsável é obrigatório.';
     else if (responsavel.trim().length > 100) erros.responsavel = 'Máximo de 100 caracteres.';
     if (contato && contato.length > 20) erros.contato = 'Máximo de 20 caracteres.';
@@ -106,9 +116,6 @@ export function AlmoxarifadoFormPage() {
     setFieldErrors(erros);
     return Object.keys(erros).length === 0;
   };
-
-  const clearFieldError = (field: string) =>
-    setFieldErrors(prev => ({ ...prev, [field]: '' }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,6 +152,7 @@ export function AlmoxarifadoFormPage() {
         throw new Error(data.message ?? 'Erro ao salvar almoxarifado.');
       }
 
+      showToast();
       navigate('/cadastros/almoxarifados');
     } catch (err: any) {
       setError(err.message ?? 'Erro inesperado. Tente novamente.');
@@ -155,8 +163,8 @@ export function AlmoxarifadoFormPage() {
 
   const titulo: Record<Modo, string> = {
     criar:      'Novo Almoxarifado',
-    editar:     'Editar Almoxarifado',
-    visualizar: 'Almoxarifado',
+    editar:     'Dados do almoxarifado',
+    visualizar: 'Dados do almoxarifado',
   };
 
   if (loading) {
@@ -168,16 +176,14 @@ export function AlmoxarifadoFormPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
 
-      <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200/70">
+      {/* Breadcrumb */}
+      <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-100">
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Home size={11} /><ChevronRight size={11} />
-          <span>Cadastros</span><ChevronRight size={11} />
-          <button
-            onClick={() => navigate('/cadastros/almoxarifados')}
-            className="hover:text-gray-600 transition-colors"
-          >
+          <Home size={11} />
+          <ChevronRight size={11} />
+          <button onClick={() => navigate('/cadastros/almoxarifados')} className="hover:text-gray-600 transition-colors">
             Almoxarifados
           </button>
           <ChevronRight size={11} />
@@ -185,208 +191,171 @@ export function AlmoxarifadoFormPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-6">
-        <div className="max-w-2xl mx-auto">
-
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-              <Warehouse size={20} className="text-[#3B82F6]" />
-            </div>
-            <h1 className="text-base font-semibold text-gray-800">{titulo[modo]}</h1>
-          </div>
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-auto px-6 py-6">
 
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+            <div className="mb-5 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="bg-white rounded-xl border border-gray-200/70 shadow-sm overflow-hidden">
-              <div className="p-5 space-y-5">
-
-                {/* Nome */}
-                <Field label="Nome" required={!readonly} error={fieldErrors.nome}>
-                  <input
-                    disabled={readonly}
-                    value={nome}
-                    onChange={e => { setNome(e.target.value); clearFieldError('nome'); }}
-                    placeholder="Ex: Almoxarifado Central"
-                    maxLength={100}
-                    className={inputCls(fieldErrors.nome, readonly)}
-                  />
-                </Field>
-
-                {/* Descrição */}
-                <Field label="Descrição" required={!readonly} error={fieldErrors.descricao}>
-                  <div className="relative">
-                    <textarea
-                      disabled={readonly}
-                      value={descricao}
-                      onChange={e => { setDescricao(e.target.value); clearFieldError('descricao'); }}
-                      placeholder={readonly ? '—' : 'Descreva o propósito deste almoxarifado…'}
-                      rows={3}
-                      maxLength={255}
-                      className={cn(
-                        'w-full px-3 py-2 text-sm border rounded-md transition-all resize-none',
-                        'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6]',
-                        'placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-default',
-                        fieldErrors.descricao ? 'border-red-400' : 'border-gray-300',
-                      )}
-                    />
-                    {!readonly && (
-                      <span className="absolute bottom-2 right-2 text-[10px] text-gray-300 pointer-events-none">
-                        {descricao.length}/255
-                      </span>
-                    )}
-                  </div>
-                </Field>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Localização */}
-                  <Field label="Localização" required={!readonly} error={fieldErrors.localizacao}>
-                    <div className="relative">
-                      <MapPin size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
-                      <input
-                        disabled={readonly}
-                        value={localizacao}
-                        onChange={e => { setLocalizacao(e.target.value); clearFieldError('localizacao'); }}
-                        placeholder="Ex: Galpão A, Bloco 2"
-                        maxLength={100}
-                        className={cn(inputCls(fieldErrors.localizacao, readonly), 'pl-8')}
-                      />
-                    </div>
-                  </Field>
-
-                  {/* Responsável */}
-                  <Field label="Responsável" required={!readonly} error={fieldErrors.responsavel}>
-                    <div className="relative">
-                      <User size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
-                      <input
-                        disabled={readonly}
-                        value={responsavel}
-                        onChange={e => { setResponsavel(e.target.value); clearFieldError('responsavel'); }}
-                        placeholder="Nome do responsável"
-                        maxLength={100}
-                        className={cn(inputCls(fieldErrors.responsavel, readonly), 'pl-8')}
-                      />
-                    </div>
-                  </Field>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Contato */}
-                  <Field label="Contato" error={fieldErrors.contato}>
-                    <div className="relative">
-                      <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
-                      <input
-                        disabled={readonly}
-                        value={contato}
-                        onChange={e => { setContato(e.target.value); clearFieldError('contato'); }}
-                        placeholder="(11) 99999-0000"
-                        maxLength={20}
-                        className={cn(inputCls(fieldErrors.contato, readonly), 'pl-8')}
-                      />
-                    </div>
-                  </Field>
-
-                  {/* E-mail */}
-                  <Field label="E-mail" error={fieldErrors.email}>
-                    <div className="relative">
-                      <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
-                      <input
-                        type="email"
-                        disabled={readonly}
-                        value={email}
-                        onChange={e => { setEmail(e.target.value); clearFieldError('email'); }}
-                        placeholder="almox@empresa.com"
-                        maxLength={100}
-                        className={cn(inputCls(fieldErrors.email, readonly), 'pl-8')}
-                      />
-                    </div>
-                  </Field>
-                </div>
-
-                {/* Status toggle — modo editar */}
-                {modo === 'editar' && (
-                  <div className="flex items-center justify-between py-1">
-                    <div>
-                      <p className="text-xs font-medium text-gray-600">Status</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">
-                        {ativo ? 'Almoxarifado ativo e disponível' : 'Almoxarifado inativo'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAtivo(v => !v)}
-                      className={cn(
-                        'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
-                        ativo ? 'bg-[#3B82F6]' : 'bg-gray-200',
-                      )}
-                    >
-                      <span className={cn(
-                        'absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
-                        ativo ? 'translate-x-[17px]' : 'translate-x-0',
-                      )} />
-                    </button>
-                  </div>
-                )}
-
-                {/* Status read-only */}
-                {modo === 'visualizar' && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-600">Status:</span>
-                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
-                      ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
-                      {ativo ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-end gap-2 px-5 py-3 bg-gray-50 border-t border-gray-100">
-                {readonly ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/cadastros/almoxarifados')}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md border border-gray-300 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      Voltar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/cadastros/almoxarifados/${id}/editar`)}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md bg-[#3B82F6] text-white text-xs font-medium hover:bg-[#2563eb] transition-colors"
-                    >
-                      <Pencil size={12} /> Editar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/cadastros/almoxarifados')}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md border border-gray-300 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      <X size={13} /> Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={saving}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md bg-[#3B82F6] text-white text-xs font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                      {saving ? 'Salvando…' : 'Salvar'}
-                    </button>
-                  </>
-                )}
-              </div>
+          {/* Localização + Responsável */}
+          <div className="grid grid-cols-2 gap-8 mb-6">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Localização {!readonly && <span className="text-red-400">*</span>}
+              </label>
+              <input
+                disabled={readonly}
+                value={localizacao}
+                onChange={e => { setLocalizacao(e.target.value); clearErr('localizacao'); }}
+                placeholder="Ex: Galpão A, Bloco 2"
+                maxLength={100}
+                className={underline(fieldErrors.localizacao)}
+              />
+              {fieldErrors.localizacao && (
+                <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.localizacao}</p>
+              )}
             </div>
-          </form>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Responsável {!readonly && <span className="text-red-400">*</span>}
+              </label>
+              <input
+                disabled={readonly}
+                value={responsavel}
+                onChange={e => { setResponsavel(e.target.value); clearErr('responsavel'); }}
+                placeholder="Nome do responsável"
+                maxLength={100}
+                className={underline(fieldErrors.responsavel)}
+              />
+              {fieldErrors.responsavel && (
+                <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.responsavel}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Nome */}
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">
+              Nome {!readonly && <span className="text-red-400">*</span>}
+            </label>
+            <input
+              disabled={readonly}
+              value={nome}
+              onChange={e => { setNome(e.target.value); clearErr('nome'); }}
+              maxLength={100}
+              className={underline(fieldErrors.nome)}
+            />
+            {fieldErrors.nome && (
+              <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.nome}</p>
+            )}
+          </div>
+
+          {/* Descrição */}
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">Descrição<span className="text-red-400">*</span></label>
+            <textarea
+              disabled={readonly}
+              value={descricao}
+              onChange={e => setDescricao(e.target.value)}
+              placeholder={readonly ? '—' : 'Descreva o propósito deste almoxarifado…'}
+              rows={3}
+              maxLength={255}
+              className={cn(
+                'w-full bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none pt-1',
+                'border-gray-300 focus:border-[#3B82F6]',
+                readonly && 'opacity-60 cursor-default',
+              )}
+            />
+          </div>
+
+          {/* Contato + E-mail */}
+          <div className="grid grid-cols-2 gap-8 mb-6">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Contato</label>
+              <IMaskInput
+                mask={[{ mask: '(00) 0000-0000' }, { mask: '(00) 00000-0000' }]}
+                value={contato}
+                onAccept={(v: string) => { setContato(v); clearErr('contato'); }}
+                placeholder="(11) 99999-0000"
+                readOnly={readonly}
+                className={underline(fieldErrors.contato)}
+              />
+              {fieldErrors.contato && (
+                <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.contato}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">E-mail</label>
+              <input
+                type="email"
+                disabled={readonly}
+                value={email}
+                onChange={e => { setEmail(e.target.value); clearErr('email'); }}
+                placeholder="almox@empresa.com"
+                maxLength={100}
+                className={underline(fieldErrors.email)}
+              />
+              {fieldErrors.email && (
+                <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.email}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Status toggle — apenas modo editar */}
+          {modo === 'editar' && (
+            <div className="flex items-center justify-between py-4 border-b border-gray-100">
+              <span className="text-sm text-gray-700">Ativo?</span>
+              <Toggle checked={ativo} onChange={setAtivo} />
+            </div>
+          )}
+
+          {/* Status read-only */}
+          {modo === 'visualizar' && (
+            <div className="flex items-center gap-2 py-2">
+              <span className="text-xs text-gray-500">Status:</span>
+              <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
+                ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
+                {ativo ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+          )}
         </div>
-      </div>
+
+        {/* Bottom bar */}
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate('/cadastros/almoxarifados')}
+            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            {readonly ? 'Voltar' : 'Cancelar'}
+          </button>
+
+          {readonly ? (
+            <button
+              type="button"
+              onClick={() => navigate(`/cadastros/almoxarifados/${id}/editar`)}
+              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+            >
+              <Pencil size={13} /> Editar
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={saving}
+              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {saving
+                ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>
+                : <span className="flex items-center gap-1.5"><Save size={13} /> Salvar</span>
+              }
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }

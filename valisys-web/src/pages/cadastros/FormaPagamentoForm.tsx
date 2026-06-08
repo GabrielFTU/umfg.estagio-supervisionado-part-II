@@ -5,6 +5,7 @@ import {
   Plus, Trash2, Search, Users, Lock, Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -131,6 +132,7 @@ export function FormaPagamentoFormPage() {
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const modo: Modo = !id
     ? 'criar'
@@ -222,6 +224,7 @@ export function FormaPagamentoFormPage() {
         throw new Error(data.detail ?? 'Erro ao salvar.');
       }
 
+      showToast();
       navigate('/cadastros/formas-pagamento');
     } catch (err: any) {
       setGlobalError(err.message ?? 'Erro inesperado. Tente novamente.');

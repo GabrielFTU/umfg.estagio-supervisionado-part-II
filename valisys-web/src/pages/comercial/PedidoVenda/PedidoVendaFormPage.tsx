@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { useToast } from '@/contexts/ToastContext';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -376,6 +377,7 @@ interface FormState {
 
 export function PedidoVendaFormPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
 
@@ -511,10 +513,12 @@ export function PedidoVendaFormPage() {
         const res = await fetch('/api/pedidos-venda', { method: 'POST', headers, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error('Erro ao criar pedido.');
         const criado = await res.json();
+        showToast();
         navigate(`/comercial/pedidos/${criado.id}`);
       } else {
         const res = await fetch(`/api/pedidos-venda/${pedidoId}`, { method: 'PUT', headers, body: JSON.stringify({ id: pedidoId, ...payload }) });
         if (!res.ok) throw new Error('Erro ao salvar pedido.');
+        showToast();
         navigate(`/comercial/pedidos/${pedidoId}`);
       }
     } catch (err: any) {

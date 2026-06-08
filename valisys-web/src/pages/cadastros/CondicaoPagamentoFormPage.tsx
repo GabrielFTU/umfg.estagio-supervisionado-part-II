@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Loader2, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -50,6 +51,7 @@ export function CondicaoPagamentoFormPage() {
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const modo: Modo = !id ? 'criar' : location.pathname.endsWith('/editar') ? 'editar' : 'visualizar';
   const readOnly   = modo === 'visualizar';
@@ -148,6 +150,7 @@ export function CondicaoPagamentoFormPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail ?? 'Erro ao salvar.');
       }
+      showToast();
       navigate('/cadastros/condicoes-pagamento');
     } catch (err: any) {
       setGlobalErr(err.message);

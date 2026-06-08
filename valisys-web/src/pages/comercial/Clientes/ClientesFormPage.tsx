@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/contexts/ToastContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -167,6 +168,7 @@ const emptyForm = {
 
 export function ClientesFormPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const location = useLocation();
   const { tipo: tipoParam, id } = useParams<{ tipo?: string; id?: string }>();
 
@@ -340,6 +342,7 @@ export function ClientesFormPage() {
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();
+      showToast();
       navigate('/comercial/clientes');
     } catch {
       setErrors(prev => ({ ...prev, _global: 'Não foi possível salvar. Tente novamente.' }));
