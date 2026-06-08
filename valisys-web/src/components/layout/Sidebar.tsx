@@ -164,11 +164,10 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
             const isOpen = openGroup === group.label;
             return (
               <div key={group.label}>
-                {gi > 0 && <div className="mx-3 border-t border-gray-100" />}
                 <button
                   type="button"
                   onClick={() => setOpenGroup(isOpen ? null : group.label)}
-                  className="w-full flex items-center justify-between px-4 py-2 text-[11px] font-semibold text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors"
+                  className="flex w-full items-center justify-between px-4 py-2 text-sm text-gray-600 hover:bg-[#eff6ff] hover:text-[#3B82F6] transition-colors group"
                 >
                   {group.label}
                   <ChevronRight
@@ -247,10 +246,10 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
               return (
                 <a
                   key={item.href}
-                  href={item.children ? undefined : item.href}
-                  onClick={item.children ? (e) => handleClick(item, e) : undefined}
+                  href={item.children || item.groups ? undefined : item.href}
+                  onClick={item.children || item.groups ? (e) => handleClick(item, e) : undefined}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
+                    'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
                     active
                       ? 'bg-[#3B82F6] text-white'
                       : 'text-gray-500 hover:bg-blue-50 hover:text-[#3B82F6]',
@@ -258,7 +257,7 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
                 >
                   <Icon size={17} className="shrink-0" />
                   <span className="flex-1 whitespace-nowrap">{item.label}</span>
-                  {item.children && <ChevronRight size={13} className="opacity-40" />}
+                  {(item.children || item.groups) && <ChevronRight size={13} className="opacity-40" />}
                 </a>
               );
             }

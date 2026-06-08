@@ -3,8 +3,10 @@ import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
 import { FinanceiroPage } from './pages/financeiro';
 import { ComercialPage } from './pages/comercial';
-import { PedidosVendaPage } from './pages/comercial/PedidosVendaPage';
-import { PedidoVendaFormPage } from './pages/comercial/PedidoVendaFormPage';
+import { PedidosVendaPage } from './pages/comercial/PedidoVenda/PedidosVendaPage';
+import { PedidoVendaFormPage } from './pages/comercial/PedidoVenda/PedidoVendaFormPage';
+import { ClientesFormPage } from './pages/comercial/Clientes/ClientesFormPage';
+import { ClientesPage } from './pages/comercial/Clientes/ClientesPage';
 import { PessoasPage } from './pages/cadastros/PessoasPage';
 import { PessoaFormPage } from './pages/cadastros/PessoaForm';
 import { ProdutosPage } from './pages/cadastros/ProdutosPage';
@@ -66,6 +68,10 @@ const App = () => (
       <Route path="/comercial/pedidos/novo" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/comercial/pedidos/:id/editar" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/comercial/pedidos/:id" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/clientes" element={<PrivateRoute><AppLayout><ClientesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/clientes/novo" element={<PrivateRoute><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/clientes/:tipo/:id/editar" element={<PrivateRoute><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/clientes/:tipo/:id" element={<PrivateRoute><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
 
       <Route
         path="/cadastros/pessoas"
