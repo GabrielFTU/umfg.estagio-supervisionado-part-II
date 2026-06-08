@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, ShoppingCart, DollarSign,
-  Settings, LogOut, Package, BarChart2, ChevronRight,
-  ClipboardList,
+  Gauge, Briefcase, Landmark, Warehouse, Database, BarChart3,
+  SlidersHorizontal, LogOut, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,59 +18,59 @@ interface NavItemDef {
 
 const NAV_ITEMS: NavItemDef[] = [
   {
-    icon: LayoutDashboard,
+    icon: Gauge,
     label: 'Dashboard',
     href: '/dashboard',
   },
   {
-    icon: ShoppingCart,
+    icon: Briefcase,
     label: 'Comercial',
     href: '/comercial',
     children: [
-      { label: 'Pedidos de Venda', href: '/comercial/pedidos' },
       { label: 'Clientes',         href: '/comercial/clientes' },
-      { label: 'Produtos',         href: '/comercial/produtos' },
       { label: 'Orçamentos',       href: '/comercial/orcamentos' },
+      { label: 'Pedidos de Venda', href: '/comercial/pedidos' },
+      { label: 'Produtos',         href: '/comercial/produtos' },
     ],
   },
   {
-    icon: DollarSign,
+    icon: Landmark,
     label: 'Financeiro',
     href: '/financeiro',
     children: [
-      { label: 'Contas a Pagar',   href: '/financeiro/contas-pagar' },
-      { label: 'Contas a Receber', href: '/financeiro/contas-receber' },
+      { label: 'Contas a Pagar',    href: '/financeiro/contas-pagar' },
+      { label: 'Contas a Receber',  href: '/financeiro/contas-receber' },
+      { label: 'Fluxo de Caixa',    href: '/financeiro/fluxo-caixa' },
       { label: 'Gestão de Carteira', href: '/financeiro/carteira' },
-      { label: 'Fluxo de Caixa',   href: '/financeiro/fluxo-caixa' },
     ],
   },
   {
-    icon: Package,
+    icon: Warehouse,
     label: 'Estoque',
     href: '/estoque',
     children: [
-      { label: 'Produtos',       href: '/estoque/produtos' },
-      { label: 'Movimentações',  href: '/estoque/movimentacoes' },
-      { label: 'Inventário',     href: '/estoque/inventario' },
+      { label: 'Inventário',    href: '/estoque/inventario' },
+      { label: 'Movimentações', href: '/estoque/movimentacoes' },
+      { label: 'Produtos',      href: '/estoque/produtos' },
     ],
   },
   {
-    icon: ClipboardList,
+    icon: Database,
     label: 'Cadastros',
     href: '/cadastros',
     groups: [
       {
-        label: 'Simples',
+        label: 'Basicos',
         items: [
-          { label: 'Almoxarifados',         href: '/cadastros/almoxarifados' },
-          { label: 'Depósitos',             href: '/cadastros/depositos' },
-          { label: 'Categorias de Produto', href: '/cadastros/categorias' },
-          { label: 'Unidades de Medida',    href: '/cadastros/unidades' },
-          { label: 'Fases de Produção',     href: '/cadastros/fases' },
-          { label: 'Tipos de Ordem',        href: '/cadastros/tipos-ordem' },
-          { label: 'Formas de Pagamento',    href: '/cadastros/formas-pagamento' },
+          { label: 'Almoxarifados',          href: '/cadastros/almoxarifados' },
+          { label: 'Categorias de Produto',  href: '/cadastros/categorias' },
           { label: 'Condições de Pagamento', href: '/cadastros/condicoes-pagamento' },
+          { label: 'Depósitos',              href: '/cadastros/depositos' },
+          { label: 'Fases de Produção',      href: '/cadastros/fases' },
           { label: 'Finalidades de Pedido',  href: '/cadastros/finalidades' },
+          { label: 'Formas de Pagamento',    href: '/cadastros/formas-pagamento' },
+          { label: 'Tipos de Ordem',         href: '/cadastros/tipos-ordem' },
+          { label: 'Unidades de Medida',     href: '/cadastros/unidades' },
         ],
       },
       {
@@ -84,17 +83,17 @@ const NAV_ITEMS: NavItemDef[] = [
     ],
   },
   {
-    icon: BarChart2,
+    icon: BarChart3,
     label: 'Relatórios',
     href: '/relatorios',
     children: [
-      { label: 'Vendas',     href: '/relatorios/vendas' },
-      { label: 'Financeiro', href: '/relatorios/financeiro' },
       { label: 'Estoque',    href: '/relatorios/estoque' },
+      { label: 'Financeiro', href: '/relatorios/financeiro' },
+      { label: 'Vendas',     href: '/relatorios/vendas' },
     ],
   },
   {
-    icon: Settings,
+    icon: SlidersHorizontal,
     label: 'Configurações',
     href: '/configuracoes',
   },
@@ -124,7 +123,7 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
     window.innerHeight - (allItems.length * 34 + 80),
   );
 
-  const linkClass = 'flex items-center justify-between px-4 py-2 text-sm text-gray-600 hover:bg-[#eff6ff] hover:text-[#3B82F6] transition-colors group';
+  const linkClass = 'flex items-center justify-between pl-6 pr-4 py-2 text-sm text-gray-500 hover:bg-[#eff6ff] hover:text-[#3B82F6] transition-colors group';
   const chevron = <ChevronRight size={12} className="text-gray-300 group-hover:text-[#3B82F6] shrink-0 ml-6" />;
 
   return (
@@ -162,12 +161,12 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
                 <button
                   type="button"
                   onClick={() => setOpenGroup(isOpen ? null : group.label)}
-                  className="flex w-full items-center justify-between px-4 py-2 text-sm text-gray-600 hover:bg-[#eff6ff] hover:text-[#3B82F6] transition-colors group"
+                  className="flex w-full items-center justify-between px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400 hover:text-gray-500 transition-colors"
                 >
                   {group.label}
                   <ChevronRight
-                    size={12}
-                    className={cn('transition-transform duration-150', isOpen && 'rotate-90')}
+                    size={11}
+                    className={cn('transition-transform duration-150 text-gray-300', isOpen && 'rotate-90')}
                   />
                 </button>
                 <AnimatePresence initial={false}>
@@ -237,7 +236,6 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
             const Icon = item.icon;
 
             if (showLabels) {
-              // Mobile drawer — navegação direta com labels visíveis
               return (
                 <a
                   key={item.href}
@@ -308,8 +306,7 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
                 px-2.5 py-1 rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
                 opacity-0 group-hover/tip:opacity-100
                 translate-x-1 group-hover/tip:translate-x-0
-                transition-all duration-150 z-50
-              ">
+                transition-all duration-150 z-50">
                 Sair
                 <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-800" />
               </span>
