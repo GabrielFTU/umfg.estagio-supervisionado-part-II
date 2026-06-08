@@ -5,6 +5,7 @@ import {
   ChevronLeft, CheckCircle2, XCircle, TrendingUp, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -635,8 +636,10 @@ export function PedidoVendaFormPage() {
             <UField label="Previsão de Entrega">
               {readOnly
                 ? <p className="text-sm text-gray-700">{form.dataPrevisaoEntrega ? new Date(form.dataPrevisaoEntrega + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
-                : <input type="date" className={uCls} value={form.dataPrevisaoEntrega}
-                    onChange={e => setF('dataPrevisaoEntrega')(e.target.value)} />
+                : <DatePicker
+                    value={form.dataPrevisaoEntrega ?? ''}
+                    onChange={setF('dataPrevisaoEntrega')}
+                  />
               }
             </UField>
 

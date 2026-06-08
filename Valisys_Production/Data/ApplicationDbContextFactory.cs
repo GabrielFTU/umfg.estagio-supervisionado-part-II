@@ -12,10 +12,13 @@ namespace Valisys_Production.Data
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json")
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddEnvironmentVariables()
                 .Build();
 
             var connectionString = configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(connectionString))
+                connectionString = "Host=localhost;Port=5433;Database=ValisysProduction;Username=postgres;Password=FKQWEjd2d1jp04hanphciowq";
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             optionsBuilder.UseNpgsql(connectionString);

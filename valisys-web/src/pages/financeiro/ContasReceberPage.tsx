@@ -5,6 +5,8 @@ import {
   ChevronUp, ChevronDown, AlertCircle, Link2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PixModal } from '@/components/financeiro/PixModal';
+import { BoletoViewer } from '@/components/financeiro/BoletoViewer';
 
 interface ParcelaRow {
   contaId: string;
@@ -57,12 +59,14 @@ function fmtBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-function RowMenu({ ativo, onEdit, onView, onBaixar, onCancelar, pedidoVendaId, navigate }: {
+function RowMenu({ ativo, onEdit, onView, onBaixar, onCancelar, onPix, onBoleto, pedidoVendaId, navigate }: {
   ativo: boolean;
   onEdit: () => void;
   onView: () => void;
   onBaixar: () => void;
   onCancelar: () => void;
+  onPix: () => void;
+  onBoleto: () => void;
   pedidoVendaId: string | null;
   navigate: (path: string) => void;
 }) {
@@ -113,13 +117,13 @@ function RowMenu({ ativo, onEdit, onView, onBaixar, onCancelar, pedidoVendaId, n
             Compensar
           </button>
           <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 opacity-50 cursor-not-allowed">
-            Gerar boleto
+          <button onClick={() => { setOpen(false); onBoleto(); }}
+            className="w-full text-left px-3 py-1.5 text-gray-700 hover:bg-gray-50 font-medium">
+            📄 Gerar boleto
           </button>
-          <button
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 opacity-50 cursor-not-allowed">
-            Imprimir boleto
+          <button onClick={() => { setOpen(false); onPix(); }}
+            className="w-full text-left px-3 py-1.5 hover:bg-gray-50 font-medium" style={{ color: '#32BCAD' }}>
+            🔲 Cobrar via PIX
           </button>
           <button
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 opacity-50 cursor-not-allowed">
@@ -187,6 +191,10 @@ export function ContasReceberPage() {
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort_]        = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'dataVencimento', dir: 'asc' });
   const filterRef = useRef<HTMLDivElement>(null);
+
+  type ModalTarget = { contaId: string; descricao: string; valor: number; pagadorNome: string; pagadorDoc: string; dataVencimento: string; dataEmissao: string } | null;
+  const [pixTarget,    setPixTarget]    = useState<ModalTarget>(null);
+  const [boletoTarget, setBoletoTarget] = useState<ModalTarget>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -466,6 +474,24 @@ export function ContasReceberPage() {
                           onEdit={() => navigate(`/financeiro/contas-receber/${row.contaId}/editar`)}
                           onBaixar={() => navigate(`/financeiro/contas-receber/${row.contaId}/baixar`)}
                           onCancelar={() => handleCancelar(row.contaId)}
+                          onPix={() => setPixTarget({
+                            contaId: row.contaId,
+                            descricao: row.descricao,
+                            valor: row.valor,
+                            pagadorNome: row.pessoaNome ?? 'Cliente',
+                            pagadorDoc: '',
+                            dataVencimento: row.dataVencimento,
+                            dataEmissao: row.dataEmissao,
+                          })}
+                          onBoleto={() => setBoletoTarget({
+                            contaId: row.contaId,
+                            descricao: row.descricao,
+                            valor: row.valor,
+                            pagadorNome: row.pessoaNome ?? 'Cliente',
+                            pagadorDoc: '',
+                            dataVencimento: row.dataVencimento,
+                            dataEmissao: row.dataEmissao,
+                          })}
                           pedidoVendaId={row.pedidoVendaId}
                           navigate={navigate}
                         />
@@ -499,6 +525,32 @@ export function ContasReceberPage() {
           </>
         )}
       </div>
+
+      {/* PIX Modal */}
+      {pixTarget && (
+        <PixModal
+          descricao={pixTarget.descricao}
+          valor={pixTarget.valor}
+          contaId={pixTarget.contaId}
+          onClose={() => setPixTarget(null)}
+        />
+      )}
+
+      {/* Boleto Viewer */}
+      {boletoTarget && (
+        <BoletoViewer
+          contaId={boletoTarget.contaId}
+          descricao={boletoTarget.descricao}
+          valor={boletoTarget.valor}
+          dataVencimento={new Date(boletoTarget.dataVencimento + 'T12:00:00')}
+          dataEmissao={new Date(boletoTarget.dataEmissao ? boletoTarget.dataEmissao + 'T12:00:00' : Date.now())}
+          pagador={{
+            nome: boletoTarget.pagadorNome,
+            cpfCnpj: boletoTarget.pagadorDoc || '000.000.000-00',
+          }}
+          onClose={() => setBoletoTarget(null)}
+        />
+      )}
     </div>
   );
 }

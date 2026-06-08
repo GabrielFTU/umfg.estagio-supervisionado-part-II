@@ -15,6 +15,8 @@ using Valisys_Production.Repositories.Interfaces;
 using Valisys_Production.Services;
 using Valisys_Production.Services.Interfaces;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 var secretKey = builder.Configuration["JwtSettings:SecretKey"];

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Home, Loader2, ChevronDown, Plus, Pencil, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -229,21 +230,18 @@ export function ContaReceberFormPage() {
               />
             </UField>
             <UField label="Emissão" required={!readonly}>
-              <input
-                type="date"
-                disabled={readonly}
+              <DatePicker
                 value={emissao}
-                onChange={e => setEmissao(e.target.value)}
-                className={ul()}
+                onChange={setEmissao}
+                disabled={readonly}
               />
             </UField>
             <UField label="Vencimento" required={!readonly} error={fieldErrors.vencimento}>
-              <input
-                type="date"
-                disabled={readonly}
+              <DatePicker
                 value={vencimento}
-                onChange={e => { setVencimento(e.target.value); clearErr('vencimento'); }}
-                className={ul(fieldErrors.vencimento)}
+                onChange={v => { setVencimento(v); clearErr('vencimento'); }}
+                disabled={readonly}
+                error={!!fieldErrors.vencimento}
               />
             </UField>
           </div>
