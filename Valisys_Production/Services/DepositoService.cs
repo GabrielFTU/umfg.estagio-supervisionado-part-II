@@ -21,7 +21,8 @@ namespace Valisys_Production.Services
             if (dto.AlmoxarifadoId == Guid.Empty)
                 throw new ArgumentException("O almoxarifado é obrigatório.");
 
-            var deposito = new Deposito(dto.AlmoxarifadoId, dto.CodigoIdentificador, dto.Nome, dto.Descricao);
+            var deposito = new Deposito(dto.AlmoxarifadoId, dto.CodigoIdentificador, dto.Nome, dto.Descricao,
+                dto.DepositoPadraoRequisicoes, dto.ControlaQualidade2a, dto.ControlaLote, dto.ControlaMultiplosLocais);
             return await _repository.AddAsync(deposito);
         }
 
@@ -42,7 +43,8 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(dto.Id)
                 ?? throw new KeyNotFoundException($"Depósito {dto.Id} não encontrado.");
 
-            existing.Atualizar(dto.Nome, dto.CodigoIdentificador, dto.Descricao);
+            existing.Atualizar(dto.Nome, dto.CodigoIdentificador, dto.Descricao,
+                dto.DepositoPadraoRequisicoes, dto.ControlaQualidade2a, dto.ControlaLote, dto.ControlaMultiplosLocais);
 
             if (!dto.Ativo && existing.Ativo)
             {

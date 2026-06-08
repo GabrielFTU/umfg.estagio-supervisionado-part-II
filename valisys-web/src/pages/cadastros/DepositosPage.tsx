@@ -1,33 +1,38 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus, Search, SlidersHorizontal, Package,
-  ChevronRight, Home, Loader2, MoreHorizontal, Warehouse,
-} from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type DepositoItem = {
+interface DepositoItem {
   id: string;
-  almoxarifadoId: string;
-  almoxarifadoNome: string;
   codigoIdentificador: number;
   nome: string;
-  descricao: string | null;
+  descricao?: string;
+  almoxarifadoNome: string;
+  depositoPadraoRequisicoes: boolean;
+  controlaQualidade2a: boolean;
+  controlaLote: boolean;
+  controlaMultiplosLocais: boolean;
   ativo: boolean;
-};
+}
 
-function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
-  ativo: boolean;
-  onEdit: () => void;
-  onView: () => void;
-  onToggleAtivo: () => void;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
+
+function BoolIcon({ value }: { value: boolean }) {
+  return value
+    ? <CheckCircle2 size={17} className="text-emerald-500 mx-auto" />
+    : <XCircle     size={17} className="text-red-400   mx-auto" />;
+}
+
+function RowMenu({ ativo, onEdit, onView, onToggle }: {
+  ativo: boolean; onEdit: () => void; onView: () => void; onToggle: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos]   = useState({ top: 0, right: 0 });
   const btnRef  = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleToggle = () => {
+  const toggle = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
@@ -38,57 +43,32 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
-    const onDown = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current  && !btnRef.current.contains(e.target as Node)
-      ) close();
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          btnRef.current  && !btnRef.current.contains(e.target as Node)) close();
     };
-    document.addEventListener('mousedown', onDown);
+    document.addEventListener('mousedown', h);
     document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('scroll', close, true);
-    };
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('scroll', close, true); };
   }, [open]);
 
   return (
     <>
-      <button
-        ref={btnRef}
-        onMouseDown={e => e.stopPropagation()}
-        onClick={handleToggle}
-        className={cn(
-          'p-1.5 rounded-md transition-colors',
-          open ? 'bg-gray-100 text-gray-700' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100',
-        )}
-      >
+      <button ref={btnRef} onMouseDown={e => e.stopPropagation()} onClick={toggle}
+        className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
         <MoreHorizontal size={15} />
       </button>
-
       {open && (
-        <div
-          ref={menuRef}
+        <div ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg shadow-black/[0.07] py-0.5 text-[13px]"
-        >
-          <button
-            onClick={() => { setOpen(false); onView(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            Visualizar
-          </button>
-          <button
-            onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            Editar
-          </button>
+          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
+          <button onClick={() => { setOpen(false); onView(); }}
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Visualizar</button>
+          <button onClick={() => { setOpen(false); onEdit(); }}
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
           <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button
-            onClick={() => { setOpen(false); onToggleAtivo(); }}
-            className="w-full text-left px-3 py-1.5 text-red-500 hover:bg-red-50 transition-colors"
-          >
+          <button onClick={() => { setOpen(false); onToggle(); }}
+            className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', ativo ? 'text-red-500' : 'text-emerald-600')}>
             {ativo ? 'Desativar' : 'Reativar'}
           </button>
         </div>
@@ -99,263 +79,184 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
 
 export function DepositosPage() {
   const navigate = useNavigate();
-  const [search, setSearch]           = useState('');
-  const [depositos, setDepositos]     = useState<DepositoItem[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState('');
-  const [filterOpen, setFilterOpen]   = useState(false);
-  const [filtroStatus, setFiltroStatus] = useState('');
+  const [items, setItems]       = useState<DepositoItem[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState('');
+  const [statusFiltro, setStatusFiltro] = useState<'todos' | 'ativo' | 'inativo'>('ativo');
+  const [filterOpen, setFilterOpen]     = useState(false);
+  const [page, setPage]         = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fn = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node))
-        setFilterOpen(false);
-    };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
-  }, []);
+    if (!filterOpen) return;
+    const h = (e: MouseEvent) => { if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [filterOpen]);
 
   const load = async () => {
     setLoading(true);
-    setError('');
     const token = localStorage.getItem('token');
-    try {
-      const res = await fetch('/api/Deposito', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.status === 403) { setDepositos([]); return; }
-      if (!res.ok) throw new Error();
-      const data: any[] = await res.json();
-      const lista: DepositoItem[] = data.map(d => ({
-        id:                  d.id,
-        almoxarifadoId:      d.almoxarifadoId,
-        almoxarifadoNome:    d.almoxarifadoNome ?? 'N/A',
-        codigoIdentificador: d.codigoIdentificador,
-        nome:                d.nome,
-        descricao:           d.descricao ?? null,
-        ativo:               d.ativo,
-      }));
-      lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-      setDepositos(lista);
-    } catch {
-      setError('Não foi possível carregar os depósitos.');
-    } finally {
-      setLoading(false);
-    }
+    const res = await fetch('/api/Deposito', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) setItems(await res.json());
+    setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = async (d: DepositoItem) => {
-    const acao = d.ativo ? 'Desativar' : 'Reativar';
-    if (!confirm(`${acao} o depósito "${d.nome}"?`)) return;
-
+  const handleToggle = async (item: DepositoItem) => {
+    if (!confirm(`${item.ativo ? 'Desativar' : 'Reativar'} "${item.nome}"?`)) return;
     const token = localStorage.getItem('token');
-    const res = await fetch(`/api/Deposito/${d.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (res.status === 409) {
-      const body = await res.json().catch(() => ({}));
-      alert(body.message ?? 'Este depósito não pode ser desativado.');
-      return;
-    }
-
+    await fetch(`/api/Deposito/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     load();
   };
 
-  const filtrosAtivos = !!filtroStatus;
-  const filtered = depositos.filter(d => {
+  const filtered = items.filter(i => {
     if (search) {
       const q = search.toLowerCase();
-      if (
-        !d.nome.toLowerCase().includes(q) &&
-        !d.almoxarifadoNome.toLowerCase().includes(q)
-      ) return false;
+      if (!i.nome.toLowerCase().includes(q) && !String(i.codigoIdentificador).includes(q)) return false;
     }
-    if (filtroStatus === 'ativo'   && !d.ativo) return false;
-    if (filtroStatus === 'inativo' &&  d.ativo) return false;
+    if (statusFiltro === 'ativo'   && !i.ativo) return false;
+    if (statusFiltro === 'inativo' &&  i.ativo) return false;
     return true;
   });
 
-  return (
-    <div className="flex flex-col h-full">
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
+  const statusLabel = statusFiltro === 'ativo' ? 'ATIVO' : statusFiltro === 'inativo' ? 'INATIVO' : null;
 
-      <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200/70">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Home size={11} /><ChevronRight size={11} />
-          <span>Cadastros</span><ChevronRight size={11} />
-          <span className="text-gray-600 font-medium">Depósitos</span>
+  return (
+    <div className="flex flex-col h-full bg-white">
+
+      {/* ── Toolbar ── */}
+      <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            placeholder="Informe o código ou nome"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+          />
+        </div>
+
+        <button onClick={() => navigate('/cadastros/depositos/novo')}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors shrink-0">
+          <Plus size={14} /> Novo
+        </button>
+
+        <div ref={filterRef} className="relative shrink-0">
+          <button onClick={() => setFilterOpen(v => !v)}
+            className={cn(
+              'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
+              statusFiltro !== 'todos'
+                ? 'border-[#3B82F6] bg-blue-50 text-[#3B82F6]'
+                : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
+            )}>
+            <SlidersHorizontal size={15} />
+          </button>
+
+          {filterOpen && (
+            <div onMouseDown={e => e.stopPropagation()}
+              className="absolute z-30 right-0 top-full mt-1.5 w-44 bg-white border border-gray-200 rounded-xl shadow-lg p-3">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status</p>
+              {(['todos', 'ativo', 'inativo'] as const).map(v => (
+                <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
+                  className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                    statusFiltro === v ? 'bg-[#3B82F6] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                  {v === 'todos' ? 'Todos' : v === 'ativo' ? 'Ativo' : 'Inativo'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-gray-200/50">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      {/* ── Chip filtro ativo ── */}
+      {statusLabel && (
+        <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2">
+          <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+            Status : {statusLabel}
+            <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+          </span>
+        </div>
+      )}
 
-          <div className="relative flex-1 min-w-0 sm:max-w-md">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6] transition-all placeholder:text-gray-400"
-              placeholder="Buscar por nome ou almoxarifado…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+      {/* ── Tabela ── */}
+      <div className="flex-1 overflow-auto">
+        {loading ? (
+          <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
+            <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
+        ) : (
+          <>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Código</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
+                  <th className="text-center font-semibold text-gray-700 px-3 py-3 w-44 leading-tight">Depósito padrão para requisições?</th>
+                  <th className="text-center font-semibold text-gray-700 px-3 py-3 w-44 leading-tight">Controla produto acabado de 2ª qualidade?</th>
+                  <th className="text-center font-semibold text-gray-700 px-3 py-3 w-32">Controla lote?</th>
+                  <th className="text-center font-semibold text-gray-700 px-3 py-3 w-36 leading-tight">Controla múltiplos locais?</th>
+                  <th className="w-10 pr-4" />
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-400">
+                      Nenhum registro encontrado.
+                    </td>
+                  </tr>
+                ) : paginated.map(item => (
+                  <tr key={item.id}
+                    onClick={() => navigate(`/cadastros/depositos/${item.id}`)}
+                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <td className="px-6 py-3 text-sm text-gray-500">{item.codigoIdentificador}</td>
+                    <td className="px-4 py-3">
+                      <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                        {item.nome.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-center"><BoolIcon value={item.depositoPadraoRequisicoes} /></td>
+                    <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaQualidade2a} /></td>
+                    <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaLote} /></td>
+                    <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaMultiplosLocais} /></td>
+                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                      <RowMenu ativo={item.ativo}
+                        onView={() => navigate(`/cadastros/depositos/${item.id}`)}
+                        onEdit={() => navigate(`/cadastros/depositos/${item.id}/editar`)}
+                        onToggle={() => handleToggle(item)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          <div ref={filterRef} className="relative shrink-0">
-            <button
-              onMouseDown={e => e.stopPropagation()}
-              onClick={() => setFilterOpen(v => !v)}
-              className={cn(
-                'flex items-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors',
-                filtrosAtivos
-                  ? 'bg-blue-50 border-[#3B82F6] text-[#3B82F6]'
-                  : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400',
-              )}
-            >
-              <SlidersHorizontal size={13} /> Filtros
-              {filtrosAtivos && (
-                <span className="w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex items-center justify-center">1</span>
-              )}
-            </button>
-
-            {filterOpen && (
-              <div
-                onMouseDown={e => e.stopPropagation()}
-                className="absolute z-30 top-full right-0 mt-1.5 w-52 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-600">Status</span>
-                  {filtroStatus && (
-                    <button onClick={() => setFiltroStatus('')} className="text-[11px] text-red-400 hover:text-red-600">
-                      Limpar
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {(['ativo', 'inativo'] as const).map(k => (
-                    <button
-                      key={k}
-                      onClick={() => setFiltroStatus(k === filtroStatus ? '' : k)}
-                      className={cn('text-xs py-1.5 px-3 rounded-md border text-left transition-colors',
-                        filtroStatus === k
-                          ? 'bg-[#3B82F6] border-[#3B82F6] text-white'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-300')}
-                    >
-                      {k.charAt(0).toUpperCase() + k.slice(1)}
-                    </button>
-                  ))}
-                </div>
+            {/* ── Paginação ── */}
+            {filtered.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+                <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => goPage(p)}
+                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                    {p}
+                  </button>
+                ))}
+                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
             )}
-          </div>
-
-          <button
-            onClick={() => navigate('/cadastros/depositos/novo')}
-            className="flex items-center gap-2 h-9 px-4 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] shadow-sm shadow-blue-200 transition-colors sm:ml-auto shrink-0"
-          >
-            <Plus size={15} /> Novo Depósito
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-4">
-        {loading && (
-          <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
-            <Loader2 size={16} className="animate-spin" /> Carregando depósitos…
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 pb-16">
-            <p className="text-sm font-semibold text-red-500">{error}</p>
-            <button onClick={load} className="text-xs text-[#3B82F6] hover:underline">Tentar novamente</button>
-          </div>
-        )}
-
-        {!loading && !error && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-              <Package size={28} className="text-[#3B82F6]" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-700">
-                {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhum depósito cadastrado'}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {search || filtrosAtivos ? 'Ajuste os filtros ou a busca.' : 'Clique em "Novo Depósito" para começar.'}
-              </p>
-            </div>
-            {!search && !filtrosAtivos && (
-              <button
-                onClick={() => navigate('/cadastros/depositos/novo')}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#3B82F6] text-white text-sm hover:bg-[#2563eb] transition-colors"
-              >
-                <Plus size={14} /> Cadastrar depósito
-              </button>
-            )}
-          </div>
-        )}
-
-        {!loading && !error && filtered.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[580px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pl-4 w-14">Cód.</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Nome</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Almoxarifado</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Status</th>
-                    <th className="w-10 pr-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(d => (
-                    <tr
-                      key={d.id}
-                      className={cn(
-                        'border-b border-gray-50 hover:bg-blue-50/40 transition-colors',
-                        !d.ativo && 'opacity-50',
-                      )}
-                    >
-                      <td className="py-3 pl-4 pr-3">
-                        <span className="text-xs font-mono text-gray-400">#{d.codigoIdentificador}</span>
-                      </td>
-                      <td className="py-3 pr-6">
-                        <p className="text-gray-700 font-medium">{d.nome}</p>
-                        {d.descricao && (
-                          <p className="text-[11px] text-gray-400 mt-0.5 max-w-xs truncate">{d.descricao}</p>
-                        )}
-                      </td>
-                      <td className="py-3 pr-6">
-                        <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <Warehouse size={11} className="shrink-0 text-gray-300" />
-                          {d.almoxarifadoNome}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-6">
-                        <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
-                          d.ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
-                          {d.ativo ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-3 text-right">
-                        <RowMenu
-                          ativo={d.ativo}
-                          onView={() => navigate(`/cadastros/depositos/${d.id}`)}
-                          onEdit={() => navigate(`/cadastros/depositos/${d.id}/editar`)}
-                          onToggleAtivo={() => handleToggleAtivo(d)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>

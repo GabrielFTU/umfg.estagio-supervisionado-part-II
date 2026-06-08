@@ -61,7 +61,7 @@ const NAV_ITEMS: NavItemDef[] = [
     href: '/cadastros',
     groups: [
       {
-        label: 'Básicos',
+        label: 'Simples',
         items: [
           { label: 'Almoxarifados',         href: '/cadastros/almoxarifados' },
           { label: 'Depósitos',             href: '/cadastros/depositos' },
@@ -69,11 +69,6 @@ const NAV_ITEMS: NavItemDef[] = [
           { label: 'Unidades de Medida',    href: '/cadastros/unidades' },
           { label: 'Fases de Produção',     href: '/cadastros/fases' },
           { label: 'Tipos de Ordem',        href: '/cadastros/tipos-ordem' },
-        ],
-      },
-      {
-        label: 'Comercial',
-        items: [
           { label: 'Formas de Pagamento',    href: '/cadastros/formas-pagamento' },
           { label: 'Condições de Pagamento', href: '/cadastros/condicoes-pagamento' },
           { label: 'Finalidades de Pedido',  href: '/cadastros/finalidades' },
