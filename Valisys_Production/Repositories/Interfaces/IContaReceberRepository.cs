@@ -11,5 +11,6 @@ namespace Valisys_Production.Repositories.Interfaces
             decimal? juros, decimal? multa, string? observacoes);
         Task VerificarVencimentosAsync();
         Task<int> ContarAsync();
+        Task<bool> ExisteParaPedidoAsync(Guid pedidoVendaId);
     }
 }

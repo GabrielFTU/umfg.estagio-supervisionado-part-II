@@ -380,13 +380,13 @@ export function FormaPagamentoFormPage() {
                       type="button"
                       onClick={() => setAtivo(v => !v)}
                       className={cn(
-                        'relative w-10 h-[22px] rounded-full transition-colors duration-200',
+                        'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
                         ativo ? 'bg-[#3B82F6]' : 'bg-gray-200',
                       )}
                     >
                       <span className={cn(
-                        'absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
-                        ativo ? 'translate-x-5' : 'translate-x-[3px]',
+                        'absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+                        ativo ? 'translate-x-[17px]' : 'translate-x-0',
                       )} />
                     </button>
                   </div>

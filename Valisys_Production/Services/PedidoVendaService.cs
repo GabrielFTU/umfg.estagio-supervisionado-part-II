@@ -10,11 +10,13 @@ namespace Valisys_Production.Services
     {
         private readonly IPedidoVendaRepository _repository;
         private readonly ILogSistemaService _log;
+        private readonly IContaReceberService _contaReceberService;
 
-        public PedidoVendaService(IPedidoVendaRepository repository, ILogSistemaService log)
+        public PedidoVendaService(IPedidoVendaRepository repository, ILogSistemaService log, IContaReceberService contaReceberService)
         {
             _repository = repository;
             _log = log;
+            _contaReceberService = contaReceberService;
         }
 
         public async Task<PedidoVenda> CreateAsync(PedidoVendaCreateDto dto, Guid usuarioId)
@@ -103,7 +105,7 @@ namespace Valisys_Production.Services
 
         public async Task<bool> AlterarStatusAsync(Guid id, StatusPedido novoStatus, Guid usuarioId)
         {
-            var pedido = await _repository.GetByIdAsync(id)
+            var pedido = await _repository.GetByIdWithItensAsync(id)
                 ?? throw new KeyNotFoundException("Pedido não encontrado.");
 
             switch (novoStatus)
@@ -112,6 +114,7 @@ namespace Valisys_Production.Services
                     if (pedido.Status != StatusPedido.Rascunho)
                         throw new InvalidOperationException("Apenas rascunhos podem ser confirmados.");
                     pedido.Confirmar();
+                    await GerarContaReceberAutomaticaAsync(pedido);
                     break;
 
                 case StatusPedido.Concluido:
@@ -137,6 +140,24 @@ namespace Valisys_Production.Services
                     $"Alterou status do Pedido #{pedido.Codigo} para {novoStatus}");
 
             return ok;
+        }
+
+        private async Task GerarContaReceberAutomaticaAsync(PedidoVenda pedido)
+        {
+            if (pedido.Total <= 0) return;
+            if (await _contaReceberService.ExisteParaPedidoAsync(pedido.Id)) return;
+
+            var dto = new ContaReceberCreateDto
+            {
+                Descricao      = $"Pedido de Venda #{pedido.Codigo}",
+                ValorTotal     = pedido.Total,
+                DataVencimento = DateTime.UtcNow.AddDays(30),
+                PessoaId       = pedido.ClienteId,
+                PedidoVendaId  = pedido.Id,
+                NumeroParcelas = 1,
+            };
+
+            await _contaReceberService.CreateAsync(dto);
         }
 
         private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento, string? finalidade)

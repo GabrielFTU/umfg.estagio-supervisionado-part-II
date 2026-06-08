@@ -119,5 +119,8 @@ namespace Valisys_Production.Services
             await _logService.RegistrarAsync("Verificação", "ContasReceber",
                 "Verificação de vencimentos de contas a receber executada.");
         }
+
+        public async Task<bool> ExisteParaPedidoAsync(Guid pedidoVendaId)
+            => await _repository.ExisteParaPedidoAsync(pedidoVendaId);
     }
 }

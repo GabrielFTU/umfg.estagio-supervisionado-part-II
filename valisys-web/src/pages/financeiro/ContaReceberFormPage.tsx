@@ -1,27 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronRight, Home, Loader2, ChevronDown, Plus, Pencil } from 'lucide-react';
+import { ChevronRight, Home, Loader2, ChevronDown, Plus, Pencil, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
 type PessoaOpt = { id: string; nome: string };
-type FormaPagOpt = { id: string; nome: string };
 
 const TIPOS = ['Manual', 'Automático', 'Importado'];
 
-const FORMAS_PAG_ENUM: Record<string, string> = {
-  Dinheiro: 'Dinheiro',
-  Pix: 'PIX',
-  Boleto: 'Boleto',
-  CartaoCredito: 'Cartão de Crédito',
-  CartaoDebito: 'Cartão de Débito',
-  Transferencia: 'Transferência',
-  Cheque: 'Cheque',
-};
-
 function hoje() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function trintaDias() {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString().slice(0, 10);
 }
 
 const ul = (err?: string) => cn(
@@ -43,7 +38,7 @@ function UField({ label, required, error, children }: {
   );
 }
 
-export function ContaPagarFormPage() {
+export function ContaReceberFormPage() {
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -58,27 +53,23 @@ export function ContaPagarFormPage() {
   const [error, setError]     = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const [pessoas, setPessoas]         = useState<PessoaOpt[]>([]);
-  const [formasPag, setFormasPag]     = useState<FormaPagOpt[]>([]);
-  const [maisOpcoes, setMaisOpcoes]   = useState(false);
+  const [pessoas, setPessoas]       = useState<PessoaOpt[]>([]);
+  const [maisOpcoes, setMaisOpcoes] = useState(false);
 
-  // Campos do formulário
+  // Campos
   const [valor, setValor]               = useState('');
-  const [vencimento, setVencimento]     = useState(hoje());
-  const [competencia, setCompetencia]   = useState(hoje());
+  const [emissao, setEmissao]           = useState(hoje());
+  const [vencimento, setVencimento]     = useState(trintaDias());
   const [descricao, setDescricao]       = useState('');
   const [tipo, setTipo]                 = useState('Manual');
-  const [previsao, setPrevisao]         = useState(false);
-  const [numeroDocumento, setNumeroDoc] = useState('');
-  const [emissao, setEmissao]           = useState(hoje());
-  const [pessoaId, setPessoaId]         = useState('');
-  const [formaPagamento, setFormaPag]   = useState('');
-  const [observacao, setObs]            = useState('');
   const [numeroParcelas, setNumParcelas] = useState('1');
+  const [numeroDocumento, setNumeroDoc] = useState('');
+  const [pessoaId, setPessoaId]         = useState('');
+  const [observacao, setObs]            = useState('');
 
-  // Checkbox extras do footer
-  const [criarRegra, setCriarRegra] = useState(false);
-  const [baixar, setBaixar]         = useState(false);
+  // Campos somente leitura para auto-geradas
+  const [pedidoVendaId, setPedidoVendaId]       = useState<string | null>(null);
+  const [pedidoVendaCodigo, setPedidoVendaCodigo] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -87,10 +78,6 @@ export function ContaPagarFormPage() {
     fetch('/api/Pessoas', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setPessoas(d.map(p => ({ id: p.id, nome: p.nomeCompleto ?? p.razaoSocial ?? p.nome ?? '—' }))));
-
-    fetch('/api/formas-pagamento', { headers: h })
-      .then(r => r.ok ? r.json() : [])
-      .then((d: any[]) => setFormasPag(d.filter((f: any) => f.ativo).map((f: any) => ({ id: f.id, nome: f.nome }))));
   }, []);
 
   useEffect(() => {
@@ -99,19 +86,22 @@ export function ContaPagarFormPage() {
       setLoading(true);
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`/api/contas-pagar/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`/api/contas-receber/${id}`, { headers: { Authorization: `Bearer ${token}` } });
         if (!res.ok) throw new Error();
         const d = await res.json();
         setDescricao(d.descricao ?? '');
         setValor(String(d.valorTotal ?? ''));
-        setVencimento(d.dataVencimento?.slice(0, 10) ?? hoje());
+        setVencimento(d.dataVencimento?.slice(0, 10) ?? trintaDias());
+        setEmissao(d.dataEmissao?.slice(0, 10) ?? hoje());
         setNumeroDoc(d.numeroDocumento ?? '');
         setObs(d.observacoes ?? '');
-        setPessoaId(d.fornecedorId ?? '');
-        setEmissao(d.dataEmissao?.slice(0, 10) ?? hoje());
+        setPessoaId(d.pessoaId ?? '');
         setNumParcelas(String(d.parcelas?.length ?? 1));
+        setPedidoVendaId(d.pedidoVendaId ?? null);
+        setPedidoVendaCodigo(d.pedidoVendaCodigo ?? null);
+        if (d.pedidoVendaId) setTipo('Automático');
       } catch {
-        setError('Não foi possível carregar a conta a pagar.');
+        setError('Não foi possível carregar a conta a receber.');
       } finally {
         setLoading(false);
       }
@@ -147,16 +137,16 @@ export function ContaPagarFormPage() {
         dataVencimento: vencimento,
         observacoes: observacao.trim() || undefined,
         numeroDocumento: numeroDocumento.trim() || undefined,
-        fornecedorId: pessoaId || undefined,
+        pessoaId: pessoaId || undefined,
         numeroParcelas: parseInt(numeroParcelas) || 1,
       };
       const res = modo === 'criar'
-        ? await fetch('/api/contas-pagar', {
+        ? await fetch('/api/contas-receber', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify(body),
           })
-        : await fetch(`/api/contas-pagar/${id}`, {
+        : await fetch(`/api/contas-receber/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ id, descricao: body.descricao, dataVencimento: body.dataVencimento, observacoes: body.observacoes, numeroDocumento: body.numeroDocumento }),
@@ -165,7 +155,7 @@ export function ContaPagarFormPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? 'Erro ao salvar.');
       }
-      navigate('/financeiro/contas-pagar');
+      navigate('/financeiro/contas-receber');
     } catch (err: any) {
       setError(err.message ?? 'Erro inesperado.');
     } finally {
@@ -182,9 +172,9 @@ export function ContaPagarFormPage() {
   }
 
   const titulo: Record<Modo, string> = {
-    criar:      'Nova conta a pagar',
-    editar:     'Dados da conta a pagar',
-    visualizar: 'Dados da conta a pagar',
+    criar:      'Nova conta a receber',
+    editar:     'Dados da conta a receber',
+    visualizar: 'Dados da conta a receber',
   };
 
   return (
@@ -195,8 +185,8 @@ export function ContaPagarFormPage() {
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Home size={11} />
           <ChevronRight size={11} />
-          <button onClick={() => navigate('/financeiro/contas-pagar')} className="hover:text-gray-600 transition-colors">
-            Contas a pagar
+          <button onClick={() => navigate('/financeiro/contas-receber')} className="hover:text-gray-600 transition-colors">
+            Contas a receber
           </button>
           <ChevronRight size={11} />
           <span className="text-gray-600 font-medium">{titulo[modo]}</span>
@@ -210,7 +200,24 @@ export function ContaPagarFormPage() {
             <div className="mb-5 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{error}</div>
           )}
 
-          {/* Linha 1: Valor | Vencimento | Competência */}
+          {/* Banner: gerada automaticamente */}
+          {pedidoVendaId && (
+            <div className="mb-6 flex items-center gap-2 px-4 py-3 rounded-lg bg-blue-50 border border-blue-100 text-sm text-blue-600">
+              <Link2 size={14} className="shrink-0" />
+              <span>
+                Esta conta foi gerada automaticamente pelo{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/comercial/pedidos/${pedidoVendaId}`)}
+                  className="font-medium underline hover:text-blue-800 transition-colors"
+                >
+                  Pedido de Venda #{pedidoVendaCodigo}
+                </button>
+              </span>
+            </div>
+          )}
+
+          {/* Linha 1: Valor | Emissão | Vencimento */}
           <div className="grid grid-cols-3 gap-8 mb-6">
             <UField label="Valor" required={!readonly} error={fieldErrors.valor}>
               <input
@@ -221,6 +228,15 @@ export function ContaPagarFormPage() {
                 className={ul(fieldErrors.valor)}
               />
             </UField>
+            <UField label="Emissão" required={!readonly}>
+              <input
+                type="date"
+                disabled={readonly}
+                value={emissao}
+                onChange={e => setEmissao(e.target.value)}
+                className={ul()}
+              />
+            </UField>
             <UField label="Vencimento" required={!readonly} error={fieldErrors.vencimento}>
               <input
                 type="date"
@@ -228,15 +244,6 @@ export function ContaPagarFormPage() {
                 value={vencimento}
                 onChange={e => { setVencimento(e.target.value); clearErr('vencimento'); }}
                 className={ul(fieldErrors.vencimento)}
-              />
-            </UField>
-            <UField label="Competência" required={!readonly}>
-              <input
-                type="date"
-                disabled={readonly}
-                value={competencia}
-                onChange={e => setCompetencia(e.target.value)}
-                className={ul()}
               />
             </UField>
           </div>
@@ -258,7 +265,7 @@ export function ContaPagarFormPage() {
           {/* Tipo */}
           <div className="mb-6">
             <UField label="Tipo" required={!readonly}>
-              {readonly ? (
+              {readonly || pedidoVendaId ? (
                 <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">{tipo}</p>
               ) : (
                 <select value={tipo} onChange={e => setTipo(e.target.value)} className={ul()}>
@@ -282,26 +289,6 @@ export function ContaPagarFormPage() {
             </div>
           )}
 
-          {/* Toggle Previsão */}
-          <div className="flex items-center justify-between py-4 border-b border-gray-100 mb-2">
-            <span className="text-sm text-gray-700">Previsão?</span>
-            <button
-              type="button"
-              disabled={readonly}
-              onClick={() => !readonly && setPrevisao(v => !v)}
-              className={cn(
-                'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
-                previsao ? 'bg-[#3B82F6]' : 'bg-gray-200',
-                readonly && 'opacity-60 cursor-default',
-              )}
-            >
-              <span className={cn(
-                'absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
-                previsao ? 'translate-x-[17px]' : 'translate-x-0',
-              )} />
-            </button>
-          </div>
-
           {/* Mais opções */}
           <div className="mb-6">
             <button
@@ -315,7 +302,7 @@ export function ContaPagarFormPage() {
 
             {maisOpcoes && (
               <div className="mt-4 space-y-6">
-                {/* Número doc | Emissão | Repetir */}
+                {/* Número doc | Emissão (campo) | Repetir */}
                 <div className="grid grid-cols-3 gap-8 items-end">
                   <UField label="Número do documento">
                     <input
@@ -326,15 +313,7 @@ export function ContaPagarFormPage() {
                       className={ul()}
                     />
                   </UField>
-                  <UField label="Emissão" required>
-                    <input
-                      type="date"
-                      disabled={readonly}
-                      value={emissao}
-                      onChange={e => setEmissao(e.target.value)}
-                      className={ul()}
-                    />
-                  </UField>
+                  <div />
                   <div className="pb-1">
                     <button
                       type="button"
@@ -351,7 +330,7 @@ export function ContaPagarFormPage() {
                 </div>
 
                 {/* Pessoa */}
-                <UField label="Pessoa">
+                <UField label="Cliente / Pessoa">
                   {readonly ? (
                     <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
                       {pessoas.find(p => p.id === pessoaId)?.nome ?? '—'}
@@ -360,22 +339,6 @@ export function ContaPagarFormPage() {
                     <select value={pessoaId} onChange={e => setPessoaId(e.target.value)} className={ul()}>
                       <option value="">Selecione uma pessoa…</option>
                       {pessoas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                    </select>
-                  )}
-                </UField>
-
-                {/* Forma de pagamento */}
-                <UField label="Forma de pagamento">
-                  {readonly ? (
-                    <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
-                      {formasPag.find(f => f.id === formaPagamento)?.nome
-                        ?? FORMAS_PAG_ENUM[formaPagamento]
-                        ?? '—'}
-                    </p>
-                  ) : (
-                    <select value={formaPagamento} onChange={e => setFormaPag(e.target.value)} className={ul()}>
-                      <option value="">Selecione…</option>
-                      {formasPag.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
                     </select>
                   )}
                 </UField>
@@ -442,7 +405,7 @@ export function ContaPagarFormPage() {
         <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4">
           <button
             type="button"
-            onClick={() => navigate('/financeiro/contas-pagar')}
+            onClick={() => navigate('/financeiro/contas-receber')}
             className="text-sm text-gray-500 hover:text-gray-700 transition-colors shrink-0"
           >
             Cancelar
@@ -451,41 +414,21 @@ export function ContaPagarFormPage() {
           {readonly ? (
             <button
               type="button"
-              onClick={() => navigate(`/financeiro/contas-pagar/${id}/editar`)}
+              onClick={() => navigate(`/financeiro/contas-receber/${id}/editar`)}
               className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
             >
               <Pencil size={13} /> Editar
             </button>
           ) : (
-            <div className="flex items-center gap-6">
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={criarRegra}
-                  onChange={e => setCriarRegra(e.target.checked)}
-                  className="rounded border-gray-300"
-                />
-                Criar regra de preenchimento
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={baixar}
-                  onChange={e => setBaixar(e.target.checked)}
-                  className="rounded border-gray-300"
-                />
-                Baixar
-              </label>
-              <button
-                type="submit"
-                disabled={saving}
-                className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed shrink-0"
-              >
-                {saving
-                  ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>
-                  : 'Salvar'}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={saving}
+              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed shrink-0"
+            >
+              {saving
+                ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>
+                : 'Salvar'}
+            </button>
           )}
         </div>
       </form>

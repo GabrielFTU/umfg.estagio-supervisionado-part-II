@@ -13,15 +13,23 @@ namespace Valisys_Production.Repositories
         public override async Task<ContaReceber?> GetByIdAsync(Guid id)
             => await _context.ContasReceber
                 .Include(c => c.Parcelas)
+                .Include(c => c.Pessoa)
+                .Include(c => c.PedidoVenda)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id);
 
         public override async Task<IEnumerable<ContaReceber>> GetAllAsync()
             => await _context.ContasReceber
                 .Include(c => c.Parcelas)
+                .Include(c => c.Pessoa)
+                .Include(c => c.PedidoVenda)
                 .AsNoTracking()
                 .OrderByDescending(c => c.DataVencimento)
                 .ToListAsync();
+
+        public async Task<bool> ExisteParaPedidoAsync(Guid pedidoVendaId)
+            => await _context.ContasReceber
+                .AnyAsync(c => c.PedidoVendaId == pedidoVendaId && c.Ativo);
 
         public async Task<IEnumerable<ContaReceber>> GetByPeriodoAsync(DateTime inicio, DateTime fim)
             => await _context.ContasReceber

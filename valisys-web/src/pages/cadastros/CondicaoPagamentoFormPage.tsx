@@ -232,13 +232,13 @@ export function CondicaoPagamentoFormPage() {
               <button type="button" disabled={readOnly}
                 onClick={() => !readOnly && setF('vencimentoDiaFixo')(!form.vencimentoDiaFixo)}
                 className={cn(
-                  'relative w-10 h-[22px] rounded-full transition-colors duration-200',
+                  'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
                   form.vencimentoDiaFixo ? 'bg-[#3B82F6]' : 'bg-gray-200',
                   readOnly && 'cursor-default opacity-70',
                 )}>
                 <span className={cn(
-                  'absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
-                  form.vencimentoDiaFixo ? 'translate-x-5' : 'translate-x-[3px]',
+                  'absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+                  form.vencimentoDiaFixo ? 'translate-x-[17px]' : 'translate-x-0',
                 )} />
               </button>
             </div>
@@ -251,10 +251,10 @@ export function CondicaoPagamentoFormPage() {
                   <p className="text-xs text-gray-400 mt-0.5">{form.ativo ? 'Ativo' : 'Inativo'}</p>
                 </div>
                 <button type="button" onClick={() => setF('ativo')(!form.ativo)}
-                  className={cn('relative w-10 h-[22px] rounded-full transition-colors duration-200',
+                  className={cn('relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
                     form.ativo ? 'bg-[#3B82F6]' : 'bg-gray-200')}>
-                  <span className={cn('absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
-                    form.ativo ? 'translate-x-5' : 'translate-x-[3px]')} />
+                  <span className={cn('absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+                    form.ativo ? 'translate-x-[17px]' : 'translate-x-0')} />
                 </button>
               </div>
             )}

@@ -26,7 +26,9 @@ namespace Valisys_Production.DTOs
         public string Status { get; set; } = string.Empty;
         public string? Observacoes { get; set; }
         public Guid? PessoaId { get; set; }
+        public string? PessoaNome { get; set; }
         public Guid? PedidoVendaId { get; set; }
+        public string? PedidoVendaCodigo { get; set; }
         public bool Ativo { get; set; }
         public List<ParcelaReceberReadDto> Parcelas { get; set; } = new();
     }

@@ -147,7 +147,11 @@ namespace Valisys_Production.Helpers
             // Conta a Receber
             CreateMap<ContaReceber, ContaReceberReadDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                .ForMember(dest => dest.Parcelas, opt => opt.MapFrom(src => src.Parcelas));
+                .ForMember(dest => dest.Parcelas, opt => opt.MapFrom(src => src.Parcelas))
+                .ForMember(dest => dest.PessoaNome, opt => opt.MapFrom(src =>
+                    src.Pessoa != null ? src.Pessoa.Nome : null))
+                .ForMember(dest => dest.PedidoVendaCodigo, opt => opt.MapFrom(src =>
+                    src.PedidoVenda != null ? src.PedidoVenda.Codigo.ToString() : null));
 
             CreateMap<ParcelaReceber, ParcelaReceberReadDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
