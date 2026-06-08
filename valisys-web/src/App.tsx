@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
 import { FinanceiroPage } from './pages/financeiro';
+import { ContasPagarPage } from './pages/financeiro/ContasPagarPage';
+import { ContaPagarFormPage } from './pages/financeiro/ContaPagarFormPage';
 import { ComercialPage } from './pages/comercial';
 import { PedidosVendaPage } from './pages/comercial/PedidoVenda/PedidosVendaPage';
 import { PedidoVendaFormPage } from './pages/comercial/PedidoVenda/PedidoVendaFormPage';
@@ -55,6 +57,11 @@ const App = () => (
           </PrivateRoute>
         }
       />
+      <Route path="/financeiro/contas-pagar" element={<PrivateRoute><AppLayout><ContasPagarPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/novo" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/:id/editar" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/:id" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
+
       <Route
         path="/comercial"
         element={

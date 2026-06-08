@@ -23,3 +23,9 @@ appsettings.*.json
 postgres_data_final/
 postgres_data_local/
 postgres_data/
+
+
+/appsettings
+.appsettings
+migrations/
+.migrations
