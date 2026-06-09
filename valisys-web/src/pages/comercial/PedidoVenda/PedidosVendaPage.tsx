@@ -83,7 +83,7 @@ function RowMenu({ pedido, onView, onEdit, onConfirmar, onCancelar }: {
 
   return (
     <>
-      <button ref={btnRef} onMouseDown={e => e.stopPropagation()} onClick={toggle}
+      <button ref={btnRef} onClick={toggle}
         className="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
         <MoreHorizontal size={15} />
       </button>

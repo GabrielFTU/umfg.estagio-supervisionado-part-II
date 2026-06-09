@@ -65,7 +65,6 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
     <>
       <button
         ref={btnRef}
-        onMouseDown={e => e.stopPropagation()}
         onClick={handleToggle}
         className={cn(
           'p-1.5 rounded-md transition-colors',

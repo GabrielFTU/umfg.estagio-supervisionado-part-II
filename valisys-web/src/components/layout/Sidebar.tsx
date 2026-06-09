@@ -161,7 +161,7 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
                 <button
                   type="button"
                   onClick={() => setOpenGroup(isOpen ? null : group.label)}
-                  className="flex w-full items-center justify-between px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400 hover:text-gray-500 transition-colors"
+                  className="flex w-full items-center justify-between px-4 py-1.5 text-[11px] text-sm text-gray-500"
                 >
                   {group.label}
                   <ChevronRight

@@ -5,6 +5,7 @@ import {
   ChevronRight, Home, Loader2, MoreHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -95,7 +96,6 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
     <>
       <button
         ref={btnRef}
-        onMouseDown={e => e.stopPropagation()}
         onClick={handleToggle}
         className={cn(
           'p-1.5 rounded-md transition-colors',
@@ -147,6 +147,7 @@ export function ClientesPage() {
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [modal, setModal] = useState<{ p: PessoaItem; acao: 'desativar' | 'bloquear' } | null>(null);
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
@@ -201,26 +202,23 @@ export function ClientesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDesativar = async (p: PessoaItem) => {
-    const acao = p.ativo ? 'Desativar' : 'Reativar';
-    if (!confirm(`${acao} "${p.nome}"?`)) return;
-    const token = localStorage.getItem('token');
-    const base = p.tipo === 'fisica' ? '/api/PessoasFisicas' : '/api/PessoasJuridicas';
-    if (p.ativo) {
-      await fetch(`${base}/${p.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    } else {
-      await fetch(`${base}/${p.id}/reativar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
-    }
-    load();
-  };
+  const handleDesativar = (p: PessoaItem) => setModal({ p, acao: 'desativar' });
+  const handleBloquear  = (p: PessoaItem) => setModal({ p, acao: 'bloquear' });
 
-  const handleBloquear = async (p: PessoaItem) => {
-    const acao = p.bloqueado ? 'Desbloquear' : 'Bloquear';
-    if (!confirm(`${acao} crédito de "${p.nome}"?`)) return;
+  const execAcao = async () => {
+    if (!modal) return;
+    const { p, acao } = modal;
+    setModal(null);
     const token = localStorage.getItem('token');
     const base = p.tipo === 'fisica' ? '/api/PessoasFisicas' : '/api/PessoasJuridicas';
-    const endpoint = p.bloqueado ? 'desbloquear' : 'bloquear';
-    await fetch(`${base}/${p.id}/${endpoint}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    if (acao === 'desativar') {
+      const method = p.ativo ? 'DELETE' : 'PATCH';
+      const url = p.ativo ? `${base}/${p.id}` : `${base}/${p.id}/reativar`;
+      await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
+    } else {
+      const endpoint = p.bloqueado ? 'desbloquear' : 'bloquear';
+      await fetch(`${base}/${p.id}/${endpoint}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    }
     load();
   };
 
@@ -440,6 +438,32 @@ export function ClientesPage() {
           </div>
         )}
       </div>
+
+      <ModalMsg
+        aberto={!!modal}
+        variante={modal?.acao === 'desativar' ? 'perigo' : 'aviso'}
+        titulo={
+          modal?.acao === 'desativar'
+            ? `${modal.p.ativo ? 'Desativar' : 'Reativar'} "${modal.p.nome}"?`
+            : `${modal?.p.bloqueado ? 'Desbloquear' : 'Bloquear'} crédito de "${modal?.p.nome}"?`
+        }
+        descricao={
+          modal?.acao === 'desativar'
+            ? modal.p.ativo
+              ? 'O cliente será inativado e não aparecerá em novas operações.'
+              : 'O cliente será reativado e voltará a estar disponível.'
+            : modal?.p.bloqueado
+              ? 'O crédito do cliente será liberado.'
+              : 'O cliente ficará impedido de realizar compras a crédito.'
+        }
+        labelConfirmar={
+          modal?.acao === 'desativar'
+            ? modal.p.ativo ? 'Desativar' : 'Reativar'
+            : modal?.p.bloqueado ? 'Desbloquear' : 'Bloquear'
+        }
+        onConfirmar={execAcao}
+        onCancelar={() => setModal(null)}
+      />
     </div>
   );
 }

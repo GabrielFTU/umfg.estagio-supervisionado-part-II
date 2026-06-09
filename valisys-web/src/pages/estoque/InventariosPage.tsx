@@ -101,7 +101,7 @@ function RowMenu({ status, onView, onEdit, onFinalizar, onCancelar }: {
 
   return (
     <>
-      <button ref={btnRef} onMouseDown={e => e.stopPropagation()} onClick={toggle}
+      <button ref={btnRef} onClick={toggle}
         className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
         <MoreHorizontal size={15} />
       </button>

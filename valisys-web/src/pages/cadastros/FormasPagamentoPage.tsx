@@ -61,7 +61,6 @@ function RowMenu({ item, onView, onEdit, onToggle }: {
     <>
       <button
         ref={btnRef}
-        onMouseDown={e => e.stopPropagation()}
         onClick={handleToggle}
         className={cn(
           'p-1.5 rounded-md transition-colors',
