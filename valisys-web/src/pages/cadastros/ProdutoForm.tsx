@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 type Aba = 'geral' | 'fiscal' | 'fornecedores' | 'variacoes' | 'custos';
@@ -260,6 +261,7 @@ export function ProdutoFormPage() {
   const [f, setF]             = useState<FormState>(emptyForm);
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [saving, setSaving]   = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [loadingData, setLoadingData] = useState(!!id);
   const [activeTab, setActiveTab]     = useState<Aba>('geral');
 
@@ -554,9 +556,7 @@ export function ProdutoFormPage() {
 
   // ─── Salvar ───────────────────────────────────────────────────────────────
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (ro || !validate()) return;
+  const execSave = async () => {
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
@@ -610,6 +610,13 @@ export function ProdutoFormPage() {
     } catch {
       setErrors(prev => ({ ...prev, _global: 'Não foi possível salvar. Tente novamente.' }));
     } finally { setSaving(false); }
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (ro || !validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
   };
 
   // ─── Memos ────────────────────────────────────────────────────────────────
@@ -1144,6 +1151,16 @@ export function ProdutoFormPage() {
 
         </form>
       </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados do produto serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSave(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

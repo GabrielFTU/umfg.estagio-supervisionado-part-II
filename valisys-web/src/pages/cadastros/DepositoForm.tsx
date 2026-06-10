@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Home, Loader2, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 type AlmoxarifadoOption = { id: string; nome: string };
@@ -90,6 +91,7 @@ export function DepositoFormPage() {
   const [codigoIdentificador, setCodigoIdentificador] = useState('');
   const [nome, setNome]                               = useState('');
   const [ativo, setAtivo]                             = useState(true);
+  const [confirmOpen, setConfirmOpen]                 = useState(false);
   const [depositoPadraoRequisicoes, setDepositoPadraoRequisicoes] = useState(false);
   const [controlaQualidade2a, setControlaQualidade2a]             = useState(false);
   const [controlaLote, setControlaLote]                           = useState(false);
@@ -157,9 +159,7 @@ export function DepositoFormPage() {
     return Object.keys(erros).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const execSave = async () => {
     setSaving(true);
     setError('');
     const token = localStorage.getItem('token');
@@ -195,6 +195,13 @@ export function DepositoFormPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
   };
 
   const confirmarFormato = () => {
@@ -478,6 +485,16 @@ export function DepositoFormPage() {
           )}
         </div>
       </form>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados do depósito serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSave(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

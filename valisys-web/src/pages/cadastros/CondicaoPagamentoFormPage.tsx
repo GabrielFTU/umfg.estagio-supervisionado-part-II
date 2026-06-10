@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Loader2, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -58,6 +59,7 @@ export function CondicaoPagamentoFormPage() {
 
   const [loading, setLoading]   = useState(!!id);
   const [saving, setSaving]     = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [erros, setErros]       = useState<Record<string, string>>({});
   const [globalErr, setGlobalErr] = useState('');
 
@@ -125,13 +127,7 @@ export function CondicaoPagamentoFormPage() {
 
   const totalPercentual = parcelas.reduce((s, p) => s + (Number(p.percentual) || 0), 0);
 
-  const handleSalvar = async () => {
-    const novosErros: Record<string, string> = {};
-    if (!form.nome.trim()) novosErros.nome = 'O nome é obrigatório.';
-    if (form.numeroParcelas < 1) novosErros.numeroParcelas = 'Mínimo 1 parcela.';
-    if (Math.abs(totalPercentual - 100) > 0.01) novosErros.percentual = 'A soma dos percentuais deve ser 100%.';
-    if (Object.keys(novosErros).length) { setErros(novosErros); return; }
-
+  const execSalvar = async () => {
     setSaving(true); setGlobalErr('');
     const token = localStorage.getItem('token');
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -155,6 +151,16 @@ export function CondicaoPagamentoFormPage() {
     } catch (err: any) {
       setGlobalErr(err.message);
     } finally { setSaving(false); }
+  };
+
+  const handleSalvar = () => {
+    const novosErros: Record<string, string> = {};
+    if (!form.nome.trim()) novosErros.nome = 'O nome é obrigatório.';
+    if (form.numeroParcelas < 1) novosErros.numeroParcelas = 'Mínimo 1 parcela.';
+    if (Math.abs(totalPercentual - 100) > 0.01) novosErros.percentual = 'A soma dos percentuais deve ser 100%.';
+    if (Object.keys(novosErros).length) { setErros(novosErros); return; }
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSalvar();
   };
 
   if (loading) {
@@ -354,6 +360,16 @@ export function CondicaoPagamentoFormPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados da condição de pagamento serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSalvar(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

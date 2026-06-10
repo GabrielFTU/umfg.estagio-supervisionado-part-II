@@ -4,6 +4,7 @@ import { ChevronRight, Home, Loader2, ChevronDown, Plus, Pencil } from 'lucide-r
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -60,7 +61,8 @@ export function ContaPagarFormPage() {
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  
   const [pessoas, setPessoas]         = useState<PessoaOpt[]>([]);
   const [formasPag, setFormasPag]     = useState<FormaPagOpt[]>([]);
   const [maisOpcoes, setMaisOpcoes]   = useState(false);
@@ -136,9 +138,7 @@ export function ContaPagarFormPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const execSave = async () => {
     setSaving(true);
     setError('');
     const token = localStorage.getItem('token');
@@ -175,6 +175,13 @@ export function ContaPagarFormPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
   };
 
   if (loading) {
@@ -488,6 +495,15 @@ export function ContaPagarFormPage() {
           )}
         </div>
       </form>
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="As informações do cliente serão atualizadas, e as antigas serão perdidas. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={execSave}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

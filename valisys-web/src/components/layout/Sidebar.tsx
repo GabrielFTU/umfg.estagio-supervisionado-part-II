@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Gauge, Briefcase, Landmark, Warehouse, Database, BarChart3,
+  CircleDollarSign , Gauge, Briefcase, Package, LayersPlus, BarChart3,
   SlidersHorizontal, LogOut, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,39 +23,7 @@ const NAV_ITEMS: NavItemDef[] = [
     href: '/dashboard',
   },
   {
-    icon: Briefcase,
-    label: 'Comercial',
-    href: '/comercial',
-    children: [
-      { label: 'Clientes',         href: '/comercial/clientes' },
-      { label: 'Orçamentos',       href: '/comercial/orcamentos' },
-      { label: 'Pedidos de Venda', href: '/comercial/pedidos' },
-      { label: 'Produtos',         href: '/comercial/produtos' },
-    ],
-  },
-  {
-    icon: Landmark,
-    label: 'Financeiro',
-    href: '/financeiro',
-    children: [
-      { label: 'Contas a Pagar',    href: '/financeiro/contas-pagar' },
-      { label: 'Contas a Receber',  href: '/financeiro/contas-receber' },
-      { label: 'Fluxo de Caixa',    href: '/financeiro/fluxo-caixa' },
-      { label: 'Gestão de Carteira', href: '/financeiro/carteira' },
-    ],
-  },
-  {
-    icon: Warehouse,
-    label: 'Estoque',
-    href: '/estoque',
-    children: [
-      { label: 'Inventário',    href: '/estoque/inventario' },
-      { label: 'Movimentações', href: '/estoque/movimentacoes' },
-      { label: 'Produtos',      href: '/estoque/produtos' },
-    ],
-  },
-  {
-    icon: Database,
+    icon: LayersPlus,
     label: 'Cadastros',
     href: '/cadastros',
     groups: [
@@ -80,6 +48,38 @@ const NAV_ITEMS: NavItemDef[] = [
           { label: 'Produtos', href: '/cadastros/produtos' },
         ],
       },
+    ],
+  },
+  {
+    icon: CircleDollarSign,
+    label: 'Financeiro',
+    href: '/financeiro',
+    children: [
+      { label: 'Contas a Pagar',     href: '/financeiro/contas-pagar' },
+      { label: 'Contas a Receber',   href: '/financeiro/contas-receber' },
+      { label: 'Fluxo de Caixa',     href: '/financeiro/fluxo-caixa' },
+      { label: 'Gestão de Carteira', href: '/financeiro/carteira' },
+    ],
+  },
+  {
+    icon: Package,
+    label: 'Estoque',
+    href: '/estoque',
+    children: [
+      { label: 'Inventário',    href: '/estoque/inventario' },
+      { label: 'Movimentações', href: '/estoque/movimentacoes' },
+      { label: 'Produtos',      href: '/estoque/produtos' },
+    ],
+  },
+  {
+    icon: Briefcase,
+    label: 'Comercial',
+    href: '/comercial',
+    children: [
+      { label: 'Clientes',         href: '/comercial/clientes' },
+      { label: 'Orçamentos',       href: '/comercial/orcamentos' },
+      { label: 'Pedidos de Venda', href: '/comercial/pedidos' },
+      { label: 'Produtos',         href: '/comercial/produtos' },
     ],
   },
   {
@@ -266,7 +266,7 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
                       : 'text-gray-400 hover:bg-blue-50 hover:text-[#3B82F6]',
                   )}
                 >
-                  <Icon size={17} />
+                  <Icon size={20} />
                 </button>
 
                 {!isOpen && (

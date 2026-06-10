@@ -4,6 +4,7 @@ import { ChevronRight, Home, Loader2, Save, X, Pencil } from 'lucide-react';
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -71,6 +72,7 @@ export function AlmoxarifadoFormPage() {
   const [contato, setContato]         = useState('');
   const [email, setEmail]             = useState('');
   const [ativo, setAtivo]             = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -117,14 +119,10 @@ export function AlmoxarifadoFormPage() {
     return Object.keys(erros).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
+  const execSave = async () => {
     setSaving(true);
     setError('');
     const token = localStorage.getItem('token');
-
     try {
       const body = {
         nome:        nome.trim(),
@@ -134,7 +132,6 @@ export function AlmoxarifadoFormPage() {
         contato:     contato.trim() || undefined,
         email:       email.trim() || undefined,
       };
-
       const res = modo === 'criar'
         ? await fetch('/api/Almoxarifado', {
             method: 'POST',
@@ -146,12 +143,10 @@ export function AlmoxarifadoFormPage() {
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ id, ...body, ativo }),
           });
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? 'Erro ao salvar almoxarifado.');
       }
-
       showToast();
       navigate('/cadastros/almoxarifados');
     } catch (err: any) {
@@ -159,6 +154,13 @@ export function AlmoxarifadoFormPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
   };
 
   const titulo: Record<Modo, string> = {
@@ -356,6 +358,16 @@ export function AlmoxarifadoFormPage() {
           )}
         </div>
       </form>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados do almoxarifado serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSave(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

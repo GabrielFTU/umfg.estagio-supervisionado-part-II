@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Loader2, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -41,6 +42,7 @@ export function FinalidadeFormPage() {
   const [descricao, setDescricao] = useState('');
   const [erroNome, setErroNome]   = useState('');
   const [globalErr, setGlobalErr] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -55,8 +57,7 @@ export function FinalidadeFormPage() {
     fn();
   }, [id, navigate]);
 
-  const handleSalvar = async () => {
-    if (!nome.trim()) { setErroNome('O nome é obrigatório.'); return; }
+  const execSalvar = async () => {
     setSaving(true); setGlobalErr('');
     const token = localStorage.getItem('token');
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -73,6 +74,12 @@ export function FinalidadeFormPage() {
     } catch (err: any) {
       setGlobalErr(err.message);
     } finally { setSaving(false); }
+  };
+
+  const handleSalvar = () => {
+    if (!nome.trim()) { setErroNome('O nome é obrigatório.'); return; }
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSalvar();
   };
 
   if (loading) {
@@ -184,6 +191,16 @@ export function FinalidadeFormPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados da finalidade serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSalvar(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

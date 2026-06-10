@@ -7,6 +7,7 @@ import {
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -283,6 +284,7 @@ export function PessoaFormPage() {
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [papeis, setPapeis]   = useState<Papel[]>([]);
   const [f, setF]             = useState(emptyForm);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const set = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
 
@@ -402,9 +404,7 @@ export function PessoaFormPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (ro || !validate()) return;
+  const execSave = async () => {
     setLoading(true);
     try {
       const papelEnum = papeis.reduce((acc, p) => acc | PAPEL_ENUM[p], 0);
@@ -413,7 +413,6 @@ export function PessoaFormPage() {
         numero: f.numero || null, complemento: f.complemento || null,
         bairro: f.bairro || null, cidade: f.cidade || null, uf: f.uf || null, codigoIbge: null,
       } : null;
-
       const body = tipo === 'fisica'
         ? { nome: f.nome, cpf: f.cpf.replace(/\D/g, ''), papelPessoa: papelEnum,
             nomeFantasia: f.nomeFantasia || null, email: f.email || null,
@@ -432,18 +431,13 @@ export function PessoaFormPage() {
             responsavelNome: f.responsavelNome || null,
             responsavelCpf: f.responsavelCpf.replace(/\D/g, '') || null,
             observacoes: f.observacoes || null, endereco: end };
-
       const isEdit = modo === 'editar';
       const url = tipo === 'fisica'
         ? `/api/PessoasFisicas${isEdit ? `/${id}` : ''}`
         : `/api/PessoasJuridicas${isEdit ? `/${id}` : ''}`;
-
       const res = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();
@@ -454,6 +448,13 @@ export function PessoaFormPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (ro || !validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
   };
 
   const tituloModo = modo === 'criar' ? 'Nova Pessoa'
@@ -745,6 +746,16 @@ export function PessoaFormPage() {
           </form>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados da pessoa serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSave(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

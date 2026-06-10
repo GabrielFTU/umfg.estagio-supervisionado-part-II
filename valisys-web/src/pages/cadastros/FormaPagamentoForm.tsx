@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,7 @@ export function FormaPagamentoFormPage() {
   const [descricao, setDescricao] = useState('');
   const [prazoDias, setPrazoDias] = useState('');
   const [ativo, setAtivo]         = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // vendedores vinculados
   const [vendedores, setVendedores] = useState<VendedorVinculo[]>([]);
@@ -198,9 +200,7 @@ export function FormaPagamentoFormPage() {
 
   // ─── Salvar ──────────────────────────────────────────────────────────────────
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const execSave = async () => {
     setSaving(true);
     setGlobalError('');
     const token = localStorage.getItem('token');
@@ -210,7 +210,6 @@ export function FormaPagamentoFormPage() {
       descricao: descricao.trim() || undefined,
       prazoDias: prazoDias !== '' ? Number(prazoDias) : undefined,
     };
-
     try {
       const res = modo === 'criar'
         ? await fetch('/api/formas-pagamento', { method: 'POST', headers, body: JSON.stringify(body) })
@@ -218,12 +217,10 @@ export function FormaPagamentoFormPage() {
             method: 'PUT', headers,
             body: JSON.stringify({ id, ...body, ativo }),
           });
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail ?? 'Erro ao salvar.');
       }
-
       showToast();
       navigate('/cadastros/formas-pagamento');
     } catch (err: any) {
@@ -231,6 +228,13 @@ export function FormaPagamentoFormPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
   };
 
   // ─── Vínculo de vendedores ───────────────────────────────────────────────────
@@ -505,6 +509,16 @@ export function FormaPagamentoFormPage() {
 
         </div>
       </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados da forma de pagamento serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSave(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Home, Loader2, Layers, Save, X, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -37,6 +38,7 @@ export function FaseFormPage() {
   const [ordem, setOrdem]               = useState<number | ''>(1);
   const [tempoDias, setTempoDias]       = useState<number | ''>(0);
   const [ativo, setAtivo]               = useState(true);
+  const [confirmOpen, setConfirmOpen]   = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -78,14 +80,10 @@ export function FaseFormPage() {
   const clearFieldError = (field: string) =>
     setFieldErrors(prev => ({ ...prev, [field]: '' }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
+  const execSave = async () => {
     setSaving(true);
     setError('');
     const token = localStorage.getItem('token');
-
     try {
       const res = modo === 'criar'
         ? await fetch('/api/fases-producao', {
@@ -110,12 +108,10 @@ export function FaseFormPage() {
               ativo,
             }),
           });
-
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.detail ?? body.message ?? 'Erro ao salvar fase de produção.');
       }
-
       showToast();
       navigate('/cadastros/fases');
     } catch (err: any) {
@@ -123,6 +119,13 @@ export function FaseFormPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
   };
 
   const titulo: Record<Modo, string> = {
@@ -359,6 +362,16 @@ export function FaseFormPage() {
           </form>
         </div>
       </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados da fase de produção serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSave(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

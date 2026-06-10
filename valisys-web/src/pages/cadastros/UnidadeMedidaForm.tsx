@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Home, Loader2, Ruler, Save, X, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -72,6 +73,7 @@ export function UnidadeMedidaFormPage() {
   const [fatorConversao, setFatorConversao]   = useState('1');
   const [ehUnidadeBase, setEhUnidadeBase]     = useState(false);
   const [ativo, setAtivo]                     = useState(true);
+  const [confirmOpen, setConfirmOpen]         = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -115,14 +117,10 @@ export function UnidadeMedidaFormPage() {
   const clearFieldError = (field: string) =>
     setFieldErrors(prev => ({ ...prev, [field]: '' }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
+  const execSave = async () => {
     setSaving(true);
     setError('');
     const token = localStorage.getItem('token');
-
     try {
       const body = {
         nome:            nome.trim(),
@@ -131,7 +129,6 @@ export function UnidadeMedidaFormPage() {
         fatorConversao:  parseFloat(fatorConversao),
         ehUnidadeBase,
       };
-
       const res = modo === 'criar'
         ? await fetch('/api/UnidadesMedida', {
             method: 'POST',
@@ -143,12 +140,10 @@ export function UnidadeMedidaFormPage() {
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ id, ...body, ativo }),
           });
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? 'Erro ao salvar unidade de medida.');
       }
-
       showToast();
       navigate('/cadastros/unidades');
     } catch (err: any) {
@@ -156,6 +151,13 @@ export function UnidadeMedidaFormPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
   };
 
   const titulo: Record<Modo, string> = {
@@ -385,6 +387,16 @@ export function UnidadeMedidaFormPage() {
           </form>
         </div>
       </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados da unidade de medida serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); execSave(); }}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { ChevronRight, Home, Loader2, ChevronDown, Plus, Pencil, Link2 } from 'l
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 

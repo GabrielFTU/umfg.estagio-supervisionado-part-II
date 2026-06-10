@@ -7,6 +7,7 @@ import {
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -178,8 +179,9 @@ export function ClientesFormPage() {
 
   const ro = modo === 'visualizar';
 
-  const [tipo, setTipo]       = useState<Tipo>(tipoParam === 'juridica' ? 'juridica' : 'fisica');
-  const [loading, setLoading] = useState(false);
+  const [tipo, setTipo]         = useState<Tipo>(tipoParam === 'juridica' ? 'juridica' : 'fisica');
+  const [loading, setLoading]   = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [loadingData, setLoadingData] = useState(!!id);
   const [loadingCep, setLoadingCep]   = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
@@ -299,9 +301,15 @@ export function ClientesFormPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (ro || !validate()) return;
+    if (modo === 'editar') { setConfirmOpen(true); return; }
+    execSave();
+  };
+
+  const execSave = async () => {
+    setConfirmOpen(false);
     setLoading(true);
     try {
       const end = f.cep ? {
@@ -629,6 +637,16 @@ export function ClientesFormPage() {
           </form>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="As informações do cliente serão atualizadas, e as antigas serão perdidas. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={execSave}
+        onCancelar={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

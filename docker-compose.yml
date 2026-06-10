@@ -30,7 +30,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};Timeout=30;Command Timeout=30;
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5433;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};Timeout=30;Command Timeout=30;
       - JwtSettings__SecretKey=${JWT_SECRET}
       - Aws__BucketName=${AWS_BUCKET_NAME}
       - Aws__Region=${AWS_REGION}
