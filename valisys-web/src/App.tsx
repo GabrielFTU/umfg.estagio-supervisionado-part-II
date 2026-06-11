@@ -10,6 +10,8 @@ import { ContaReceberFormPage } from './pages/financeiro/ContaReceberFormPage';
 import { ComercialPage } from './pages/comercial';
 import { PedidosVendaPage } from './pages/comercial/PedidoVenda/PedidosVendaPage';
 import { PedidoVendaFormPage } from './pages/comercial/PedidoVenda/PedidoVendaFormPage';
+import { OrcamentosPage } from './pages/comercial/Orcamento/OrcamentosPage';
+import { OrcamentoFormPage } from './pages/comercial/Orcamento/OrcamentoFormPage';
 import { ClientesFormPage } from './pages/comercial/Clientes/ClientesFormPage';
 import { ClientesPage } from './pages/comercial/Clientes/ClientesPage';
 import { PessoasPage } from './pages/cadastros/PessoasPage';
@@ -82,6 +84,10 @@ const App = () => (
         }
       />
 
+      <Route path="/comercial/orcamentos" element={<PrivateRoute><AppLayout><OrcamentosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/orcamentos/novo" element={<PrivateRoute><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/orcamentos/:id/editar" element={<PrivateRoute><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/orcamentos/:id" element={<PrivateRoute><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/comercial/pedidos" element={<PrivateRoute><AppLayout><PedidosVendaPage /></AppLayout></PrivateRoute>} />
       <Route path="/comercial/pedidos/novo" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/comercial/pedidos/:id/editar" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />

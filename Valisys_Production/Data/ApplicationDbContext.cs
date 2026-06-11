@@ -51,6 +51,8 @@ namespace Valisys_Production.Data
         public DbSet<ParcelaPagar> ParcelasPagar { get; set; }
         public DbSet<PedidoVenda> PedidosVenda { get; set; }
         public DbSet<ItemPedido> ItensPedido { get; set; }
+        public DbSet<Orcamento> Orcamentos { get; set; }
+        public DbSet<ItemOrcamento> ItensOrcamento { get; set; }
         public DbSet<FormaPagamento> FormasPagamento { get; set; }
         public DbSet<FormaPagamentoVendedor> FormaPagamentoVendedores { get; set; }
         public DbSet<Finalidade> Finalidades { get; set; }
@@ -324,6 +326,39 @@ namespace Valisys_Production.Data
                 .HasOne<PedidoVenda>()
                 .WithMany(p => p.Itens)
                 .HasForeignKey(i => i.PedidoVendaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ─── Orçamento ────────────────────────────────────────────────────
+
+            modelBuilder.Entity<Orcamento>()
+                .Navigation(o => o.Itens).HasField("_itens");
+
+            modelBuilder.Entity<Orcamento>()
+                .HasIndex(o => o.Codigo)
+                .IsUnique();
+
+            modelBuilder.Entity<Orcamento>()
+                .HasOne(o => o.Cliente)
+                .WithMany()
+                .HasForeignKey(o => o.ClienteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Orcamento>()
+                .HasOne(o => o.Representante)
+                .WithMany()
+                .HasForeignKey(o => o.RepresentanteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ItemOrcamento>()
+                .HasOne(i => i.Produto)
+                .WithMany()
+                .HasForeignKey(i => i.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ItemOrcamento>()
+                .HasOne<Orcamento>()
+                .WithMany(o => o.Itens)
+                .HasForeignKey(i => i.OrcamentoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Seed Data

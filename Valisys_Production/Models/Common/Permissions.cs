@@ -173,6 +173,17 @@
             public const string Concluir = "PedidosVenda.Concluir";
         }
 
+        public static class Orcamentos
+        {
+            public const string Visualizar        = "Orcamentos.Visualizar";
+            public const string Criar             = "Orcamentos.Criar";
+            public const string Editar            = "Orcamentos.Editar";
+            public const string Enviar            = "Orcamentos.Enviar";
+            public const string Aprovar           = "Orcamentos.Aprovar";
+            public const string Cancelar          = "Orcamentos.Cancelar";
+            public const string ConverterEmPedido = "Orcamentos.ConverterEmPedido";
+        }
+
         public static class Logs
         {
             public const string Visualizar = "Logs.Visualizar";
@@ -185,6 +196,8 @@
             FormasPagamento.Visualizar, FormasPagamento.Criar, FormasPagamento.Editar, FormasPagamento.Inativar,
             PedidosVenda.Visualizar, PedidosVenda.Criar, PedidosVenda.Editar,
             PedidosVenda.Confirmar, PedidosVenda.Cancelar, PedidosVenda.Concluir,
+            Orcamentos.Visualizar, Orcamentos.Criar, Orcamentos.Editar,
+            Orcamentos.Enviar, Orcamentos.Aprovar, Orcamentos.Cancelar, Orcamentos.ConverterEmPedido,
             Produtos.Visualizar, Produtos.Criar, Produtos.Editar, Produtos.Inativar,
             Categorias.Visualizar, Categorias.Criar, Categorias.Editar, Categorias.Inativar,
             Fornecedores.Visualizar, Fornecedores.Criar, Fornecedores.Editar, Fornecedores.Inativar,

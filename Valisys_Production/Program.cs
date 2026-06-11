@@ -139,6 +139,8 @@ builder.Services.AddScoped<IFichaTecnicaRepository, FichaTecnicaRepository>();
 builder.Services.AddScoped<IFichaTecnicaService, FichaTecnicaService>();
 builder.Services.AddScoped<IPedidoVendaRepository, PedidoVendaRepository>();
 builder.Services.AddScoped<IPedidoVendaService, PedidoVendaService>();
+builder.Services.AddScoped<IOrcamentoRepository, OrcamentoRepository>();
+builder.Services.AddScoped<IOrcamentoService, OrcamentoService>();
 builder.Services.AddScoped<IFormaPagamentoRepository, FormaPagamentoRepository>();
 builder.Services.AddScoped<IFormaPagamentoService, FormaPagamentoService>();
 builder.Services.AddScoped<IFinalidadeRepository, FinalidadeRepository>();

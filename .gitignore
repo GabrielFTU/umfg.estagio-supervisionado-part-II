@@ -14,7 +14,7 @@ node_modules/
 
 dist/
 wwwroot/dist/
-
+Dockerfile
 appsettings.Development.json
 appsettings.*.json
 .env
@@ -24,6 +24,7 @@ postgres_data_final/
 postgres_data_local/
 postgres_data/
 
+.docker-compose.yml
 
 /appsettings
 .appsettings
