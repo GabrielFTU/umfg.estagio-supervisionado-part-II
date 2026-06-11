@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  CircleDollarSign , Gauge, Briefcase, Package, LayersPlus, BarChart3,
+  Gauge, LayersPlus, Briefcase, ScanLine, Factory, DraftingCompass, Package, CircleDollarSign, BarChart3,
   SlidersHorizontal, LogOut, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,12 +17,14 @@ interface NavItemDef {
 }
 
 const NAV_ITEMS: NavItemDef[] = [
+  /*icon dashboard*/
   {
     icon: Gauge,
     label: 'Dashboard',
     href: '/dashboard',
   },
   {
+    /*icon cadastros*/
     icon: LayersPlus,
     label: 'Cadastros',
     href: '/cadastros',
@@ -51,27 +53,7 @@ const NAV_ITEMS: NavItemDef[] = [
     ],
   },
   {
-    icon: CircleDollarSign,
-    label: 'Financeiro',
-    href: '/financeiro',
-    children: [
-      { label: 'Contas a Pagar',     href: '/financeiro/contas-pagar' },
-      { label: 'Contas a Receber',   href: '/financeiro/contas-receber' },
-      { label: 'Fluxo de Caixa',     href: '/financeiro/fluxo-caixa' },
-      { label: 'Gestão de Carteira', href: '/financeiro/carteira' },
-    ],
-  },
-  {
-    icon: Package,
-    label: 'Estoque',
-    href: '/estoque',
-    children: [
-      { label: 'Inventário',    href: '/estoque/inventario' },
-      { label: 'Movimentações', href: '/estoque/movimentacoes' },
-      { label: 'Produtos',      href: '/estoque/produtos' },
-    ],
-  },
-  {
+    /*icon comercial*/
     icon: Briefcase,
     label: 'Comercial',
     href: '/comercial',
@@ -83,6 +65,57 @@ const NAV_ITEMS: NavItemDef[] = [
     ],
   },
   {
+    /*icon consulta e ação*/
+    icon: ScanLine,
+    label: 'Consulta e Ação',
+    href: '/consulta-acao',
+    children: [
+      { label: 'Consulta e Ação',         href: '/scan' },
+    ],
+  },
+  {
+    /*icon produção*/
+    icon: Factory,
+    label: 'Produção',
+    href: '/producao',
+    children: [
+      { label: 'Produção',         href: '/producao' },
+    ],
+  },
+  {
+    /*icon Engenharia*/
+    icon: DraftingCompass,
+    label: 'Engenharia',
+    href: '/engenharia',
+    children: [
+      { label: 'Engenharia',         href: '/engenharia' },
+    ],
+  },
+  {
+    /*icon estoque*/
+    icon: Package,
+    label: 'Estoque',
+    href: '/estoque',
+    children: [
+      { label: 'Inventário',    href: '/estoque/inventario' },
+      { label: 'Movimentações', href: '/estoque/movimentacoes' },
+      { label: 'Produtos',      href: '/estoque/produtos' },
+    ],
+  },
+  {
+    /*icon financeiro*/
+    icon: CircleDollarSign,
+    label: 'Financeiro',
+    href: '/financeiro',
+    children: [
+      { label: 'Contas a Pagar',     href: '/financeiro/contas-pagar' },
+      { label: 'Contas a Receber',   href: '/financeiro/contas-receber' },
+      { label: 'Fluxo de Caixa',     href: '/financeiro/fluxo-caixa' },
+      { label: 'Gestão de Carteira', href: '/financeiro/carteira' },
+    ],
+  },
+  {
+    /*icon relatórios*/
     icon: BarChart3,
     label: 'Relatórios',
     href: '/relatorios',
@@ -91,11 +124,6 @@ const NAV_ITEMS: NavItemDef[] = [
       { label: 'Financeiro', href: '/relatorios/financeiro' },
       { label: 'Vendas',     href: '/relatorios/vendas' },
     ],
-  },
-  {
-    icon: SlidersHorizontal,
-    label: 'Configurações',
-    href: '/configuracoes',
   },
 ];
 
@@ -229,7 +257,7 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
         showLabels ? 'w-52' : 'w-14',
       )}>
         {/* Navegação */}
-        <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-hidden">
+        <nav className="flex-1 py-3 px-2 space-y-0.5">
           {NAV_ITEMS.map(item => {
             const active = activeItem?.href === item.href;
             const isOpen = flyout?.id === item.href;
@@ -286,8 +314,38 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
           })}
         </nav>
 
-        {/* Sair */}
-        <div className="px-2 py-3 border-t border-gray-100">
+        {/* Configurações + Sair */}
+        <div className="px-2 py-3 border-t border-gray-100 space-y-0.5">
+          {/* Configurações */}
+          <div className="relative group/tip">
+            <button
+              onClick={() => { window.location.href = '/configuracoes'; }}
+              className={cn(
+                'flex items-center justify-center rounded-lg transition-colors',
+                currentPath.startsWith('/configuracoes')
+                  ? 'bg-[#3B82F6] text-white shadow-sm shadow-blue-200'
+                  : 'text-gray-400 hover:bg-blue-50 hover:text-[#3B82F6]',
+                showLabels ? 'gap-3 px-3 py-2.5 w-full' : 'w-10 h-10 mx-auto',
+              )}
+            >
+              <SlidersHorizontal size={17} className="shrink-0" />
+              {showLabels && <span className="text-sm font-medium flex-1 text-left">Configurações</span>}
+            </button>
+
+            {!showLabels && (
+              <span className="
+                pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3
+                px-2.5 py-1 rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                opacity-0 group-hover/tip:opacity-100
+                translate-x-1 group-hover/tip:translate-x-0
+                transition-all duration-150 z-50">
+                Configurações
+                <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-800" />
+              </span>
+            )}
+          </div>
+
+          {/* Sair */}
           <div className="relative group/tip">
             <button
               onClick={() => { localStorage.clear(); window.location.href = '/'; }}
