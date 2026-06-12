@@ -30,6 +30,8 @@ namespace Valisys_Production.Models
             TempoEstimadoDias = tempoEstimadoDias;
         }
 
+        public void SetFichaTecnicaId(Guid fichaTecnicaId) => FichaTecnicaId = fichaTecnicaId;
+
         public void Atualizar(Guid faseProducaoId, int ordem, string descricao, string? observacao, int tempoEstimadoDias)
         {
             if (ordem <= 0)

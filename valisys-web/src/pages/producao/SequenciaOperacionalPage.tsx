@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Loader2, Plus, Trash2, Edit2, Check, X,
-  Home, ChevronRight, ChevronLeft, Save, GripVertical,
+  Home, ChevronRight, ChevronLeft, Save,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
@@ -62,8 +62,8 @@ function SeqRow({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!draft.faseId) e.fase = 'Obrigatório';
-    if (!draft.descricao.trim()) e.descricao = 'Obrigatório';
+    if (!draft.faseId)             e.fase = 'Obrigatório';
+    if (!draft.descricao.trim())   e.descricao = 'Obrigatório';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -79,31 +79,35 @@ function SeqRow({
     setDraft(item); setErrors({}); setEditing(false);
   };
 
+  const isEven = index % 2 === 0;
+
   if (!editing) return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
-      <td className="py-3 pl-4 pr-2 text-center">
-        <div className="flex items-center gap-2">
-          <GripVertical size={14} className="text-gray-300" />
-          <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">
-            {item.ordem}
-          </span>
-        </div>
+    <tr className={cn(
+      'border-b border-gray-100 hover:bg-blue-50/40 transition-colors group',
+      isEven ? 'bg-white' : 'bg-gray-50/60',
+    )}>
+      <td className="py-2.5 pl-4 pr-3 text-center w-16">
+        <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center justify-center mx-auto">
+          {item.ordem}
+        </span>
       </td>
-      <td className="py-3 pr-2 text-sm text-gray-700">{item.faseNome}</td>
-      <td className="py-3 pr-2 text-sm text-gray-800">{item.descricao}</td>
-      <td className="py-3 pr-2 text-sm text-gray-600">{item.observacao || '—'}</td>
-      <td className="py-3 pr-2 text-sm text-gray-600 text-center tabular-nums">
-        {item.tempoEstimadoDias > 0 ? `${item.tempoEstimadoDias}d` : '—'}
+      <td className="py-2.5 pr-3 text-xs text-gray-600 whitespace-nowrap w-40">{item.faseNome}</td>
+      <td className="py-2.5 pr-3 text-xs font-medium text-gray-800">{item.descricao}</td>
+      <td className="py-2.5 pr-3 text-xs text-gray-500 max-w-[160px] truncate">
+        {item.observacao || <span className="text-gray-300">—</span>}
       </td>
-      <td className="py-3 pr-3 text-right">
-        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <td className="py-2.5 pr-3 text-xs text-gray-600 text-center tabular-nums w-24">
+        {item.tempoEstimadoDias > 0 ? `${item.tempoEstimadoDias}d` : <span className="text-gray-300">—</span>}
+      </td>
+      <td className="py-2.5 pr-3 text-right w-16">
+        <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={() => setEditing(true)}
-            className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-            <Edit2 size={13} />
+            className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-100 transition-colors">
+            <Edit2 size={12} />
           </button>
           <button onClick={onRemove}
             className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
-            <Trash2 size={13} />
+            <Trash2 size={12} />
           </button>
         </div>
       </td>
@@ -111,73 +115,80 @@ function SeqRow({
   );
 
   return (
-    <tr className="border-b border-blue-100 bg-blue-50/40">
-      <td className="py-2 pl-4 pr-2 align-top">
+    <tr className="border-b border-blue-200 bg-blue-50/60">
+      {/* Ordem */}
+      <td className="py-2 pl-4 pr-2 align-top w-16">
         <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center mx-auto">
           {index + 1}
         </span>
       </td>
-      <td className="py-2 pr-2 align-top">
-        <div>
-          <select
-            value={draft.faseId}
-            onChange={e => {
-              const fase = fases.find(f => f.id === e.target.value);
-              setDraft(d => ({ ...d, faseId: e.target.value, faseNome: fase?.nome ?? '' }));
-            }}
-            className={cn(
-              'w-full text-xs border rounded px-1.5 py-1 bg-white outline-none focus:border-blue-500',
-              errors.fase ? 'border-red-400' : 'border-gray-300',
-            )}>
-            <option value="">Selecione…</option>
-            {fases.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-          </select>
-          {errors.fase && <p className="text-[10px] text-red-500 mt-0.5">{errors.fase}</p>}
-        </div>
+
+      {/* Fase */}
+      <td className="py-2 pr-2 align-top w-40">
+        <select
+          value={draft.faseId}
+          onChange={e => {
+            const fase = fases.find(f => f.id === e.target.value);
+            setDraft(d => ({ ...d, faseId: e.target.value, faseNome: fase?.nome ?? '' }));
+          }}
+          className={cn(
+            'w-full h-7 text-xs border rounded px-1.5 bg-white outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200',
+            errors.fase ? 'border-red-400 bg-red-50' : 'border-gray-300',
+          )}>
+          <option value="">Selecione…</option>
+          {fases.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+        </select>
+        {errors.fase && <p className="text-[10px] text-red-500 mt-0.5 leading-tight">{errors.fase}</p>}
       </td>
+
+      {/* Descrição */}
       <td className="py-2 pr-2 align-top">
-        <div>
-          <input
-            type="text" maxLength={500}
-            value={draft.descricao}
-            onChange={e => setDraft(d => ({ ...d, descricao: e.target.value }))}
-            placeholder="Descrição da operação…"
-            className={cn(
-              'w-full text-xs border rounded px-1.5 py-1 bg-white outline-none focus:border-blue-500',
-              errors.descricao ? 'border-red-400' : 'border-gray-300',
-            )}
-          />
-          {errors.descricao && <p className="text-[10px] text-red-500 mt-0.5">{errors.descricao}</p>}
-        </div>
+        <input
+          type="text" maxLength={500}
+          value={draft.descricao}
+          onChange={e => setDraft(d => ({ ...d, descricao: e.target.value }))}
+          placeholder="Descrição da operação…"
+          className={cn(
+            'w-full h-7 text-xs border rounded px-1.5 bg-white outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200',
+            errors.descricao ? 'border-red-400 bg-red-50' : 'border-gray-300',
+          )}
+        />
+        {errors.descricao && <p className="text-[10px] text-red-500 mt-0.5 leading-tight">{errors.descricao}</p>}
       </td>
+
+      {/* Observação */}
       <td className="py-2 pr-2 align-top">
         <input
           type="text" maxLength={500}
           value={draft.observacao}
           onChange={e => setDraft(d => ({ ...d, observacao: e.target.value }))}
-          placeholder="Obs…"
-          className="w-full text-xs border border-gray-300 rounded px-1.5 py-1 bg-white outline-none focus:border-blue-500"
+          placeholder="Opcional…"
+          className="w-full h-7 text-xs border border-gray-300 rounded px-1.5 bg-white outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200"
         />
       </td>
-      <td className="py-2 pr-2 align-top">
-        <div className="flex items-center gap-0.5">
+
+      {/* Tempo */}
+      <td className="py-2 pr-2 align-top w-24">
+        <div className="flex items-center gap-1">
           <input
             type="number" min="0"
             value={draft.tempoEstimadoDias || ''}
             onChange={e => setDraft(d => ({ ...d, tempoEstimadoDias: parseInt(e.target.value) || 0 }))}
-            className="w-14 text-xs border border-gray-300 rounded px-1.5 py-1 text-right bg-white outline-none focus:border-blue-500"
+            className="w-full h-7 text-xs border border-gray-300 rounded px-1.5 text-right bg-white outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200"
           />
-          <span className="text-xs text-gray-500">d</span>
+          <span className="text-xs text-gray-500 shrink-0">d</span>
         </div>
       </td>
-      <td className="py-2 pr-3 align-top">
-        <div className="flex items-center gap-1">
+
+      {/* Ações */}
+      <td className="py-2 pr-3 align-top w-16">
+        <div className="flex items-center gap-0.5 pt-0.5">
           <button onClick={confirm}
-            className="p-1.5 rounded text-emerald-600 hover:bg-emerald-50 transition-colors">
+            className="p-1.5 rounded text-emerald-700 hover:bg-emerald-100 transition-colors" title="Confirmar">
             <Check size={14} />
           </button>
           <button onClick={cancel}
-            className="p-1.5 rounded text-gray-500 hover:bg-gray-100 transition-colors">
+            className="p-1.5 rounded text-gray-500 hover:bg-gray-200 transition-colors" title="Cancelar">
             <X size={14} />
           </button>
         </div>
@@ -233,10 +244,9 @@ export function SequenciaOperacionalPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleAddRow = () => {
-    const nextOrdem = itens.length + 1;
     setItens(prev => [...prev, {
       localId: uid(), faseId: '', faseNome: '',
-      ordem: nextOrdem, descricao: '', observacao: '', tempoEstimadoDias: 0,
+      ordem: prev.length + 1, descricao: '', observacao: '', tempoEstimadoDias: 0,
     }]);
   };
 
@@ -252,6 +262,9 @@ export function SequenciaOperacionalPage() {
 
   const handleSave = async () => {
     if (!ficha) return;
+    const incomplete = itens.find(i => !i.faseId || !i.descricao.trim());
+    if (incomplete) { alert('Existe uma etapa incompleta. Confirme ou remova-a antes de salvar.'); return; }
+
     setSaving(true);
     const token = localStorage.getItem('token');
     try {
@@ -306,10 +319,10 @@ export function SequenciaOperacionalPage() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-gray-50">
 
       {/* Breadcrumb */}
-      <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-200">
+      <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Home size={11} /><ChevronRight size={11} />
           <span>Produção</span><ChevronRight size={11} />
@@ -324,20 +337,20 @@ export function SequenciaOperacionalPage() {
       </div>
 
       {/* Subheader */}
-      <div className="shrink-0 px-6 py-3 border-b border-gray-200 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold text-gray-800">{ficha.produtoCodigo} — {ficha.produtoNome}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Ficha {ficha.codigo} · v{ficha.versao}</p>
-        </div>
+      <div className="shrink-0 px-6 py-3 border-b border-gray-200 bg-white flex items-center justify-between gap-4">
+        <p className="text-sm font-medium text-gray-700">
+          {ficha.produtoNome}
+          <span className="ml-2 text-xs font-normal text-gray-400">{ficha.codigo}</span>
+        </p>
         <div className="flex items-center gap-2">
           <button onClick={() => navigate(`/producao/fichas-tecnicas/${id}`)}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors">
             <ChevronLeft size={13} /> Voltar
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 h-8 px-4 rounded-lg bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800 transition-colors disabled:opacity-60">
+            className="flex items-center gap-1.5 h-8 px-4 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60">
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
             Salvar
           </button>
@@ -345,48 +358,51 @@ export function SequenciaOperacionalPage() {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full text-sm min-w-[700px]">
-          <thead>
-            <tr className="border-b border-gray-200 bg-gray-50 sticky top-0">
-              <th className="text-center text-xs font-semibold text-gray-600 py-3 pl-4 pr-2 w-20">Ordem</th>
-              <th className="text-left text-xs font-semibold text-gray-600 py-3 pr-2 w-40">Fase *</th>
-              <th className="text-left text-xs font-semibold text-gray-600 py-3 pr-2">Descrição da Operação *</th>
-              <th className="text-left text-xs font-semibold text-gray-600 py-3 pr-2 w-36">Observação</th>
-              <th className="text-center text-xs font-semibold text-gray-600 py-3 pr-2 w-24">Tempo (dias)</th>
-              <th className="w-16 pr-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {itens.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-sm text-gray-400">
-                  Nenhuma etapa adicionada. Clique em "Adicionar etapa" para começar.
-                </td>
+      <div className="flex-1 overflow-auto px-4 py-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <table className="w-full text-sm min-w-[700px]">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-100">
+                <th className="text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wide py-2.5 pl-4 pr-3 w-16">#</th>
+                <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide py-2.5 pr-3 w-40">Fase <span className="text-red-400">*</span></th>
+                <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide py-2.5 pr-3">Descrição <span className="text-red-400">*</span></th>
+                <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide py-2.5 pr-3 w-40">Observação</th>
+                <th className="text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wide py-2.5 pr-3 w-24">Tempo</th>
+                <th className="w-16 pr-3" />
               </tr>
-            )}
-            {itens.map((item, idx) => (
-              <SeqRow
-                key={item.localId}
-                item={item}
-                index={idx}
-                fases={fases}
-                onSave={updated => handleSaveRow(item.localId, updated)}
-                onRemove={() => handleRemoveRow(item.localId)}
-              />
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {itens.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-14 text-center">
+                    <p className="text-sm text-gray-400">Nenhuma etapa adicionada.</p>
+                    <p className="text-xs text-gray-300 mt-1">Clique em "Adicionar etapa" para começar.</p>
+                  </td>
+                </tr>
+              )}
+              {itens.map((item, idx) => (
+                <SeqRow
+                  key={item.localId}
+                  item={item}
+                  index={idx}
+                  fases={fases}
+                  onSave={updated => handleSaveRow(item.localId, updated)}
+                  onRemove={() => handleRemoveRow(item.localId)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 px-6 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-        <span className="text-xs text-gray-500">
-          {itens.length} {itens.length === 1 ? 'etapa' : 'etapas'}
+      <div className="shrink-0 px-4 pb-4 flex items-center justify-between">
+        <span className="text-xs text-gray-400 pl-1">
+          {itens.filter(i => i.faseId).length} {itens.filter(i => i.faseId).length === 1 ? 'etapa' : 'etapas'}
         </span>
         <button
           onClick={handleAddRow}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-dashed border-gray-400 text-xs font-medium text-gray-600 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
+          className="flex items-center gap-1.5 h-8 px-4 rounded-lg border border-dashed border-gray-300 text-xs font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
           <Plus size={13} /> Adicionar etapa
         </button>
       </div>

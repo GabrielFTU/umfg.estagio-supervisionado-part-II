@@ -100,13 +100,13 @@ namespace Valisys_Production.Data
 
             modelBuilder.Entity<ProdutoFornecedor>()
                 .HasOne(pf => pf.Produto)
-                .WithMany()
+                .WithMany(p => p.Fornecedores)
                 .HasForeignKey(pf => pf.ProdutoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ProdutoVariacao>()
                 .HasOne(pv => pv.Produto)
-                .WithMany()
+                .WithMany(p => p.Variacoes)
                 .HasForeignKey(pv => pv.ProdutoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -162,6 +162,9 @@ namespace Valisys_Production.Data
                 .WithMany()
                 .HasForeignKey(f => f.ProdutoId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FichaTecnica>()
+                .Navigation(f => f.Itens).HasField("_itens");
 
             modelBuilder.Entity<FichaTecnica>()
                 .Navigation(f => f.Sequencias).HasField("_sequencias");

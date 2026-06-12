@@ -43,6 +43,8 @@ namespace Valisys_Production.Models
             Observacao = observacao;
         }
 
+        public void SetFichaTecnicaId(Guid fichaTecnicaId) => FichaTecnicaId = fichaTecnicaId;
+
         public void Atualizar(decimal quantidade, decimal perdaPercentual, Guid? faseProducaoId, Guid? corId, string? observacao)
         {
             if (quantidade <= 0)

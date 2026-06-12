@@ -40,27 +40,33 @@ namespace Valisys_Production.Repositories
 
         public async Task<bool> UpdateWithItemsAsync(FichaTecnica ficha, List<FichaTecnicaItem> novosItens, List<FichaTecnicaSequencia> novasSequencias)
         {
-            var fichaExistente = await _dbSet
-                .Include(f => f.Itens)
-                .Include(f => f.Sequencias)
-                .FirstOrDefaultAsync(f => f.Id == ficha.Id);
-
+            var fichaExistente = await _dbSet.FirstOrDefaultAsync(f => f.Id == ficha.Id);
             if (fichaExistente is null) return false;
 
             _context.Entry(fichaExistente).CurrentValues.SetValues(ficha);
 
-            _context.FichaTecnicaItens.RemoveRange(fichaExistente.Itens);
-            fichaExistente.LimparItens();
+            await _context.FichaTecnicaItens
+                .Where(i => i.FichaTecnicaId == ficha.Id)
+                .ExecuteDeleteAsync();
+
+            await _context.FichaTecnicaSequencias
+                .Where(s => s.FichaTecnicaId == ficha.Id)
+                .ExecuteDeleteAsync();
+
             foreach (var item in novosItens)
-                fichaExistente.AdicionarItem(item);
+            {
+                item.SetFichaTecnicaId(ficha.Id);
+                _context.FichaTecnicaItens.Add(item);
+            }
 
-            _context.FichaTecnicaSequencias.RemoveRange(fichaExistente.Sequencias);
-            fichaExistente.LimparSequencias();
             foreach (var seq in novasSequencias)
-                fichaExistente.AdicionarSequencia(seq);
+            {
+                seq.SetFichaTecnicaId(ficha.Id);
+                _context.FichaTecnicaSequencias.Add(seq);
+            }
 
-            try { return await _context.SaveChangesAsync() > 0; }
-            catch { return false; }
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<string?> GetUltimoCodigoAsync()
