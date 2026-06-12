@@ -36,6 +36,11 @@ import { CondicoesPagamentoPage } from './pages/cadastros/CondicoesPagamentoPage
 import { CondicaoPagamentoFormPage } from './pages/cadastros/CondicaoPagamentoFormPage';
 import { InventariosPage } from './pages/estoque/InventariosPage';
 import { InventarioFormPage } from './pages/estoque/InventarioFormPage';
+import { FichaTecnicasPage } from './pages/producao/FichaTecnicasPage';
+import { ProdutosSemFichaPage } from './pages/producao/ProdutosSemFichaPage';
+import { FichaTecnicaPainelPage } from './pages/producao/FichaTecnicaPainelPage';
+import { FichaConsumoPage } from './pages/producao/FichaConsumoPage';
+import { SequenciaOperacionalPage } from './pages/producao/SequenciaOperacionalPage';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -179,6 +184,12 @@ const App = () => (
       <Route path="/estoque/inventario/novo" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/estoque/inventario/:id/editar" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/estoque/inventario/:id" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/producao/fichas-tecnicas" element={<PrivateRoute><AppLayout><FichaTecnicasPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/fichas-tecnicas/novo" element={<PrivateRoute><AppLayout><ProdutosSemFichaPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/fichas-tecnicas/:id" element={<PrivateRoute><AppLayout><FichaTecnicaPainelPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/fichas-tecnicas/:id/consumo" element={<PrivateRoute><AppLayout><FichaConsumoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/fichas-tecnicas/:id/sequencia-operacional" element={<PrivateRoute><AppLayout><SequenciaOperacionalPage /></AppLayout></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

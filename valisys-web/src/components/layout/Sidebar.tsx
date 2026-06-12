@@ -106,7 +106,7 @@ const NAV_ITEMS: NavItemDef[] = [
     href: '/producao',
     children: [
       { label: 'Apontamentos',       href: '/apontamentos' },
-      { label: 'Ficha Técnica',      href: '/fichaTecnica' },
+      { label: 'Ficha Técnica',      href: '/producao/fichas-tecnicas' },
       { label: 'Kanban',             href: '/kanban' },
       { label: 'Lotes',              href: '/lotes' },
       { label: 'Ordens de Produção', href: '/ordensProducao' },

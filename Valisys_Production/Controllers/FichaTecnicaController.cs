@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Valisys_Production.DTOs;
 using Valisys_Production.Infrastructure.Authorization;
@@ -43,6 +43,12 @@ namespace Valisys_Production.Controllers
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         public async Task<ActionResult<object>> GetProximoCodigo()
             => Ok(new { codigo = await _service.ObterProximoCodigoAsync() });
+
+        [HttpGet("produtos-sem-ficha")]
+        [HasPermission(Permissions.FichasTecnicas.Visualizar)]
+        [ProducesResponseType(typeof(IEnumerable<ProdutoReadDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<ProdutoReadDto>>> GetProdutosSemFicha()
+            => Ok(_mapper.Map<IEnumerable<ProdutoReadDto>>(await _service.GetProdutosSemFichaAsync()));
 
         [HttpPost]
         [HasPermission(Permissions.FichasTecnicas.Criar)]

@@ -5,6 +5,7 @@ namespace Valisys_Production.Models
     public class FichaTecnica : BaseModels
     {
         private readonly List<FichaTecnicaItem> _itens = new();
+        private readonly List<FichaTecnicaSequencia> _sequencias = new();
 
         public string? CodigoFicha { get; private set; }
         public string Versao { get; private set; } = string.Empty;
@@ -14,6 +15,7 @@ namespace Valisys_Production.Models
         public Produto Produto { get; private set; } = null!;
 
         public IReadOnlyCollection<FichaTecnicaItem> Itens => _itens.AsReadOnly();
+        public IReadOnlyCollection<FichaTecnicaSequencia> Sequencias => _sequencias.AsReadOnly();
 
         protected FichaTecnica() { }
 
@@ -27,8 +29,10 @@ namespace Valisys_Production.Models
         public void DefinirCodigo(string codigo) => CodigoFicha = codigo;
 
         public void AdicionarItem(FichaTecnicaItem item) => _itens.Add(item);
-
         public void LimparItens() => _itens.Clear();
+
+        public void AdicionarSequencia(FichaTecnicaSequencia sequencia) => _sequencias.Add(sequencia);
+        public void LimparSequencias() => _sequencias.Clear();
 
         public void Inativar() => Desativar();
 

@@ -128,13 +128,21 @@ namespace Valisys_Production.Helpers
             // Ficha Técnica
             CreateMap<FichaTecnica, FichaTecnicaReadDto>()
                 .ForMember(dest => dest.ProdutoNome, opt => opt.MapFrom(src => src.Produto.Nome))
+                .ForMember(dest => dest.ProdutoCodigo, opt => opt.MapFrom(src => src.Produto.CodigoInternoProduto.ToString()))
+                .ForMember(dest => dest.ProdutoImagemUrl, opt => opt.MapFrom(src => src.Produto.ImagemUrl))
                 .ForMember(dest => dest.Codigo, opt => opt.MapFrom(src => src.CodigoFicha))
                 .ForMember(dest => dest.Ativa, opt => opt.MapFrom(src => src.Ativo));
 
             CreateMap<FichaTecnicaItem, FichaTecnicaItemReadDto>()
                 .ForMember(dest => dest.ProdutoComponenteNome, opt => opt.MapFrom(src => src.ProdutoComponente.Nome))
                 .ForMember(dest => dest.ProdutoComponenteCodigo, opt => opt.MapFrom(src => src.ProdutoComponente.CodigoInternoProduto))
-                .ForMember(dest => dest.UnidadeMedida, opt => opt.MapFrom(src => src.ProdutoComponente.UnidadeMedida.Sigla));
+                .ForMember(dest => dest.UnidadeMedida, opt => opt.MapFrom(src => src.ProdutoComponente.UnidadeMedida.Sigla))
+                .ForMember(dest => dest.FaseProducaoNome, opt => opt.MapFrom(src => src.FaseProducao != null ? src.FaseProducao.Nome : null))
+                .ForMember(dest => dest.CorNome, opt => opt.MapFrom(src => src.Cor != null ? src.Cor.Nome : null))
+                .ForMember(dest => dest.CorHex, opt => opt.MapFrom(src => src.Cor != null ? src.Cor.CodigoHex : null));
+
+            CreateMap<FichaTecnicaSequencia, FichaTecnicaSequenciaReadDto>()
+                .ForMember(dest => dest.FaseProducaoNome, opt => opt.MapFrom(src => src.FaseProducao.Nome));
 
             // Roteiro de Produção
             CreateMap<RoteiroProducao, RoteiroProducaoReadDto>()

@@ -42,6 +42,7 @@ namespace Valisys_Production.Data
         public DbSet<TipoOrdemDeProducao> TiposDeOrdemDeProducao { get; set; }
         public DbSet<FichaTecnica> FichasTecnicas { get; set; }
         public DbSet<FichaTecnicaItem> FichaTecnicaItens { get; set; }
+        public DbSet<FichaTecnicaSequencia> FichaTecnicaSequencias { get; set; }
         public DbSet<RoteiroProducao> RoteirosProducao { get; set; }
         public DbSet<RoteiroProducaoEtapa> RoteiroProducaoEtapas { get; set; }
         public DbSet<LogSistema> LogsSistema { get; set; }
@@ -162,6 +163,9 @@ namespace Valisys_Production.Data
                 .HasForeignKey(f => f.ProdutoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<FichaTecnica>()
+                .Navigation(f => f.Sequencias).HasField("_sequencias");
+
             modelBuilder.Entity<FichaTecnicaItem>()
                 .HasOne(i => i.FichaTecnica)
                 .WithMany(f => f.Itens)
@@ -172,6 +176,32 @@ namespace Valisys_Production.Data
                 .HasOne(i => i.ProdutoComponente)
                 .WithMany()
                 .HasForeignKey(i => i.ProdutoComponenteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FichaTecnicaItem>()
+                .HasOne(i => i.FaseProducao)
+                .WithMany()
+                .HasForeignKey(i => i.FaseProducaoId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FichaTecnicaItem>()
+                .HasOne(i => i.Cor)
+                .WithMany()
+                .HasForeignKey(i => i.CorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FichaTecnicaSequencia>()
+                .HasOne(s => s.FichaTecnica)
+                .WithMany(f => f.Sequencias)
+                .HasForeignKey(s => s.FichaTecnicaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FichaTecnicaSequencia>()
+                .HasOne(s => s.FaseProducao)
+                .WithMany()
+                .HasForeignKey(s => s.FaseProducaoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<RoteiroProducao>()
