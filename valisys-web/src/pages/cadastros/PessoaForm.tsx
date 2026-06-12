@@ -8,6 +8,7 @@ import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -106,41 +107,6 @@ function Sel({ error, readOnly, children, ...p }: React.SelectHTMLAttributes<HTM
       </select>
       <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
     </div>
-  );
-}
-
-// ─── Date input ───────────────────────────────────────────────────────────────
-
-function DateInput({ value, onChange, error, readOnly }: {
-  value: string; onChange: (iso: string) => void; error?: string; readOnly?: boolean;
-}) {
-  const toDisplay = (iso: string) => {
-    if (!iso) return '';
-    const [y, m, d] = iso.split('-');
-    return `${d ?? ''}/${m ?? ''}/${y ?? ''}`;
-  };
-  const [display, setDisplay] = useState(() => toDisplay(value));
-
-  useEffect(() => { setDisplay(toDisplay(value)); }, [value]);
-
-  const handleAccept = (raw: string) => {
-    setDisplay(raw);
-    const digits = raw.replace(/\D/g, '');
-    if (digits.length === 8) {
-      const d = digits.slice(0, 2), m = digits.slice(2, 4), y = digits.slice(4, 8);
-      onChange(`${y}-${m}-${d}`);
-    } else onChange('');
-  };
-
-  return (
-    <IMaskInput
-      mask="00/00/0000"
-      value={display}
-      onAccept={handleAccept}
-      placeholder="DD/MM/AAAA"
-      readOnly={readOnly}
-      className={inputCls(!!error, readOnly)}
-    />
   );
 }
 
@@ -274,7 +240,8 @@ export function PessoaFormPage() {
     : location.pathname.endsWith('/editar') ? 'editar'
     : 'visualizar';
 
-  const ro = modo === 'visualizar';
+  const ro   = modo === 'visualizar';
+  const roId = ro || modo === 'editar'; // CPF / RG / CNPJ imutáveis após criação
 
   const [tipo, setTipo]       = useState<Tipo>(tipoParam === 'juridica' ? 'juridica' : 'fisica');
   const [loading, setLoading] = useState(false);
@@ -571,18 +538,18 @@ export function PessoaFormPage() {
                 {/* Identificação PF */}
                 {tipo === 'fisica' ? (
                   <Section title="Identificação · Pessoa Física">
-                    <Field label="CPF" required={!ro} error={errors.cpf} span={3}>
+                    <Field label="CPF" required={!roId} error={errors.cpf} span={3}>
                       <IMaskInput mask="000.000.000-00" value={f.cpf}
                         onAccept={(v: string) => set('cpf', v)}
-                        placeholder="000.000.000-00" readOnly={ro}
-                        className={inputCls(!!errors.cpf, ro)} />
+                        placeholder="000.000.000-00" readOnly={roId}
+                        className={inputCls(!!errors.cpf, roId)} />
                     </Field>
 
                     <Field label="RG" span={3}>
                       <IMaskInput mask="00.000.000-[*]" value={f.rg}
                         onAccept={(v: string) => set('rg', v)}
-                        placeholder="00.000.000-0" readOnly={ro}
-                        className={inputCls(false, ro)} />
+                        placeholder="00.000.000-0" readOnly={roId}
+                        className={inputCls(false, roId)} />
                     </Field>
 
                     <Field label="Órgão Expedidor" span={2}>
@@ -592,7 +559,7 @@ export function PessoaFormPage() {
                     </Field>
 
                     <Field label="Data de Nascimento" span={2}>
-                      <DateInput value={f.dataNascimento} onChange={v => set('dataNascimento', v)} readOnly={ro} />
+                      <DatePicker value={f.dataNascimento} onChange={v => set('dataNascimento', v)} disabled={ro} />
                     </Field>
 
                     <Field label="Sexo" span={2}>
@@ -606,13 +573,13 @@ export function PessoaFormPage() {
                   </Section>
                 ) : (
                   <Section title="Identificação · Pessoa Jurídica">
-                    <Field label="CNPJ" required={!ro} error={errors.cnpj} span={4}>
+                    <Field label="CNPJ" required={!roId} error={errors.cnpj} span={4}>
                       <div className="relative">
                         <IMaskInput mask="00.000.000/0000-00" value={f.cnpj}
                           onAccept={(v: string) => set('cnpj', v)}
-                          onBlur={!ro ? handleCnpjBlur : undefined}
-                          placeholder="00.000.000/0000-00" readOnly={ro}
-                          className={cn(inputCls(!!errors.cnpj, ro), loadingCnpj && 'pr-8')} />
+                          onBlur={!roId ? handleCnpjBlur : undefined}
+                          placeholder="00.000.000/0000-00" readOnly={roId}
+                          className={cn(inputCls(!!errors.cnpj, roId), loadingCnpj && 'pr-8')} />
                         {loadingCnpj && (
                           <Loader2 size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 animate-spin pointer-events-none" />
                         )}

@@ -80,6 +80,12 @@ const NAV_ITEMS: NavItemDef[] = [
     href: '/producao',
     children: [
       { label: 'Produção',         href: '/producao' },
+      { label: 'Ordens de Produção',         href: '/ordensProducao' },
+      { label: 'Ficha Técnica',         href: '/fichaTecnica' },
+      { label: 'Roteiros de Produção',         href: '/roteirosProducao' },
+      { label: 'Kanban',         href: '/kanban' },
+      { label: 'Apontamentos',         href: '/apontamentos' },
+      { label: 'Lotes',         href: '/lotes' },
     ],
   },
   {
@@ -126,6 +132,17 @@ const NAV_ITEMS: NavItemDef[] = [
     ],
   },
 ];
+
+const CONFIG_ITEM: NavItemDef = {
+  icon: SlidersHorizontal,
+  label: 'Configurações',
+  href: '/configuracoes',
+   children: [
+     { label: 'Usuários',     href: '/configuracoes/usuarios' },
+     { label: 'Perfis',   href: '/configuracoes/perfis' },
+     { label: 'Logs',  href: '/configuracoes/Logs' },
+   ],
+};
 
 interface FlyoutProps {
   item: NavItemDef;
@@ -317,33 +334,54 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
         {/* Configurações + Sair */}
         <div className="px-2 py-3 border-t border-gray-100 space-y-0.5">
           {/* Configurações */}
-          <div className="relative group/tip">
-            <button
-              onClick={() => { window.location.href = '/configuracoes'; }}
-              className={cn(
-                'flex items-center justify-center rounded-lg transition-colors',
-                currentPath.startsWith('/configuracoes')
-                  ? 'bg-[#3B82F6] text-white shadow-sm shadow-blue-200'
-                  : 'text-gray-400 hover:bg-blue-50 hover:text-[#3B82F6]',
-                showLabels ? 'gap-3 px-3 py-2.5 w-full' : 'w-10 h-10 mx-auto',
-              )}
-            >
-              <SlidersHorizontal size={17} className="shrink-0" />
-              {showLabels && <span className="text-sm font-medium flex-1 text-left">Configurações</span>}
-            </button>
-
-            {!showLabels && (
-              <span className="
-                pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3
-                px-2.5 py-1 rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
-                opacity-0 group-hover/tip:opacity-100
-                translate-x-1 group-hover/tip:translate-x-0
-                transition-all duration-150 z-50">
-                Configurações
-                <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-800" />
-              </span>
-            )}
-          </div>
+          {(() => {
+            const item = CONFIG_ITEM;
+            const active = currentPath.startsWith(item.href);
+            const isOpen = flyout?.id === item.href;
+            const Icon = item.icon;
+            if (showLabels) {
+              return (
+                <a
+                  href={item.children || item.groups ? undefined : item.href}
+                  onClick={item.children || item.groups ? (e) => handleClick(item, e) : undefined}
+                  className={cn(
+                    'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
+                    active ? 'bg-[#3B82F6] text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-[#3B82F6]',
+                  )}
+                >
+                  <Icon size={17} className="shrink-0" />
+                  <span className="flex-1 whitespace-nowrap">{item.label}</span>
+                  {(item.children || item.groups) && <ChevronRight size={13} className="opacity-40" />}
+                </a>
+              );
+            }
+            return (
+              <div className="relative group/tip">
+                <button
+                  onClick={(e) => handleClick(item, e)}
+                  className={cn(
+                    'flex items-center justify-center w-10 h-10 rounded-md mx-auto transition-all duration-100',
+                    active || isOpen
+                      ? 'bg-[#3B82F6] text-white shadow-sm shadow-blue-200'
+                      : 'text-gray-400 hover:bg-blue-50 hover:text-[#3B82F6]',
+                  )}
+                >
+                  <Icon size={20} />
+                </button>
+                {!isOpen && (
+                  <span className="
+                    pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3
+                    px-2.5 py-1 rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                    opacity-0 group-hover/tip:opacity-100
+                    translate-x-1 group-hover/tip:translate-x-0
+                    transition-all duration-150 z-50">
+                    {item.label}
+                    <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-800" />
+                  </span>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Sair */}
           <div className="relative group/tip">
@@ -374,7 +412,7 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
       </aside>
       <AnimatePresence>
         {flyout && (() => {
-          const item = NAV_ITEMS.find(i => i.href === flyout.id);
+          const item = [...NAV_ITEMS, CONFIG_ITEM].find(i => i.href === flyout.id);
           return (item?.children || item?.groups) ? (
             <Flyout
               key={flyout.id}

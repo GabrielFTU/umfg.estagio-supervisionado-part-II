@@ -172,7 +172,7 @@ export function ClientesPage() {
       const [fisicas, juridicas]: [any[], any[]] = await Promise.all([rF.json(), rJ.json()]);
 
       const lista: PessoaItem[] = [
-        ...fisicas.map(p => ({
+        ...fisicas.filter(p => p.papelPessoa & 1).map(p => ({
           id: p.id, tipo: 'fisica' as const,
           doc: p.cpf, nome: p.nome,
           inscricaoEstadual: p.inscricaoEstadual ?? null,
@@ -181,7 +181,7 @@ export function ClientesPage() {
           cidade: p.endereco?.cidade ?? '—', uf: p.endereco?.uf ?? '',
           ativo: p.ativo, bloqueado: p.bloqueado ?? false,
         })),
-        ...juridicas.map(p => ({
+        ...juridicas.filter(p => p.papelPessoa & 1).map(p => ({
           id: p.id, tipo: 'juridica' as const,
           doc: p.cnpj, nome: p.razaoSocial,
           inscricaoEstadual: p.inscricaoEstadual ?? null,

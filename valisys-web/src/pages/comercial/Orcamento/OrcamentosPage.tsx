@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -361,7 +362,6 @@ function FiltersPanel({ filters, onChange, onClose, clientes, vendedores, produt
   const apply = () => { onChange(local); onClose(); };
   const reset = () => { const d = { ...DEFAULT_FILTERS, statuses: [...DEFAULT_FILTERS.statuses] }; setLocal(d); onChange(d); onClose(); };
 
-  const dateInputCls = 'flex-1 h-8 px-2 text-xs border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-gray-700 bg-white';
 
   return (
     <div className="absolute z-40 right-0 top-full mt-1.5 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
@@ -426,18 +426,18 @@ function FiltersPanel({ filters, onChange, onClose, clientes, vendedores, produt
         <div>
           <p className="text-xs font-semibold text-gray-700 mb-1.5">Data de Emissão</p>
           <div className="flex items-center gap-2">
-            <input type="date" value={local.emissaoFrom} onChange={e => set('emissaoFrom', e.target.value)} className={dateInputCls} />
+            <DatePicker value={local.emissaoFrom} onChange={v => set('emissaoFrom', v)} />
             <span className="text-xs text-gray-500 shrink-0">até</span>
-            <input type="date" value={local.emissaoTo} onChange={e => set('emissaoTo', e.target.value)} className={dateInputCls} />
+            <DatePicker value={local.emissaoTo} onChange={v => set('emissaoTo', v)} />
           </div>
         </div>
 
         <div>
           <p className="text-xs font-semibold text-gray-700 mb-1.5">Validade</p>
           <div className="flex items-center gap-2">
-            <input type="date" value={local.validadeFrom} onChange={e => set('validadeFrom', e.target.value)} className={dateInputCls} />
+            <DatePicker value={local.validadeFrom} onChange={v => set('validadeFrom', v)} />
             <span className="text-xs text-gray-500 shrink-0">até</span>
-            <input type="date" value={local.validadeTo} onChange={e => set('validadeTo', e.target.value)} className={dateInputCls} />
+            <DatePicker value={local.validadeTo} onChange={v => set('validadeTo', v)} />
           </div>
         </div>
 
