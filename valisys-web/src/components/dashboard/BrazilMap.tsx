@@ -11,37 +11,23 @@ const GEO_URL =
 function stateColor(value: number, max: number): string {
   if (!value) return '#fef2f2';
   const t = Math.min(value / max, 1);
-  const r = Math.round(254 - t * 101); // 254 → 153
-  const g = Math.round(202 - t * 175); // 202 → 27
-  const b = Math.round(202 - t * 175); // 202 → 27
+  const r = Math.round(254 - t * 101);
+  const g = Math.round(202 - t * 175);
+  const b = Math.round(202 - t * 175);
   return `rgb(${r},${g},${b})`;
 }
 
-
-interface PathProps {
+interface MemoPathProps {
   feature: StateFeature;
   d: string;
   fill: string;
+  value: number;
   onEnter: (name: string, sigla: string, value: number) => void;
   onLeave: () => void;
+  onClick?: (sigla: string) => void;
 }
 
-const StatePath = ({ d, fill, feature, onEnter, onLeave }: PathProps) => (
-  <path
-    d={d}
-    fill={fill}
-    stroke="#fff"
-    strokeWidth={0.6}
-    onMouseEnter={() =>
-      onEnter(feature.properties.name, feature.properties.sigla, 0)
-    }
-    onMouseLeave={onLeave}
-    style={{ willChange: 'filter' }}
-    className="hover:brightness-[0.88] transition-[filter] duration-75 cursor-default"
-  />
-);
-
-const MemoPath = ({ d, fill, feature, value, onEnter, onLeave }: PathProps & { value: number }) => {
+const MemoPath = ({ d, fill, feature, value, onEnter, onLeave, onClick }: MemoPathProps) => {
   const handleEnter = useCallback(
     () => onEnter(feature.properties.name, feature.properties.sigla, value),
     [feature.properties.name, feature.properties.sigla, value, onEnter],
@@ -54,16 +40,16 @@ const MemoPath = ({ d, fill, feature, value, onEnter, onLeave }: PathProps & { v
       strokeWidth={0.6}
       onMouseEnter={handleEnter}
       onMouseLeave={onLeave}
+      onClick={() => onClick?.(feature.properties.sigla)}
       style={{ willChange: 'filter' }}
-      className="hover:brightness-[0.88] transition-[filter] duration-75 cursor-default"
+      className={`hover:brightness-[0.88] transition-[filter] duration-75 ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
     />
   );
 };
 
-void StatePath; // unused but kept for reference
-
 export interface BrazilMapProps {
   data: Record<string, number>;
+  onStateClick?: (sigla: string) => void;
 }
 
 interface Hovered { name: string; sigla: string; value: number }
@@ -71,7 +57,7 @@ interface Hovered { name: string; sigla: string; value: number }
 const W = 380;
 const H = 320;
 
-export function BrazilMap({ data }: BrazilMapProps) {
+export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
   const [features, setFeatures] = useState<StateFeature[]>([]);
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [hovered, setHovered] = useState<Hovered | null>(null);
@@ -149,6 +135,7 @@ export function BrazilMap({ data }: BrazilMapProps) {
             value={value}
             onEnter={handleEnter}
             onLeave={handleLeave}
+            onClick={onStateClick}
           />
         ))}
       </svg>
@@ -163,24 +150,26 @@ export function BrazilMap({ data }: BrazilMapProps) {
       >
         {hovered && (
           <>
-            <p className="font-semibold">{hovered.name}</p>
+            <p className="font-semibold">{hovered.name} <span className="text-gray-400">({hovered.sigla})</span></p>
             <p className="text-gray-300 mt-0.5">
               {hovered.value > 0
-                ? `${hovered.value.toLocaleString('pt-BR')} vendas`
+                ? `${hovered.value.toLocaleString('pt-BR')} pedido${hovered.value !== 1 ? 's' : ''}`
                 : 'Sem dados'}
             </p>
+            {onStateClick && (
+              <p className="text-blue-300 mt-0.5 text-[10px]">Clique para detalhes</p>
+            )}
           </>
         )}
       </div>
 
-      {/* Legenda */}
       <div className="flex items-center gap-2 px-3 pb-2 mt-1">
         <span className="text-[10px] text-gray-400 whitespace-nowrap">Menos</span>
         <div
           className="flex-1 h-1.5 rounded-full"
           style={{ background: 'linear-gradient(to right, #fef2f2, #991b1b)' }}
         />
-        <span className="text-[10px] text-gray-400 whitespace-nowrap">Mais vendas</span>
+        <span className="text-[10px] text-gray-400 whitespace-nowrap">Mais pedidos</span>
       </div>
     </div>
   );

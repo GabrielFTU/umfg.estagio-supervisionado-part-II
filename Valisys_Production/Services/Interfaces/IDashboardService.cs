@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Valisys_Production.DTOs;
 
 namespace Valisys_Production.Services.Interfaces
@@ -6,5 +6,6 @@ namespace Valisys_Production.Services.Interfaces
     public interface IDashboardService
     {
         Task<DashboardStatsDto> GetStatsAsync();
+        Task<EstadoDetalhesDto> GetEstadoDetalhesAsync(string sigla);
     }
 }

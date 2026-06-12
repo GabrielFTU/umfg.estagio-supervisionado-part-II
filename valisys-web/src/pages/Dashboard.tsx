@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, type FC } from 'react';
 import {
   Pencil, Check, GripVertical, EyeOff, Eye,
   DollarSign, ShoppingBag, Package, Users,
-  ChevronRight, Home, TrendingUp, TrendingDown,
+  ChevronRight, Home, TrendingUp, TrendingDown, X,
+  MapPin, Loader2,
 } from 'lucide-react';
 import { BrazilMap } from '@/components/dashboard/BrazilMap';
 import {
@@ -12,80 +13,392 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 
-const VENDAS_CARDS = [
-  { icon: DollarSign, label: 'Total de vendas',    value: 'R$1.000', change: '+8% do que ontem',   up: true },
-  { icon: ShoppingBag, label: 'Total de pedidos',  value: '300',     change: '+5% do que ontem',   up: true },
-  { icon: Package,    label: 'Produtos vendidos',  value: '5',       change: '+1,2% do que ontem', up: true },
-  { icon: Users,      label: 'Novos clientes',     value: '8',       change: '+0,5% do que ontem', up: true },
-];
+// ── Types ────────────────────────────────────────────────────────────────────
 
-const TOP_PRODUCTS = [
-  { rank: '01', name: 'Barco 1', pct: 45, color: '#3B82F6' },
-  { rank: '02', name: 'Barco 2', pct: 29, color: '#10B981' },
-  { rank: '03', name: 'Barco 3', pct: 25, color: '#8B5CF6' },
-  { rank: '04', name: 'Barco 4', pct: 18, color: '#F59E0B' },
-];
+interface VendasResumo {
+  totalVendas: number;
+  totalPedidos: number;
+  produtosVendidos: number;
+  novosClientes: number;
+  variacaoVendas: number;
+  variacaoPedidos: number;
+  variacaoProdutos: number;
+  variacaoClientes: number;
+}
 
-const WEEKLY_DATA = [
-  { day: 'Seg', aReceber: 18, aPagar: 12 },
-  { day: 'Ter', aReceber: 20, aPagar: 15 },
-  { day: 'Qua', aReceber: 13, aPagar: 20 },
-  { day: 'Qui', aReceber: 10, aPagar: 8  },
-  { day: 'Sex', aReceber: 17, aPagar: 14 },
-  { day: 'Sáb', aReceber: 15, aPagar: 16 },
-];
+interface TopProduto {
+  nome: string;
+  quantidade: number;
+  percentual: number;
+}
 
-const DELAYS_DATA = [
-  { month: 'Jan', mais15: 180, mais30: 280 },
-  { month: 'Fev', mais15: 220, mais30: 310 },
-  { month: 'Mar', mais15: 260, mais30: 200 },
-  { month: 'Abr', mais15: 310, mais30: 255 },
-  { month: 'Mai', mais15: 280, mais30: 380 },
-  { month: 'Jun', mais15: 330, mais30: 295 },
-  { month: 'Jul', mais15: 220, mais30: 345 },
-  { month: 'Ago', mais15: 190, mais30: 270 },
-  { month: 'Set', mais15: 240, mais30: 190 },
-  { month: 'Out', mais15: 300, mais30: 315 },
-  { month: 'Nov', mais15: 270, mais30: 230 },
-  { month: 'Dez', mais15: 350, mais30: 400 },
-];
+interface FluxoSemanal {
+  dia: string;
+  aReceber: number;
+  aPagar: number;
+}
 
-const SOLD_GOAL_DATA = [
-  { month: 'Jan', vendido: 280, meta: 350 },
-  { month: 'Fev', vendido: 320, meta: 350 },
-  { month: 'Mar', vendido: 370, meta: 350 },
-  { month: 'Abr', vendido: 290, meta: 380 },
-  { month: 'Mai', vendido: 400, meta: 380 },
-  { month: 'Jun', vendido: 355, meta: 400 },
-  { month: 'Jul', vendido: 430, meta: 400 },
-];
+interface DelaysMensais {
+  mes: string;
+  mais15: number;
+  mais30: number;
+}
 
-const LEAD_DATA = [
-  { day: 'Seg', producao: 22, entrega: 15 },
-  { day: 'Ter', producao: 18, entrega: 20 },
-  { day: 'Qua', producao: 25, entrega: 13 },
-  { day: 'Qui', producao: 12, entrega: 18 },
-  { day: 'Sex', producao: 20, entrega: 14 },
-  { day: 'Sáb', producao: 16, entrega: 10 },
-];
+interface VendasMensais {
+  mes: string;
+  vendido: number;
+}
 
-const PRODUCTION_DATA = [
-  { prod: '1', produzido: 180, previsto: 200 },
-  { prod: '2', produzido: 240, previsto: 220 },
-  { prod: '3', produzido: 160, previsto: 190 },
-  { prod: '4', produzido: 290, previsto: 260 },
-  { prod: '5', produzido: 210, previsto: 230 },
-  { prod: '6', produzido: 320, previsto: 300 },
-];
+interface DashboardData {
+  vendasResumo: VendasResumo;
+  topProdutos: TopProduto[];
+  vendasPorEstado: Record<string, number>;
+  fluxoSemanal: FluxoSemanal[];
+  recebimentosMensais: DelaysMensais[];
+  vendasMensais: VendasMensais[];
+  // produção
+  opsPorFase: { nome: string; valor: number }[];
+  opsPorMes: { nome: string; valor: number }[];
+  totalOpsAtivas: number;
+  totalOpsFinalizadas: number;
+  totalOpsAtrasadas: number;
+  tempoMedioProducao: number;
+}
 
-const STATES_SALES: Record<string, number> = {
-  SP: 950, RJ: 780, MG: 650, RS: 580, PR: 520,
-  BA: 430, SC: 410, GO: 350, PE: 330, CE: 300,
-  AM: 250, PA: 220, MT: 200, MS: 180, ES: 170,
-  MA: 150, DF: 140, RN: 120, PB: 110, AL: 100,
-  PI: 90,  RO: 80,  TO: 70,  SE: 60,  AC: 50,
-  AP: 40,  RR: 30,
+interface EstadoDetalhes {
+  sigla: string;
+  totalPedidos: number;
+  totalVendas: number;
+  topProdutos: { nome: string; quantidade: number; valorTotal: number }[];
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatBRL(v: number) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatVariacao(v: number): string {
+  const abs = Math.abs(v).toFixed(1);
+  return `${v >= 0 ? '+' : '-'}${abs}% em relação ao mês anterior`;
+}
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const token = localStorage.getItem('token');
+  const res = await fetch(path, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+// ── Panel constants ───────────────────────────────────────────────────────────
+
+const axisStyle = { fontSize: 10, fill: '#9ca3af' };
+const gridProps = { stroke: '#f3f4f6', strokeDasharray: '3 3' };
+const tooltipStyle = {
+  contentStyle: {
+    fontSize: 11,
+    borderRadius: 8,
+    border: '1px solid #e5e7eb',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08)',
+  },
 };
+
+const PANEL_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444'];
+
+// ── Panel components ─────────────────────────────────────────────────────────
+
+function VendasPanel({ data }: { data?: VendasResumo }) {
+  const cards = [
+    {
+      icon: DollarSign, label: 'Total de vendas',
+      value: data ? formatBRL(data.totalVendas) : '—',
+      change: data ? formatVariacao(data.variacaoVendas) : '',
+      up: (data?.variacaoVendas ?? 0) >= 0,
+    },
+    {
+      icon: ShoppingBag, label: 'Total de pedidos',
+      value: data ? String(data.totalPedidos) : '—',
+      change: data ? formatVariacao(data.variacaoPedidos) : '',
+      up: (data?.variacaoPedidos ?? 0) >= 0,
+    },
+    {
+      icon: Package, label: 'Produtos vendidos',
+      value: data ? String(data.produtosVendidos) : '—',
+      change: data ? formatVariacao(data.variacaoProdutos) : '',
+      up: (data?.variacaoProdutos ?? 0) >= 0,
+    },
+    {
+      icon: Users, label: 'Novos clientes',
+      value: data ? String(data.novosClientes) : '—',
+      change: data ? formatVariacao(data.variacaoClientes) : '',
+      up: (data?.variacaoClientes ?? 0) >= 0,
+    },
+  ];
+
+  return (
+    <div className="p-5">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        {cards.map(({ icon: Icon, label, value, change, up }) => (
+          <div key={label} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-9 h-9 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
+                <Icon size={17} className="text-[#3B82F6]" />
+              </div>
+            </div>
+            <p className="text-xl font-bold text-gray-800">{value}</p>
+            <p className="text-xs text-gray-500 mt-0.5 leading-tight">{label}</p>
+            {change && (
+              <p className={cn('text-[11px] mt-1.5 font-medium flex items-center gap-1', up ? 'text-emerald-600' : 'text-red-500')}>
+                {up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                {change}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TopProductsPanel({ data }: { data?: TopProduto[] }) {
+  const items = data ?? [];
+
+  return (
+    <div className="p-5">
+      <div className="flex justify-between text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3 px-1">
+        <span>#</span>
+        <span className="flex-1 ml-3">Nome</span>
+        <span>Qtd</span>
+        <span className="ml-3 w-10 text-right">%</span>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-xs text-gray-400 text-center py-4">Sem dados no período</p>
+      ) : (
+        <div className="space-y-3">
+          {items.map(({ nome, quantidade, percentual }, idx) => (
+            <div key={nome} className="flex items-center gap-3">
+              <span className="text-[11px] text-gray-400 font-medium w-5 shrink-0">
+                {String(idx + 1).padStart(2, '0')}
+              </span>
+              <span className="text-xs text-gray-700 w-20 shrink-0 truncate" title={nome}>{nome}</span>
+              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${percentual}%`, backgroundColor: PANEL_COLORS[idx % PANEL_COLORS.length] }}
+                />
+              </div>
+              <span className="text-[10px] text-gray-500 w-8 text-right shrink-0">{quantidade}</span>
+              <span
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                style={{
+                  backgroundColor: PANEL_COLORS[idx % PANEL_COLORS.length] + '20',
+                  color: PANEL_COLORS[idx % PANEL_COLORS.length],
+                }}
+              >
+                {percentual.toFixed(0)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PayablesPanel({ data }: { data?: FluxoSemanal[] }) {
+  const chartData = data ?? [];
+  return (
+    <div className="p-5">
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={chartData} barSize={8} barGap={3}>
+          <CartesianGrid {...gridProps} vertical={false} />
+          <XAxis dataKey="dia" tick={axisStyle} axisLine={false} tickLine={false} />
+          <YAxis tick={axisStyle} axisLine={false} tickLine={false}
+            tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} width={32} />
+          <Tooltip {...tooltipStyle} formatter={(v) => [formatBRL(Number(v))]} />
+          <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+          <Bar dataKey="aReceber" name="A receber" fill="#3B82F6" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="aPagar"   name="A pagar"   fill="#10B981" radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function DelaysPanel({ data }: { data?: DelaysMensais[] }) {
+  const chartData = data ?? [];
+  return (
+    <div className="p-5">
+      <ResponsiveContainer width="100%" height={180}>
+        <LineChart data={chartData}>
+          <CartesianGrid {...gridProps} />
+          <XAxis dataKey="mes" tick={axisStyle} axisLine={false} tickLine={false} />
+          <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={28} />
+          <Tooltip {...tooltipStyle} />
+          <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+          <Line dataKey="mais15" name="Atrasado +15 dias" stroke="#10B981" strokeWidth={2} dot={false} />
+          <Line dataKey="mais30" name="Atrasado +30 dias" stroke="#EF4444" strokeWidth={2} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function SoldGoalPanel({ data }: { data?: VendasMensais[] }) {
+  const chartData = data ?? [];
+  return (
+    <div className="p-5">
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={chartData} barSize={14} barGap={3}>
+          <CartesianGrid {...gridProps} vertical={false} />
+          <XAxis dataKey="mes" tick={axisStyle} axisLine={false} tickLine={false} />
+          <YAxis tick={axisStyle} axisLine={false} tickLine={false}
+            tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} width={32} />
+          <Tooltip {...tooltipStyle} formatter={(v) => [formatBRL(Number(v))]} />
+          <Bar dataKey="vendido" name="Vendido" fill="#1d4ed8" radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function LeadTimePanel({ data }: { data?: { nome: string; valor: number }[] }) {
+  const chartData = (data ?? []).map(x => ({ fase: x.nome, ops: x.valor }));
+  return (
+    <div className="p-5">
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={chartData} barSize={14} barGap={3} layout="vertical">
+          <CartesianGrid {...gridProps} horizontal={false} />
+          <XAxis type="number" tick={axisStyle} axisLine={false} tickLine={false} />
+          <YAxis dataKey="fase" type="category" tick={axisStyle} axisLine={false} tickLine={false} width={60} />
+          <Tooltip {...tooltipStyle} />
+          <Bar dataKey="ops" name="OPs" fill="#3B82F6" radius={[0, 3, 3, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function ProductionPanel({ data }: { data?: { nome: string; valor: number }[] }) {
+  const chartData = (data ?? []).map(x => ({ mes: x.nome, ops: x.valor }));
+  return (
+    <div className="p-5">
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={chartData} barSize={14} barGap={3}>
+          <CartesianGrid {...gridProps} vertical={false} />
+          <XAxis dataKey="mes" tick={axisStyle} axisLine={false} tickLine={false} />
+          <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={28} />
+          <Tooltip {...tooltipStyle} />
+          <Bar dataKey="ops" name="OPs Finalizadas" fill="#3B82F6" radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ── Estado Modal ─────────────────────────────────────────────────────────────
+
+function EstadoModal({ sigla, onClose }: { sigla: string; onClose: () => void }) {
+  const [data, setData]   = useState<EstadoDetalhes | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+    fetchJson<EstadoDetalhes>(`/api/Dashboard/estado/${sigla}`)
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => { setError(true); setLoading(false); });
+  }, [sigla]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
+              <MapPin size={15} className="text-[#3B82F6]" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">Estado: {sigla}</p>
+              <p className="text-[11px] text-gray-400">Detalhes de vendas</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        <div className="p-5">
+          {loading && (
+            <div className="flex items-center justify-center h-24 gap-2 text-gray-400">
+              <Loader2 size={16} className="animate-spin" />
+              <span className="text-sm">Carregando…</span>
+            </div>
+          )}
+          {error && (
+            <p className="text-sm text-red-400 text-center py-4">Não foi possível carregar os dados.</p>
+          )}
+          {data && !loading && (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <p className="text-[11px] text-gray-400">Total de pedidos</p>
+                  <p className="text-lg font-bold text-gray-800">{data.totalPedidos.toLocaleString('pt-BR')}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <p className="text-[11px] text-gray-400">Total em vendas</p>
+                  <p className="text-lg font-bold text-gray-800">{formatBRL(data.totalVendas)}</p>
+                </div>
+              </div>
+
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                Produtos mais vendidos
+              </p>
+              {data.topProdutos.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-2">Sem produtos registrados</p>
+              ) : (
+                <div className="space-y-2">
+                  {data.topProdutos.map((p, idx) => (
+                    <div key={p.nome} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
+                          style={{
+                            backgroundColor: PANEL_COLORS[idx % PANEL_COLORS.length] + '20',
+                            color: PANEL_COLORS[idx % PANEL_COLORS.length],
+                          }}
+                        >
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs text-gray-700 truncate" title={p.nome}>{p.nome}</span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-semibold text-gray-700">{p.quantidade}x</p>
+                        <p className="text-[10px] text-gray-400">{formatBRL(p.valorTotal)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Panel config / registry ───────────────────────────────────────────────────
 
 interface PanelConfig {
   id: string;
@@ -94,14 +407,14 @@ interface PanelConfig {
 }
 
 const PANEL_META: Record<string, { title: string; subtitle?: string }> = {
-  vendas:      { title: 'Vendas', subtitle: 'Apontamento de vendas' },
-  topProducts: { title: 'Produtos mais Vendidos' },
+  vendas:      { title: 'Vendas', subtitle: 'Mês atual vs mês anterior' },
+  topProducts: { title: 'Produtos mais Vendidos', subtitle: 'Últimos 30 dias' },
   payables:    { title: 'Total a pagar x Total a receber', subtitle: 'Últimos 7 dias' },
   delays:      { title: 'Financeiro – Recebimentos com atraso', subtitle: 'Últimos 12 meses' },
-  soldGoal:    { title: 'Quantidade vendida x meta' },
-  leadTime:    { title: 'Lead Time médio de Ordens de Produção' },
-  countries:   { title: 'Vendas por Estado', subtitle: 'Mapa do Brasil' },
-  production:  { title: 'Qtd. produzida x Qtd. prevista por produto' },
+  soldGoal:    { title: 'Vendas mensais', subtitle: 'Últimos 7 meses' },
+  leadTime:    { title: 'OPs por Fase de Produção', subtitle: 'Ordens ativas' },
+  countries:   { title: 'Vendas por Estado', subtitle: 'Mapa do Brasil — clique para detalhes' },
+  production:  { title: 'OPs Finalizadas por Mês', subtitle: 'Últimos 6 meses' },
 };
 
 const DEFAULT_PANELS: PanelConfig[] = [
@@ -115,179 +428,7 @@ const DEFAULT_PANELS: PanelConfig[] = [
   { id: 'production',  cols: 1, visible: true },
 ];
 
-const axisStyle = { fontSize: 10, fill: '#9ca3af' };
-const gridProps = { stroke: '#f3f4f6', strokeDasharray: '3 3' };
-const tooltipProps = {
-  contentStyle: {
-    fontSize: 11,
-    borderRadius: 8,
-    border: '1px solid #e5e7eb',
-    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08)',
-  },
-};
-
-function VendasPanel() {
-  return (
-    <div className="p-5">
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-        {VENDAS_CARDS.map(({ icon: Icon, label, value, change, up }) => (
-          <div key={label} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-9 h-9 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
-                <Icon size={17} className="text-[#3B82F6]" />
-              </div>
-            </div>
-            <p className="text-xl font-bold text-gray-800">{value}</p>
-            <p className="text-xs text-gray-500 mt-0.5 leading-tight">{label}</p>
-            <p className={cn('text-[11px] mt-1.5 font-medium flex items-center gap-1', up ? 'text-emerald-600' : 'text-red-500')}>
-              {up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-              {change}
-            </p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TopProductsPanel() {
-  return (
-    <div className="p-5">
-      <div className="flex justify-between text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3 px-1">
-        <span>#</span>
-        <span className="flex-1 ml-3">Nome</span>
-        <span>Vendas</span>
-        <span className="ml-3 w-10 text-right">%</span>
-      </div>
-      <div className="space-y-3">
-        {TOP_PRODUCTS.map(({ rank, name, pct, color }) => (
-          <div key={rank} className="flex items-center gap-3">
-            <span className="text-[11px] text-gray-400 font-medium w-5 shrink-0">{rank}</span>
-            <span className="text-xs text-gray-700 w-14 shrink-0 truncate">{name}</span>
-            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
-            </div>
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-              style={{ backgroundColor: color + '20', color }}
-            >
-              {pct}%
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PayablesPanel() {
-  return (
-    <div className="p-5">
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={WEEKLY_DATA} barSize={8} barGap={3}>
-          <CartesianGrid {...gridProps} vertical={false} />
-          <XAxis dataKey="day" tick={axisStyle} axisLine={false} tickLine={false} />
-          <YAxis tick={axisStyle} axisLine={false} tickLine={false} tickFormatter={v => `${v}k`} width={28} />
-          <Tooltip {...tooltipProps} formatter={(v: number) => [`R$${v}k`]} />
-          <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          <Bar dataKey="aReceber" name="A receber" fill="#3B82F6" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="aPagar"   name="A pagar"   fill="#10B981" radius={[3, 3, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function DelaysPanel() {
-  return (
-    <div className="p-5">
-      <ResponsiveContainer width="100%" height={180}>
-        <LineChart data={DELAYS_DATA}>
-          <CartesianGrid {...gridProps} />
-          <XAxis dataKey="month" tick={axisStyle} axisLine={false} tickLine={false} />
-          <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={28} />
-          <Tooltip {...tooltipProps} />
-          <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          <Line dataKey="mais15" name="Atrasado +15 dias" stroke="#10B981" strokeWidth={2} dot={false} />
-          <Line dataKey="mais30" name="Atrasado +30 dias" stroke="#EF4444" strokeWidth={2} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function SoldGoalPanel() {
-  return (
-    <div className="p-5">
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={SOLD_GOAL_DATA} barSize={9} barGap={3}>
-          <CartesianGrid {...gridProps} vertical={false} />
-          <XAxis dataKey="month" tick={axisStyle} axisLine={false} tickLine={false} />
-          <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={28} />
-          <Tooltip {...tooltipProps} />
-          <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          <Bar dataKey="vendido" name="Vendido" fill="#1d4ed8" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="meta"    name="Meta"    fill="#F59E0B" radius={[3, 3, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function LeadTimePanel() {
-  return (
-    <div className="p-5">
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={LEAD_DATA} barSize={8} barGap={3}>
-          <CartesianGrid {...gridProps} vertical={false} />
-          <XAxis dataKey="day" tick={axisStyle} axisLine={false} tickLine={false} />
-          <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={24} />
-          <Tooltip {...tooltipProps} />
-          <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          <Bar dataKey="producao" name="Produção" fill="#3B82F6" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="entrega"  name="Entrega"  fill="#10B981" radius={[3, 3, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function CountriesPanel() {
-  return (
-    <div className="pt-1">
-      <BrazilMap data={STATES_SALES} />
-    </div>
-  );
-}
-
-function ProductionPanel() {
-  return (
-    <div className="p-5">
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={PRODUCTION_DATA} barSize={10} barGap={3}>
-          <CartesianGrid {...gridProps} vertical={false} />
-          <XAxis dataKey="prod" tick={axisStyle} axisLine={false} tickLine={false} />
-          <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={28} />
-          <Tooltip {...tooltipProps} />
-          <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          <Bar dataKey="produzido" name="Produzido" fill="#3B82F6" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="previsto"  name="Previsto"  fill="#93c5fd" radius={[3, 3, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-const PANEL_CONTENT: Record<string, FC> = {
-  vendas:      VendasPanel,
-  topProducts: TopProductsPanel,
-  payables:    PayablesPanel,
-  delays:      DelaysPanel,
-  soldGoal:    SoldGoalPanel,
-  leadTime:    LeadTimePanel,
-  countries:   CountriesPanel,
-  production:  ProductionPanel,
-};
+// ── Panel Wrapper ─────────────────────────────────────────────────────────────
 
 interface PanelWrapperProps {
   panel: PanelConfig;
@@ -318,7 +459,7 @@ function PanelWrapper({
       onDragLeave={onDragLeave}
       onDrop={(e) => { e.preventDefault(); onDrop(e); }}
       className={cn(
-        'bg-white rounded-xl border transition-all duration-150',
+        'bg-white rounded-xl border transition-all duration-150 min-w-0',
         editMode ? 'border-dashed border-gray-300 shadow-sm' : 'border-gray-100 shadow-sm',
         isDragging && 'opacity-30',
         isDragOver && editMode && 'border-[#3B82F6] border-solid ring-2 ring-[#3B82F6]/20',
@@ -371,9 +512,11 @@ function PanelWrapper({
   );
 }
 
+// ── Load/save panels ──────────────────────────────────────────────────────────
+
 function loadPanels(): PanelConfig[] {
   try {
-    const saved = localStorage.getItem('valisys-dashboard-panels');
+    const saved = localStorage.getItem('valisys-dashboard-panels-v2');
     if (!saved) return DEFAULT_PANELS;
     const parsed: PanelConfig[] = JSON.parse(saved);
     const missing = DEFAULT_PANELS.filter(d => !parsed.find(p => p.id === d.id));
@@ -383,15 +526,26 @@ function loadPanels(): PanelConfig[] {
   }
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export function DashboardPage() {
-  const [panels, setPanels]       = useState<PanelConfig[]>(loadPanels);
-  const [editMode, setEditMode]   = useState(false);
-  const [dragId, setDragId]       = useState<string | null>(null);
+  const [panels, setPanels]         = useState<PanelConfig[]>(loadPanels);
+  const [editMode, setEditMode]     = useState(false);
+  const [dragId, setDragId]         = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dashData, setDashData]     = useState<DashboardData | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('valisys-dashboard-panels', JSON.stringify(panels));
+    localStorage.setItem('valisys-dashboard-panels-v2', JSON.stringify(panels));
   }, [panels]);
+
+  useEffect(() => {
+    fetchJson<DashboardData>('/api/Dashboard')
+      .then(d => { setDashData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
   const handleDrop = useCallback((targetId: string) => {
     if (!dragId || dragId === targetId) return;
@@ -413,6 +567,24 @@ export function DashboardPage() {
   const resizePanel = (id: string, cols: 1 | 2) =>
     setPanels(prev => prev.map(p => p.id === id ? { ...p, cols } : p));
 
+  const PANEL_CONTENT: Record<string, FC> = {
+    vendas:      () => <VendasPanel data={dashData?.vendasResumo} />,
+    topProducts: () => <TopProductsPanel data={dashData?.topProdutos} />,
+    payables:    () => <PayablesPanel data={dashData?.fluxoSemanal} />,
+    delays:      () => <DelaysPanel data={dashData?.recebimentosMensais} />,
+    soldGoal:    () => <SoldGoalPanel data={dashData?.vendasMensais} />,
+    leadTime:    () => <LeadTimePanel data={dashData?.opsPorFase} />,
+    countries:   () => (
+      <div className="pt-1">
+        <BrazilMap
+          data={dashData?.vendasPorEstado ?? {}}
+          onStateClick={setSelectedEstado}
+        />
+      </div>
+    ),
+    production:  () => <ProductionPanel data={dashData?.opsPorMes} />,
+  };
+
   const visible = panels.filter(p => p.visible);
   const hidden  = panels.filter(p => !p.visible);
 
@@ -427,6 +599,12 @@ export function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {loading && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <Loader2 size={12} className="animate-spin" />
+              <span>Carregando dados…</span>
+            </div>
+          )}
           {editMode && (
             <button
               onClick={() => setPanels(DEFAULT_PANELS)}
@@ -460,7 +638,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         {visible.map(panel => {
           const Content = PANEL_CONTENT[panel.id];
           return (
@@ -501,6 +679,13 @@ export function DashboardPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {selectedEstado && (
+        <EstadoModal
+          sigla={selectedEstado}
+          onClose={() => setSelectedEstado(null)}
+        />
       )}
     </div>
   );

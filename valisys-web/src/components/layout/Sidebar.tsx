@@ -17,14 +17,14 @@ interface NavItemDef {
 }
 
 const NAV_ITEMS: NavItemDef[] = [
-  /*icon dashboard*/
+  // Dashboard — sempre primeiro
   {
     icon: Gauge,
     label: 'Dashboard',
     href: '/dashboard',
   },
+  // restante em ordem alfabética
   {
-    /*icon cadastros*/
     icon: LayersPlus,
     label: 'Cadastros',
     href: '/cadastros',
@@ -53,7 +53,6 @@ const NAV_ITEMS: NavItemDef[] = [
     ],
   },
   {
-    /*icon comercial*/
     icon: Briefcase,
     label: 'Comercial',
     href: '/comercial',
@@ -65,40 +64,22 @@ const NAV_ITEMS: NavItemDef[] = [
     ],
   },
   {
-    /*icon consulta e ação*/
     icon: ScanLine,
     label: 'Consulta e Ação',
     href: '/consulta-acao',
     children: [
-      { label: 'Consulta e Ação',         href: '/scan' },
+      { label: 'Consulta e Ação', href: '/scan' },
     ],
   },
   {
-    /*icon produção*/
-    icon: Factory,
-    label: 'Produção',
-    href: '/producao',
-    children: [
-      { label: 'Produção',         href: '/producao' },
-      { label: 'Ordens de Produção',         href: '/ordensProducao' },
-      { label: 'Ficha Técnica',         href: '/fichaTecnica' },
-      { label: 'Roteiros de Produção',         href: '/roteirosProducao' },
-      { label: 'Kanban',         href: '/kanban' },
-      { label: 'Apontamentos',         href: '/apontamentos' },
-      { label: 'Lotes',         href: '/lotes' },
-    ],
-  },
-  {
-    /*icon Engenharia*/
     icon: DraftingCompass,
     label: 'Engenharia',
     href: '/engenharia',
     children: [
-      { label: 'Engenharia',         href: '/engenharia' },
+      { label: 'Engenharia', href: '/engenharia' },
     ],
   },
   {
-    /*icon estoque*/
     icon: Package,
     label: 'Estoque',
     href: '/estoque',
@@ -109,7 +90,6 @@ const NAV_ITEMS: NavItemDef[] = [
     ],
   },
   {
-    /*icon financeiro*/
     icon: CircleDollarSign,
     label: 'Financeiro',
     href: '/financeiro',
@@ -121,7 +101,20 @@ const NAV_ITEMS: NavItemDef[] = [
     ],
   },
   {
-    /*icon relatórios*/
+    icon: Factory,
+    label: 'Produção',
+    href: '/producao',
+    children: [
+      { label: 'Apontamentos',       href: '/apontamentos' },
+      { label: 'Ficha Técnica',      href: '/fichaTecnica' },
+      { label: 'Kanban',             href: '/kanban' },
+      { label: 'Lotes',              href: '/lotes' },
+      { label: 'Ordens de Produção', href: '/ordensProducao' },
+      { label: 'Produção',           href: '/producao' },
+      { label: 'Roteiros de Produção', href: '/roteirosProducao' },
+    ],
+  },
+  {
     icon: BarChart3,
     label: 'Relatórios',
     href: '/relatorios',
@@ -137,11 +130,11 @@ const CONFIG_ITEM: NavItemDef = {
   icon: SlidersHorizontal,
   label: 'Configurações',
   href: '/configuracoes',
-   children: [
-     { label: 'Usuários',     href: '/configuracoes/usuarios' },
-     { label: 'Perfis',   href: '/configuracoes/perfis' },
-     { label: 'Logs',  href: '/configuracoes/Logs' },
-   ],
+  children: [
+    { label: 'Logs',     href: '/configuracoes/Logs' },
+    { label: 'Perfis',   href: '/configuracoes/perfis' },
+    { label: 'Usuários', href: '/configuracoes/usuarios' },
+  ],
 };
 
 interface FlyoutProps {
