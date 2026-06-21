@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { login, saveSession } from '@/services/auth';
 
-type Mode = 'login' | 'register';
+type Mode = 'login';
+
 
 export function LoginPage() {
   const [mode, setMode] = useState<Mode>('login');
@@ -70,29 +71,13 @@ export function LoginPage() {
           <div className="w-full max-w-[380px]">
 
             {/* Sliding tab switcher */}
-            <div className="relative flex bg-gray-100 rounded-xl p-1 mb-8">
-              <motion.div
-                className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm"
-                animate={{
-                  left: mode === 'login' ? '4px' : 'calc(50% + 2px)',
-                  width: 'calc(50% - 6px)',
-                }}
-                transition={{ type: 'spring', stiffness: 420, damping: 38 }}
-              />
-              <button
-                type="button"
-                onClick={() => switchMode('login')}
-                className={`relative z-10 flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  mode === 'login' ? 'text-gray-900' : 'text-gray-500'}`}>
-                Entrar
-              </button>
-              <button
-                type="button"
-                onClick={() => switchMode('register')}
-                className={`relative z-10 flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                  mode === 'register' ? 'text-gray-900' : 'text-gray-500'}`}>
-                Criar conta
-              </button>
+            <div className="mb-9 text-center">
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                Seja bem-vindo
+              </h1>
+              <p className="mt-2 text-sm text-gray-500">
+                {mode === 'login' ? 'Faça seu login para prosseguir' : ''}
+              </p>
             </div>
 
             {/*Animação */}
@@ -112,25 +97,18 @@ export function LoginPage() {
                     <Input
                       id="email"
                       type="email"
-                      label="Email"
+                      label={<span>Email <span style={{ color: 'red' }}>*</span></span>}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      autoComplete="email"
-                      />
+                      autoComplete="email"/>
                     <div>
                       <Input
                         id="senha"
                         type="password"
-                        label="Senha"
+                        label={<span>Senha <span style={{ color: 'red' }}>*</span></span>}
                         value={senha}
                         onChange={(e) => setSenha(e.target.value)}
-                        autoComplete="current-password"
-                      />
-                      <div className="flex justify-end mt-2">
-                        <a href="#" className="text-xs text-blue-500 hover:underline">
-                          Esqueci minha senha
-                        </a>
-                      </div>
+                        autoComplete="current-password"/>
                     </div>
 
                     {error && <p className="text-sm text-red-500 -mt-1">{error}</p>}
@@ -145,39 +123,7 @@ export function LoginPage() {
                   </form>
                 </motion.div>
               ) : (
-                <motion.div
-                  key="register"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.18, ease: 'easeOut' }}
-                >
-                  <h1 className="text-xl font-normal text-gray-900 mb-7 tracking-tight">
-                    Crie sua conta
-                  </h1>
-
-                  <form className="flex flex-col gap-5">
-                    <Input id="nome" type="text" label="Nome completo" autoComplete="name" required />
-                    <Input id="reg-email" type="email" label="Email" autoComplete="email" required />
-                    <Input
-                      id="reg-senha"
-                      type="password"
-                      label="Senha"
-                      autoComplete="new-password"
-                      required
-                    />
-
-                    <button
-                      type="submit"
-                      className="w-full py-4 bg-[#111] text-white text-xs font-semibold tracking-[2.5px] uppercase hover:bg-gray-800 transition-colors mt-1"
-                    >
-                      CADASTRAR
-                    </button>
-
-                    <p className="text-xs text-gray-400 text-center leading-relaxed">
-                      O cadastro está sujeito à aprovação do administrador.
-                    </p>
-                  </form>
+                <motion.div>
                 </motion.div>
               )}
             </AnimatePresence>

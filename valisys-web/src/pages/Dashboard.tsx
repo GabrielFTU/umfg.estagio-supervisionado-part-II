@@ -407,13 +407,13 @@ interface PanelConfig {
 }
 
 const PANEL_META: Record<string, { title: string; subtitle?: string }> = {
-  vendas:      { title: 'Vendas', subtitle: 'Mês atual vs mês anterior' },
+  vendas:      { title: 'Vendas', subtitle: 'Mês atual x Mês anterior' },
   topProducts: { title: 'Produtos mais Vendidos', subtitle: 'Últimos 30 dias' },
   payables:    { title: 'Total a pagar x Total a receber', subtitle: 'Últimos 7 dias' },
-  delays:      { title: 'Financeiro – Recebimentos com atraso', subtitle: 'Últimos 12 meses' },
-  soldGoal:    { title: 'Vendas mensais', subtitle: 'Últimos 7 meses' },
+  delays:      { title: 'Total a receber em atraso', subtitle: 'Últimos 12 meses' },
+  soldGoal:    { title: 'Historico de vendas', subtitle: 'Últimos 7 meses' },
   leadTime:    { title: 'OPs por Fase de Produção', subtitle: 'Ordens ativas' },
-  countries:   { title: 'Vendas por Estado', subtitle: 'Mapa do Brasil — clique para detalhes' },
+  countries:   { title: 'Vendas por região', subtitle: 'Estados Brasileiros' },
   production:  { title: 'OPs Finalizadas por Mês', subtitle: 'Últimos 6 meses' },
 };
 

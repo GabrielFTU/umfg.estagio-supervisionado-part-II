@@ -1,4 +1,5 @@
 using Valisys_Production.Models;
+using Valisys_Production.Models.Enums;
 
 namespace Valisys_Production.Repositories.Interfaces
 {
@@ -8,5 +9,6 @@ namespace Valisys_Production.Repositories.Interfaces
         Task<IEnumerable<Orcamento>> GetAllWithClienteAsync();
         Task<int> GetProximoCodigoAsync();
         Task<bool> UpdateWithItensAsync(Orcamento orcamento, List<ItemOrcamento> novosItens);
+        Task<bool> AtualizarStatusAsync(Guid id, StatusOrcamento novoStatus, Guid? pedidoVendaId = null);
     }
 }

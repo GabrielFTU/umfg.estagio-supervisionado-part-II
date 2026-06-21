@@ -39,6 +39,9 @@ namespace Valisys_Production.Services
                 Guid.Empty,
                 dto.DataPrevisaoEntrega);
 
+            foreach (var item in dto.Itens)
+                pedido.AdicionarItem(item.ProdutoId, item.Quantidade, item.ValorUnitario, item.DescontoUnitario);
+
             pedido.Atualizar(
                 dto.ClienteId,
                 representanteId,
@@ -47,11 +50,8 @@ namespace Valisys_Production.Services
                 Guid.Empty,
                 dto.DataPrevisaoEntrega,
                 dto.Desconto,
-                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.Finalidade),
+                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento, dto.Finalidade),
                 dto.ObservacaoExterna);
-
-            foreach (var item in dto.Itens)
-                pedido.AdicionarItem(item.ProdutoId, item.Quantidade, item.ValorUnitario, item.DescontoUnitario);
 
             var criado = await _repository.AddAsync(pedido);
 
@@ -87,7 +87,7 @@ namespace Valisys_Production.Services
                 Guid.Empty,
                 dto.DataPrevisaoEntrega,
                 dto.Desconto,
-                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.Finalidade),
+                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento, dto.Finalidade),
                 dto.ObservacaoExterna);
 
             var novosItens = dto.Itens.Select(i =>
@@ -160,12 +160,13 @@ namespace Valisys_Production.Services
             await _contaReceberService.CreateAsync(dto);
         }
 
-        private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento, string? finalidade)
+        private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento, string? condicaoPagamento, string? finalidade)
         {
             var partes = new List<string>();
-            if (!string.IsNullOrWhiteSpace(formaPagamento)) partes.Add($"[Pagamento: {formaPagamento}]");
-            if (!string.IsNullOrWhiteSpace(finalidade))     partes.Add($"[Finalidade: {finalidade}]");
-            if (!string.IsNullOrWhiteSpace(obs))            partes.Add(obs);
+            if (!string.IsNullOrWhiteSpace(formaPagamento))    partes.Add($"[Pagamento: {formaPagamento}]");
+            if (!string.IsNullOrWhiteSpace(condicaoPagamento)) partes.Add($"[Condicao: {condicaoPagamento}]");
+            if (!string.IsNullOrWhiteSpace(finalidade))        partes.Add($"[Finalidade: {finalidade}]");
+            if (!string.IsNullOrWhiteSpace(obs))               partes.Add(obs);
             return partes.Count > 0 ? string.Join(" | ", partes) : null;
         }
     }

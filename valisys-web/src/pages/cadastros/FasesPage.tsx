@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus, Search, SlidersHorizontal, Layers,
-  ChevronRight, Home, Loader2, MoreHorizontal,
-} from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type FaseItem = {
@@ -11,8 +8,11 @@ type FaseItem = {
   nome: string;
   ordem: number;
   tempoPadraoDias: number;
+  descricao: string;
   ativo: boolean;
 };
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
   ativo: boolean;
@@ -25,7 +25,7 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
   const btnRef  = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleToggle = () => {
+  const toggle = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
@@ -36,56 +36,32 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
-    const onDown = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current  && !btnRef.current.contains(e.target as Node)
-      ) close();
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          btnRef.current  && !btnRef.current.contains(e.target as Node)) close();
     };
-    document.addEventListener('mousedown', onDown);
+    document.addEventListener('mousedown', h);
     document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('scroll', close, true);
-    };
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('scroll', close, true); };
   }, [open]);
 
   return (
     <>
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        className={cn(
-          'p-1.5 rounded-md transition-colors',
-          open ? 'bg-gray-100 text-gray-700' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100',
-        )}
-      >
+      <button ref={btnRef} onClick={toggle}
+        className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
         <MoreHorizontal size={15} />
       </button>
-
       {open && (
-        <div
-          ref={menuRef}
+        <div ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg shadow-black/[0.07] py-0.5 text-[13px]"
-        >
-          <button
-            onClick={() => { setOpen(false); onView(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            Visualizar
-          </button>
-          <button
-            onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            Editar
-          </button>
+          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
+          <button onClick={() => { setOpen(false); onView(); }}
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Visualizar</button>
+          <button onClick={() => { setOpen(false); onEdit(); }}
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
           <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button
-            onClick={() => { setOpen(false); onToggleAtivo(); }}
-            className="w-full text-left px-3 py-1.5 text-red-500 hover:bg-red-50 transition-colors"
-          >
+          <button onClick={() => { setOpen(false); onToggleAtivo(); }}
+            className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', ativo ? 'text-red-500' : 'text-emerald-600')}>
             {ativo ? 'Desativar' : 'Reativar'}
           </button>
         </div>
@@ -96,43 +72,44 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
 
 export function FasesPage() {
   const navigate = useNavigate();
-  const [search, setSearch]   = useState('');
-  const [fases, setFases]     = useState<FaseItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [items, setItems]       = useState<FaseItem[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState('');
+  const [statusFiltro, setStatusFiltro] = useState<'todos' | 'ativo' | 'inativo'>('ativo');
   const [filterOpen, setFilterOpen]     = useState(false);
-  const [filtroStatus, setFiltroStatus] = useState('');
+  const [page, setPage]         = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fn = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node))
-        setFilterOpen(false);
+    if (!filterOpen) return;
+    const h = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
     };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
-  }, []);
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [filterOpen]);
 
   const load = async () => {
     setLoading(true);
-    setError('');
     const token = localStorage.getItem('token');
     try {
       const res = await fetch('/api/fases-producao', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 403) { setFases([]); return; }
+      if (res.status === 403) { setItems([]); return; }
       if (!res.ok) throw new Error();
       const data: any[] = await res.json();
-      setFases(data.map(f => ({
+      setItems(data.map(f => ({
         id: f.id,
         nome: f.nome,
         ordem: f.ordem,
         tempoPadraoDias: f.tempoPadraoDias ?? 0,
+        descricao: f.descricao,
         ativo: f.ativo,
       })));
     } catch {
-      setError('Não foi possível carregar as fases de produção.');
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -143,200 +120,172 @@ export function FasesPage() {
   const handleToggleAtivo = async (f: FaseItem) => {
     const acao = f.ativo ? 'Desativar' : 'Reativar';
     if (!confirm(`${acao} a fase "${f.nome}"?`)) return;
-
     const token = localStorage.getItem('token');
     const res = await fetch(`/api/fases-producao/${f.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
-
     if (res.status === 409) {
       const body = await res.json().catch(() => ({}));
-      alert(body.detail ?? body.message ?? 'Esta fase está em uso em roteiros ou ordens de produção e não pode ser desativada.');
+      alert(body.detail ?? body.message ?? 'Esta fase está em uso e não pode ser desativada.');
       return;
     }
-
     load();
   };
 
-  const filtrosAtivos = !!filtroStatus;
-  const filtered = fases.filter(f => {
+  const filtered = items.filter(f => {
     if (search && !f.nome.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filtroStatus === 'ativo'   && !f.ativo) return false;
-    if (filtroStatus === 'inativo' &&  f.ativo) return false;
+    if (statusFiltro === 'ativo'   && !f.ativo) return false;
+    if (statusFiltro === 'inativo' &&  f.ativo) return false;
     return true;
   });
 
-  return (
-    <div className="flex flex-col h-full">
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
+  const statusLabel = statusFiltro === 'ativo' ? 'ATIVO' : statusFiltro === 'inativo' ? 'INATIVO' : null;
 
-      <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200/70">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Home size={11} /><ChevronRight size={11} />
-          <span>Cadastros</span><ChevronRight size={11} />
-          <span className="text-gray-600 font-medium">Fases de Produção</span>
+  return (
+    <div className="flex flex-col h-full bg-white">
+
+      {/* Toolbar */}
+      <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            placeholder="Informe o nome"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+          />
+        </div>
+
+        <button onClick={() => navigate('/cadastros/fases/novo')}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors shrink-0">
+          <Plus size={14} /> Novo
+        </button>
+
+        <div ref={filterRef} className="relative shrink-0">
+          <button onClick={() => setFilterOpen(v => !v)}
+            className={cn(
+              'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
+              statusFiltro !== 'todos'
+                ? 'border-[#3B82F6] bg-blue-50 text-[#3B82F6]'
+                : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
+            )}>
+            <SlidersHorizontal size={15} />
+          </button>
+
+          {filterOpen && (
+            <div onMouseDown={e => e.stopPropagation()}
+              className="absolute z-30 right-0 top-full mt-1.5 w-44 bg-white border border-gray-200 rounded-xl shadow-lg p-3">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status</p>
+              {(['todos', 'ativo', 'inativo'] as const).map(v => (
+                <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
+                  className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                    statusFiltro === v ? 'bg-[#3B82F6] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                  {v === 'todos' ? 'Todos' : v === 'ativo' ? 'Ativo' : 'Inativo'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-gray-200/50">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      {/* Chip filtro ativo */}
+      {statusLabel && (
+        <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2">
+          <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+            Status : {statusLabel}
+            <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+          </span>
+        </div>
+      )}
 
-          <div className="relative flex-1 min-w-0 sm:max-w-md">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6] transition-all placeholder:text-gray-400"
-              placeholder="Buscar por nome…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+      {/* Tabela */}
+      <div className="flex-1 overflow-auto">
+        {loading ? (
+          <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
+            <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
+        ) : (
+          <>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Ordem</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Tempo Padrão</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Descricao</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Status</th>
+                  <th className="w-10 pr-4" />
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
+                      Nenhum registro encontrado.
+                    </td>
+                  </tr>
+                ) : paginated.map(f => (
+                  <tr key={f.id}
+                    onClick={() => navigate(`/cadastros/fases/${f.id}`)}
+                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <td className="px-6 py-3 text-sm text-gray-500">
+                      {f.ordem}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={cn('text-sm', f.ativo ? 'text-gray-700' : 'text-gray-400 line-through max-w-xs truncate  ')}>
+                        {f.nome.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {f.tempoPadraoDias > 0 ? `${f.tempoPadraoDias} dia${f.tempoPadraoDias !== 1 ? 's' : ''}` : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
+                      {f.descricao}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
+                        f.ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
+                        {f.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                      <RowMenu
+                        ativo={f.ativo}
+                        onView={() => navigate(`/cadastros/fases/${f.id}`)}
+                        onEdit={() => navigate(`/cadastros/fases/${f.id}/editar`)}
+                        onToggleAtivo={() => handleToggleAtivo(f)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          <div ref={filterRef} className="relative shrink-0">
-            <button
-              onMouseDown={e => e.stopPropagation()}
-              onClick={() => setFilterOpen(v => !v)}
-              className={cn(
-                'flex items-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors',
-                filtrosAtivos
-                  ? 'bg-blue-50 border-[#3B82F6] text-[#3B82F6]'
-                  : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400',
-              )}
-            >
-              <SlidersHorizontal size={13} /> Filtros
-              {filtrosAtivos && (
-                <span className="w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex items-center justify-center">1</span>
-              )}
-            </button>
-
-            {filterOpen && (
-              <div
-                onMouseDown={e => e.stopPropagation()}
-                className="absolute z-30 top-full right-0 mt-1.5 w-52 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-600">Status</span>
-                  {filtroStatus && (
-                    <button onClick={() => setFiltroStatus('')} className="text-[11px] text-red-400 hover:text-red-600">
-                      Limpar
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {(['ativo', 'inativo'] as const).map(k => (
-                    <button
-                      key={k}
-                      onClick={() => setFiltroStatus(k === filtroStatus ? '' : k)}
-                      className={cn('text-xs py-1.5 px-3 rounded-md border text-left transition-colors',
-                        filtroStatus === k
-                          ? 'bg-[#3B82F6] border-[#3B82F6] text-white'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-300')}
-                    >
-                      {k.charAt(0).toUpperCase() + k.slice(1)}
-                    </button>
-                  ))}
-                </div>
+            {/* Paginação */}
+            {filtered.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+                <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => goPage(p)}
+                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                    {p}
+                  </button>
+                ))}
+                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
             )}
-          </div>
-
-          <button
-            onClick={() => navigate('/cadastros/fases/novo')}
-            className="flex items-center gap-2 h-9 px-4 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] shadow-sm shadow-blue-200 transition-colors sm:ml-auto shrink-0"
-          >
-            <Plus size={15} /> Nova Fase
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-4">
-        {loading && (
-          <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
-            <Loader2 size={16} className="animate-spin" /> Carregando fases de produção…
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 pb-16">
-            <p className="text-sm font-semibold text-red-500">{error}</p>
-            <button onClick={load} className="text-xs text-[#3B82F6] hover:underline">Tentar novamente</button>
-          </div>
-        )}
-
-        {!loading && !error && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-              <Layers size={28} className="text-[#3B82F6]" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-700">
-                {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhuma fase cadastrada'}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {search || filtrosAtivos ? 'Ajuste os filtros ou a busca.' : 'Clique em "Nova Fase" para começar.'}
-              </p>
-            </div>
-            {!search && !filtrosAtivos && (
-              <button
-                onClick={() => navigate('/cadastros/fases/novo')}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#3B82F6] text-white text-sm hover:bg-[#2563eb] transition-colors"
-              >
-                <Plus size={14} /> Cadastrar fase
-              </button>
-            )}
-          </div>
-        )}
-
-        {!loading && !error && filtered.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[480px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pl-4 pr-4 w-20">Ordem</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5">Nome</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Tempo Padrão</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Status</th>
-                    <th className="w-10 pr-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(f => (
-                    <tr
-                      key={f.id}
-                      className={cn(
-                        'border-b border-gray-50 hover:bg-blue-50/40 transition-colors',
-                        !f.ativo && 'opacity-50',
-                      )}
-                    >
-                      <td className="py-3 pl-4 pr-4">
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-[#3B82F6] text-xs font-bold tabular-nums">
-                          {f.ordem}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-6 text-gray-700 font-medium">{f.nome}</td>
-                      <td className="py-3 pr-6 text-xs text-gray-500">
-                        {f.tempoPadraoDias > 0 ? `${f.tempoPadraoDias} dia${f.tempoPadraoDias !== 1 ? 's' : ''}` : '—'}
-                      </td>
-                      <td className="py-3 pr-6">
-                        <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
-                          f.ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
-                          {f.ativo ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-3 text-right">
-                        <RowMenu
-                          ativo={f.ativo}
-                          onView={() => navigate(`/cadastros/fases/${f.id}`)}
-                          onEdit={() => navigate(`/cadastros/fases/${f.id}/editar`)}
-                          onToggleAtivo={() => handleToggleAtivo(f)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>

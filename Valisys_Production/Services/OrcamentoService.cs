@@ -38,7 +38,7 @@ namespace Valisys_Production.Services
                 representanteId,
                 dto.DataValidade,
                 dto.Desconto,
-                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento),
+                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento),
                 dto.ObservacaoExterna);
 
             foreach (var item in dto.Itens)
@@ -75,7 +75,7 @@ namespace Valisys_Production.Services
                 representanteId,
                 dto.DataValidade,
                 dto.Desconto,
-                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento),
+                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento),
                 dto.ObservacaoExterna);
 
             var novosItens = dto.Itens.Select(i =>
@@ -93,7 +93,7 @@ namespace Valisys_Production.Services
 
         public async Task<bool> AlterarStatusAsync(Guid id, StatusOrcamento novoStatus, Guid usuarioId)
         {
-            var orcamento = await _repository.GetByIdWithItensAsync(id)
+            var orcamento = await _repository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException("Orçamento não encontrado.");
 
             switch (novoStatus)
@@ -118,7 +118,7 @@ namespace Valisys_Production.Services
                     throw new ArgumentException("Transição de status inválida.");
             }
 
-            var ok = await _repository.UpdateAsync(orcamento);
+            var ok = await _repository.AtualizarStatusAsync(id, novoStatus);
 
             if (ok)
                 await _log.RegistrarAsync("Status", "Orcamentos",
@@ -141,15 +141,21 @@ namespace Valisys_Production.Services
             if (!orcamento.Itens.Any())
                 throw new InvalidOperationException("O orçamento não possui itens para conversão.");
 
+            // Cap the global discount so it never exceeds the actual item subtotal.
+            // Orcamento.Atualizar only rejects negative discounts, so an orcamento can
+            // be saved with Desconto > Subtotal — which would fail PedidoVenda validation.
+            var descontoConvertido = Math.Min(orcamento.Desconto, orcamento.Subtotal);
+
             var pedidoDto = new PedidoVendaCreateDto
             {
-                ClienteId          = orcamento.ClienteId,
-                RepresentanteId    = orcamento.RepresentanteId,
-                FormaPagamento     = ExtrairTag(orcamento.ObservacaoInterna, "Pagamento"),
+                ClienteId           = orcamento.ClienteId,
+                RepresentanteId     = orcamento.RepresentanteId,
+                FormaPagamento      = ExtrairTag(orcamento.ObservacaoInterna, "Pagamento"),
+                CondicaoPagamento   = ExtrairTag(orcamento.ObservacaoInterna, "Condicao"),
                 DataPrevisaoEntrega = null,
-                Desconto           = orcamento.Desconto,
-                ObservacaoInterna  = LimparObservacaoInterna(orcamento.ObservacaoInterna),
-                ObservacaoExterna  = orcamento.ObservacaoExterna,
+                Desconto            = descontoConvertido,
+                ObservacaoInterna   = LimparObservacaoInterna(orcamento.ObservacaoInterna),
+                ObservacaoExterna   = orcamento.ObservacaoExterna,
                 Itens = orcamento.Itens.Select(i => new ItemPedidoCreateDto
                 {
                     ProdutoId        = i.ProdutoId,
@@ -161,8 +167,9 @@ namespace Valisys_Production.Services
 
             var pedido = await _pedidoVendaService.CreateAsync(pedidoDto, usuarioId);
 
-            orcamento.MarcarComoConvertido(pedido.Id);
-            await _repository.UpdateAsync(orcamento);
+            // Use direct SQL to avoid change-tracker navigation processing on the
+            // AsNoTracking entity that has items already loaded in _itens.
+            await _repository.AtualizarStatusAsync(orcamento.Id, StatusOrcamento.ConvertidoEmPedido, pedido.Id);
 
             await _log.RegistrarAsync("Conversão", "Orcamentos",
                 $"Converteu o Orçamento #{orcamento.Codigo} no Pedido de Venda #{pedido.Codigo}");
@@ -174,11 +181,12 @@ namespace Valisys_Production.Services
             };
         }
 
-        private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento)
+        private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento, string? condicaoPagamento)
         {
             var partes = new List<string>();
-            if (!string.IsNullOrWhiteSpace(formaPagamento)) partes.Add($"[Pagamento: {formaPagamento}]");
-            if (!string.IsNullOrWhiteSpace(obs))            partes.Add(obs);
+            if (!string.IsNullOrWhiteSpace(formaPagamento))   partes.Add($"[Pagamento: {formaPagamento}]");
+            if (!string.IsNullOrWhiteSpace(condicaoPagamento)) partes.Add($"[Condicao: {condicaoPagamento}]");
+            if (!string.IsNullOrWhiteSpace(obs))               partes.Add(obs);
             return partes.Count > 0 ? string.Join(" | ", partes) : null;
         }
 

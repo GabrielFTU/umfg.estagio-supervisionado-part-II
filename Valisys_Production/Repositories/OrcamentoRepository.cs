@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Valisys_Production.Data;
 using Valisys_Production.Models;
+using Valisys_Production.Models.Enums;
 using Valisys_Production.Repositories.Interfaces;
 
 namespace Valisys_Production.Repositories
@@ -53,6 +54,26 @@ namespace Valisys_Production.Repositories
 
             try { return await _context.SaveChangesAsync() > 0; }
             catch { return false; }
+        }
+
+        public async Task<bool> AtualizarStatusAsync(Guid id, StatusOrcamento novoStatus, Guid? pedidoVendaId = null)
+        {
+            int count;
+            if (pedidoVendaId.HasValue)
+            {
+                var pId = pedidoVendaId.Value;
+                count = await _dbSet.Where(o => o.Id == id).ExecuteUpdateAsync(s => s
+                    .SetProperty(o => o.Status, novoStatus)
+                    .SetProperty(o => o.PedidoVendaConvertidoId, (Guid?)pId)
+                    .SetProperty(o => o.AtualizadoEm, (DateTime?)DateTime.UtcNow));
+            }
+            else
+            {
+                count = await _dbSet.Where(o => o.Id == id).ExecuteUpdateAsync(s => s
+                    .SetProperty(o => o.Status, novoStatus)
+                    .SetProperty(o => o.AtualizadoEm, (DateTime?)DateTime.UtcNow));
+            }
+            return count > 0;
         }
     }
 }

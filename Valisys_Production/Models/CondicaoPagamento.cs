@@ -46,5 +46,9 @@ namespace Valisys_Production.Models
             _parcelas.Clear();
             _parcelas.AddRange(parcelas);
         }
+
+        public void LimparParcelas() => _parcelas.Clear();
+
+        public void AdicionarParcela(ParcelaCondicao parcela) => _parcelas.Add(parcela);
     }
 }

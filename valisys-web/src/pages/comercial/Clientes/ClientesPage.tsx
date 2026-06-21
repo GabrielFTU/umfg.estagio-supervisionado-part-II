@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus, Search, SlidersHorizontal, User,
-  ChevronRight, Home, Loader2, MoreHorizontal,
-} from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
 
@@ -29,6 +26,7 @@ type Filtros = {
 };
 
 const FILTROS_VAZIOS: Filtros = { tipo: '', status: '' };
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
@@ -67,7 +65,7 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
   const btnRef  = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleToggle = () => {
+  const toggle = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
@@ -78,56 +76,36 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
-    const onDown = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current  && !btnRef.current.contains(e.target as Node)
-      ) close();
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          btnRef.current  && !btnRef.current.contains(e.target as Node)) close();
     };
-    document.addEventListener('mousedown', onDown);
+    document.addEventListener('mousedown', h);
     document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('scroll', close, true);
-    };
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('scroll', close, true); };
   }, [open]);
 
   return (
     <>
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        className={cn(
-          'p-1.5 rounded-md transition-colors',
-          open
-            ? 'bg-gray-100 text-gray-700'
-            : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100',
-        )}
-      >
+      <button ref={btnRef} onClick={toggle}
+        className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
         <MoreHorizontal size={15} />
       </button>
-
       {open && (
-        <div
-          ref={menuRef}
+        <div ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg shadow-black/[0.07] py-0.5 text-[13px]"
-        >
+          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
           <button onClick={() => { setOpen(false); onView(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-            Visualizar
-          </button>
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Visualizar</button>
           <button onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-            Editar
-          </button>
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
           <div className="my-0.5 mx-2 border-t border-gray-100" />
           <button onClick={() => { setOpen(false); onBloquear(); }}
             className="w-full text-left px-3 py-1.5 text-amber-600 hover:bg-amber-50 transition-colors">
             {p.bloqueado ? 'Desbloquear' : 'Bloquear'}
           </button>
           <button onClick={() => { setOpen(false); onDesativar(); }}
-            className="w-full text-left px-3 py-1.5 text-red-500 hover:bg-red-50 transition-colors">
+            className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', p.ativo ? 'text-red-500' : 'text-emerald-600')}>
             {p.ativo ? 'Desativar' : 'Reativar'}
           </button>
         </div>
@@ -140,27 +118,27 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
 
 export function ClientesPage() {
   const navigate = useNavigate();
-  const [search, setSearch]   = useState('');
   const [pessoas, setPessoas] = useState<PessoaItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [search, setSearch]   = useState('');
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [page, setPage]         = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
   const [modal, setModal] = useState<{ p: PessoaItem; acao: 'desativar' | 'bloquear' } | null>(null);
 
   useEffect(() => {
-    const fn = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node))
-        setFilterOpen(false);
+    if (!filterOpen) return;
+    const h = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
     };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
-  }, []);
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [filterOpen]);
 
   const load = async () => {
     setLoading(true);
-    setError('');
     const token = localStorage.getItem('token');
     const headers: HeadersInit = { Authorization: `Bearer ${token}` };
     try {
@@ -194,7 +172,7 @@ export function ClientesPage() {
       lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
       setPessoas(lista);
     } catch {
-      setError('Não foi possível carregar os cadastros.');
+      // silently fail — user can retry
     } finally {
       setLoading(false);
     }
@@ -222,8 +200,6 @@ export function ClientesPage() {
     load();
   };
 
-  const filtrosAtivos = Object.values(filtros).some(v => v !== '');
-
   const filtered = pessoas.filter(p => {
     const q = search.toLowerCase();
     if (q && !p.nome.toLowerCase().includes(q) && !p.doc.includes(search)) return false;
@@ -234,208 +210,179 @@ export function ClientesPage() {
     return true;
   });
 
-  const setF = <K extends keyof Filtros>(k: K, v: Filtros[K]) =>
-    setFiltros(prev => ({ ...prev, [k]: v }));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
+
+  const filtrosAtivos = filtros.tipo !== '' || filtros.status !== '';
+  const tipoLabel   = filtros.tipo === 'fisica' ? 'FÍSICA' : filtros.tipo === 'juridica' ? 'JURÍDICA' : null;
+  const statusLabel = filtros.status === 'ativo' ? 'ATIVO' : filtros.status === 'inativo' ? 'INATIVO' : filtros.status === 'bloqueado' ? 'BLOQUEADO' : null;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
 
-      {/* ── Breadcrumb ── */}
-      <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200/70">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Home size={11} /><ChevronRight size={11} />
-          <span>Cadastros</span><ChevronRight size={11} />
-          <span className="text-gray-600 font-medium">Clientes</span>
+      {/* ── Toolbar ── */}
+      <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            placeholder="Informe o nome, CPF ou CNPJ"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+          />
+        </div>
+
+        <button onClick={() => navigate('/comercial/clientes/novo')}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors shrink-0">
+          <Plus size={14} /> Novo
+        </button>
+
+        <div ref={filterRef} className="relative shrink-0">
+          <button onClick={() => setFilterOpen(v => !v)}
+            className={cn(
+              'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
+              filtrosAtivos
+                ? 'border-[#3B82F6] bg-blue-50 text-[#3B82F6]'
+                : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
+            )}>
+            <SlidersHorizontal size={15} />
+          </button>
+
+          {filterOpen && (
+            <div onMouseDown={e => e.stopPropagation()}
+              className="absolute z-30 right-0 top-full mt-1.5 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-3 space-y-3">
+
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Tipo</p>
+                {(['todos', 'fisica', 'juridica'] as const).map(v => (
+                  <button key={v} onClick={() => { setFiltros(prev => ({ ...prev, tipo: v === 'todos' ? '' : v })); setPage(1); setFilterOpen(false); }}
+                    className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                      (v === 'todos' ? filtros.tipo === '' : filtros.tipo === v)
+                        ? 'bg-[#3B82F6] text-white'
+                        : 'text-gray-600 hover:bg-gray-50')}>
+                    {v === 'todos' ? 'Todos' : v === 'fisica' ? 'Física' : 'Jurídica'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-100 pt-3">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status</p>
+                {(['todos', 'ativo', 'bloqueado', 'inativo'] as const).map(v => (
+                  <button key={v} onClick={() => { setFiltros(prev => ({ ...prev, status: v === 'todos' ? '' : v })); setPage(1); setFilterOpen(false); }}
+                    className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                      (v === 'todos' ? filtros.status === '' : filtros.status === v)
+                        ? 'bg-[#3B82F6] text-white'
+                        : 'text-gray-600 hover:bg-gray-50')}>
+                    {v === 'todos' ? 'Todos' : v === 'ativo' ? 'Ativo' : v === 'bloqueado' ? 'Bloqueado' : 'Inativo'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Subheader ── */}
-      <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-gray-200/50">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      {/* ── Chips de filtro ativos ── */}
+      {filtrosAtivos && (
+        <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2">
+          {tipoLabel && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Tipo : {tipoLabel}
+              <button onClick={() => { setFiltros(prev => ({ ...prev, tipo: '' })); setPage(1); }} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {statusLabel && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Status : {statusLabel}
+              <button onClick={() => { setFiltros(prev => ({ ...prev, status: '' })); setPage(1); }} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+        </div>
+      )}
 
-          {/* Busca */}
-          <div className="relative flex-1 min-w-0 sm:max-w-md">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6] transition-all placeholder:text-gray-400"
-              placeholder="Buscar por nome, CPF ou CNPJ…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+      {/* ── Tabela ── */}
+      <div className="flex-1 overflow-auto">
+        {loading ? (
+          <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
+            <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
+        ) : (
+          <>
+            <table className="w-full table-fixed text-xs">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-44">Documento</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome / Razão Social</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-44">Contato</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-36">Município</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-24">Status</th>
+                  <th className="w-10 pr-4" />
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                      Nenhum registro encontrado.
+                    </td>
+                  </tr>
+                ) : paginated.map(p => (
+                  <tr key={p.id}
+                    onClick={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
+                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <td className="px-6 py-3 text-gray-500 tabular-nums truncate">
+                      {maskDoc(p.tipo, p.doc)}
+                    </td>
+                    <td className="px-4 py-3 truncate">
+                      <span className={cn(p.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                        {p.nome.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 truncate">
+                      {p.email ?? maskPhone(p.telefone) ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 truncate">
+                      {p.cidade !== '—' ? `${p.cidade}${p.uf ? ` – ${p.uf}` : ''}` : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge ativo={p.ativo} bloqueado={p.bloqueado} />
+                    </td>
+                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                      <RowMenu
+                        p={p}
+                        onView={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
+                        onEdit={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}/editar`)}
+                        onDesativar={() => handleDesativar(p)}
+                        onBloquear={() => handleBloquear(p)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          {/* Filtros */}
-          <div ref={filterRef} className="relative shrink-0">
-            <button
-              onMouseDown={e => e.stopPropagation()}
-              onClick={() => setFilterOpen(v => !v)}
-              className={cn(
-                'flex items-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors',
-                filtrosAtivos
-                  ? 'bg-blue-50 border-[#3B82F6] text-[#3B82F6]'
-                  : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50',
-              )}
-            >
-              <SlidersHorizontal size={13} /> Filtros
-              {filtrosAtivos && (
-                <span className="w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex items-center justify-center">
-                  {Object.values(filtros).filter(v => v !== '').length}
-                </span>
-              )}
-            </button>
-
-            {filterOpen && (
-              <div
-                onMouseDown={e => e.stopPropagation()}
-                className="absolute z-30 top-full right-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-600">Filtros</span>
-                  {filtrosAtivos && (
-                    <button onClick={() => setFiltros(FILTROS_VAZIOS)}
-                      className="text-[11px] text-red-400 hover:text-red-600 transition-colors">
-                      Limpar tudo
-                    </button>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Tipo</p>
-                  <div className="flex gap-1.5">
-                    {(['', 'fisica', 'juridica'] as const).map(v => (
-                      <button key={v} onClick={() => setF('tipo', v)}
-                        className={cn('flex-1 text-xs py-1.5 rounded-md border transition-colors',
-                          filtros.tipo === v
-                            ? 'bg-[#3B82F6] border-[#3B82F6] text-white'
-                            : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
-                        {v === '' ? 'Todos' : v === 'fisica' ? 'Física' : 'Jurídica'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Status</p>
-                  <div className="flex gap-1.5">
-                    {(['', 'ativo', 'bloqueado', 'inativo'] as const).map(v => (
-                      <button key={v} onClick={() => setF('status', v)}
-                        className={cn('flex-1 text-xs py-1.5 rounded-md border transition-colors',
-                          filtros.status === v
-                            ? 'bg-[#3B82F6] border-[#3B82F6] text-white'
-                            : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
-                        {v === '' ? 'Todos' : v === 'ativo' ? 'Ativo' : v === 'bloqueado' ? 'Bloqueado' : 'Inativo'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* ── Paginação ── */}
+            {filtered.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+                <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => goPage(p)}
+                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                    {p}
+                  </button>
+                ))}
+                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
             )}
-          </div>
-
-          <button
-            onClick={() => navigate('/comercial/clientes/novo')}
-            className="flex items-center gap-2 h-9 px-4 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] shadow-sm shadow-blue-200 transition-colors sm:ml-auto shrink-0"
-          >
-            <Plus size={15} /> Novo Cliente
-          </button>
-        </div>
-      </div>
-
-      {/* ── Conteúdo ── */}
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-4">
-
-        {loading && (
-          <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
-            <Loader2 size={16} className="animate-spin" /> Carregando cadastros…
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-center pb-16">
-            <p className="text-sm font-semibold text-red-500">{error}</p>
-            <button onClick={load} className="text-xs text-[#3B82F6] hover:underline">
-              Tentar novamente
-            </button>
-          </div>
-        )}
-
-        {!loading && !error && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-              <User size={28} className="text-[#3B82F6]" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-700">
-                {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhum cliente cadastrado'}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {search || filtrosAtivos
-                  ? 'Tente ajustar os filtros ou a busca.'
-                  : 'Clique em "Novo Cliente" para adicionar o primeiro cadastro.'}
-              </p>
-            </div>
-            {!search && !filtrosAtivos && (
-              <button onClick={() => navigate('/comercial/clientes/novo')}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#3B82F6] text-white text-sm hover:bg-[#2563eb] transition-colors">
-                <Plus size={14} /> Cadastrar cliente
-              </button>
-            )}
-          </div>
-        )}
-
-        {!loading && !error && filtered.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[700px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pl-4 pr-6">Documento</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5">Nome / Razão Social</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Inscrição Estadual</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Contato</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Município</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Status</th>
-                    <th className="w-10 pr-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(p => (
-                    <tr key={p.id} className={cn(
-                      'border-b border-gray-50 hover:bg-blue-50/40 transition-colors',
-                      !p.ativo && 'opacity-50',
-                      p.ativo && p.bloqueado && 'bg-amber-50/30',
-                    )}>
-                      <td className="py-3 pl-4 pr-6 text-xs text-gray-500 tabular-nums">
-                        {maskDoc(p.tipo, p.doc)}
-                      </td>
-                      <td className="py-3 pr-6 text-gray-700 font-medium">{p.nome}</td>
-                      <td className="py-3 pr-6 text-xs text-gray-500">
-                        {p.inscricaoEstadual ?? '—'}
-                      </td>
-                      <td className="py-3 pr-6 text-xs text-gray-500">
-                        {p.email ?? maskPhone(p.telefone) ?? '—'}
-                      </td>
-                      <td className="py-3 pr-6 text-xs text-gray-500">
-                        {p.cidade !== '—' ? `${p.cidade}${p.uf ? ` – ${p.uf}` : ''}` : '—'}
-                      </td>
-                      <td className="py-3 pr-6">
-                        <StatusBadge ativo={p.ativo} bloqueado={p.bloqueado} />
-                      </td>
-                      <td className="py-3 pr-3 text-right">
-                        <RowMenu
-                          p={p}
-                          onView={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
-                          onEdit={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}/editar`)}
-                          onDesativar={() => handleDesativar(p)}
-                          onBloquear={() => handleBloquear(p)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          </>
         )}
       </div>
 

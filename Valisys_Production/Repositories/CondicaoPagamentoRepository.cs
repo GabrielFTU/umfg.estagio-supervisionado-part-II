@@ -29,11 +29,21 @@ namespace Valisys_Production.Repositories
         public async Task AddAsync(CondicaoPagamento condicao) =>
             await db.CondicoesPagamento.AddAsync(condicao);
 
-        public void Update(CondicaoPagamento condicao) =>
-            db.Entry(condicao).State = EntityState.Modified;
+        public async Task UpdateWithParcelasAsync(CondicaoPagamento condicao, List<ParcelaCondicao> novasParcelas)
+        {
+            // Detach the already-tracked old parcelas so EF won't generate DELETEs for them
+            foreach (var p in condicao.Parcelas.ToList())
+                db.Entry(p).State = EntityState.Detached;
 
-        public void RemoveParcelas(IEnumerable<ParcelaCondicao> parcelas) =>
-            db.ParcelasCondicao.RemoveRange(parcelas);
+            condicao.LimparParcelas();
+
+            // Delete directly via SQL to avoid change-tracking conflicts
+            await db.ParcelasCondicao
+                .Where(p => p.CondicaoPagamentoId == condicao.Id)
+                .ExecuteDeleteAsync();
+
+            await db.ParcelasCondicao.AddRangeAsync(novasParcelas);
+        }
 
         public Task SaveChangesAsync() => db.SaveChangesAsync();
     }

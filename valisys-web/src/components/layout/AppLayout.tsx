@@ -29,17 +29,21 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex-1 flex items-center">
           <button
             onClick={() => setMobileOpen(true)}
-            className="lg:hidden p-1.5 rounded-md text-white/70 hover:text-white transition-colors"
-          >
+            className="lg:hidden p-1.5 rounded-md text-white/70 hover:text-white transition-colors">
             <Menu size={20} />
           </button>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <img src="/icon-white.png" alt="Valisys" className="h-8 w-8 object-contain" />
-          <span className="text-white font-semibold text-sm tracking-wide">
-            Valisys ERP
-          </span>
+        <div className="flex items-center gap-3 select-none">
+          <img 
+            src="/icon-white.png" 
+            alt="Valisys Logo" 
+            className="h-9 w-9 object-contain transform transition-transform hover:scale-105" />
+          <div className="flex flex-col border-l border-white/20 pl-3">
+            <span className="text-white font-bold text-base tracking-wide leading-none">
+              ATHEL ERP
+            </span>
+          </div>
         </div>
 
         {/* Direita — ações */}
@@ -75,8 +79,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)}
-            />
+              onClick={() => setMobileOpen(false)}/>
           )}
         </AnimatePresence>
 

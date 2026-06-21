@@ -79,7 +79,6 @@ export function AlmoxarifadosPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (!filterOpen) return;
     const h = (e: MouseEvent) => { if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false); };
@@ -98,9 +97,22 @@ export function AlmoxarifadosPage() {
   useEffect(() => { load(); }, []);
 
   const handleToggle = async (item: AlmoxarifadoItem) => {
-    if (!confirm(`${item.ativo ? 'Desativar' : 'Reativar'} "${item.nome}"?`)) return;
+    const acao = item.ativo ? 'Desativar' : 'Reativar';
+    if (!confirm(`${acao} "${item.nome}"?`)) return;
     const token = localStorage.getItem('token');
-    await fetch(`/api/Almoxarifado/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    if (item.ativo) {
+      await fetch(`/api/Almoxarifado/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    } else {
+      const res = await fetch(`/api/Almoxarifado/${item.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        await fetch(`/api/Almoxarifado/${item.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ ...data, ativo: true }),
+        });
+      }
+    }
     load();
   };
 

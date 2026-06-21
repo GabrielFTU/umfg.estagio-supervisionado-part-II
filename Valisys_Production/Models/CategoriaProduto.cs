@@ -19,10 +19,11 @@ namespace Valisys_Production.Models
 
         public void DefinirCodigo(string codigo) => CodigoInterno = codigo;
 
-        public void Atualizar(string nome, string? codigoInterno, bool ativo)
+        public void Atualizar(string nome, string? descricao, string? codigoInterno, bool ativo)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(nome);
             Nome = nome;
+            Descricao = descricao;
             if (!string.IsNullOrWhiteSpace(codigoInterno))
                 CodigoInterno = codigoInterno;
             DefinirAtivo(ativo);

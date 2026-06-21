@@ -47,14 +47,14 @@ namespace Valisys_Production.Services
             c.Atualizar(dto.Nome, dto.NumeroParcelas, dto.DiasParaPrimeiroVencimento,
                 dto.DiastEntreParcelas, dto.VencimentoDiaFixo, dto.Ativo);
 
-            repo.RemoveParcelas(c.Parcelas.ToList());
+            var novasParcelas = dto.Parcelas
+                .Select(p => new ParcelaCondicao(c.Id, p.Numero, p.NumeroDias, p.Percentual))
+                .ToList();
 
-            var novasParcelas = dto.Parcelas.Select(p => new ParcelaCondicao(c.Id, p.Numero, p.NumeroDias, p.Percentual));
-            c.SetParcelas(novasParcelas);
-
-            repo.Update(c);
+            await repo.UpdateWithParcelasAsync(c, novasParcelas);
             await repo.SaveChangesAsync();
-            return Map(c);
+            var atualizado = await repo.GetByIdAsync(c.Id);
+            return Map(atualizado!);
         }
 
         public async Task DeleteAsync(Guid id)
@@ -62,7 +62,6 @@ namespace Valisys_Production.Services
             var c = await repo.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException("Condição de pagamento não encontrada.");
             c.Desativar();
-            repo.Update(c);
             await repo.SaveChangesAsync();
         }
 

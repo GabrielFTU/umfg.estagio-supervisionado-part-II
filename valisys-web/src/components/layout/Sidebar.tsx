@@ -57,10 +57,10 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Comercial',
     href: '/comercial',
     children: [
+      { label: 'Catalogo de Produtos',         href: '/catalogo/produtos' },
       { label: 'Clientes',         href: '/comercial/clientes' },
       { label: 'Orçamentos',       href: '/comercial/orcamentos' },
       { label: 'Pedidos de Venda', href: '/comercial/pedidos' },
-      { label: 'Produtos',         href: '/comercial/produtos' },
     ],
   },
   {

@@ -9,8 +9,7 @@ namespace Valisys_Production.Repositories.Interfaces
         Task<int> GetProximoCodigoAsync();
         Task<bool> NomeExisteAsync(string nome, Guid? ignorarId = null);
         Task AddAsync(CondicaoPagamento condicao);
-        void Update(CondicaoPagamento condicao);
-        void RemoveParcelas(IEnumerable<ParcelaCondicao> parcelas);
+        Task UpdateWithParcelasAsync(CondicaoPagamento condicao, List<ParcelaCondicao> novasParcelas);
         Task SaveChangesAsync();
     }
 }

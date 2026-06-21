@@ -48,7 +48,7 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(dto.Id)
                 ?? throw new KeyNotFoundException("Categoria não encontrada.");
 
-            existing.Atualizar(dto.Nome, dto.Codigo, dto.Ativo);
+            existing.Atualizar(dto.Nome, dto.Descricao, dto.Codigo, dto.Ativo);
 
             var result = await _repository.UpdateAsync(existing);
 

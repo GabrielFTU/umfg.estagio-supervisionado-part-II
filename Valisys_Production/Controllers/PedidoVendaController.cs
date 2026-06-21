@@ -81,6 +81,7 @@ namespace Valisys_Production.Controllers
                 RepresentanteId     = pedido.RepresentanteId,
                 RepresentanteNome   = pedido.RepresentanteId != Guid.Empty && usuarios.TryGetValue(pedido.RepresentanteId, out var rn) ? rn : null,
                 FormaPagamento      = ExtrairTag(pedido.ObservacaoInterna, "Pagamento"),
+                CondicaoPagamento   = ExtrairTag(pedido.ObservacaoInterna, "Condicao"),
                 Finalidade          = ExtrairTag(pedido.ObservacaoInterna, "Finalidade"),
                 DataEmissao         = pedido.DataEmissao,
                 DataPrevisaoEntrega = pedido.DataPrevisaoEntrega,

@@ -90,6 +90,7 @@ namespace Valisys_Production.Controllers
                 RepresentanteId         = orcamento.RepresentanteId,
                 RepresentanteNome       = orcamento.RepresentanteId != Guid.Empty && usuarios.TryGetValue(orcamento.RepresentanteId, out var rn) ? rn : null,
                 FormaPagamento          = ExtrairTag(orcamento.ObservacaoInterna, "Pagamento"),
+                CondicaoPagamento       = ExtrairTag(orcamento.ObservacaoInterna, "Condicao"),
                 DataEmissao             = orcamento.DataEmissao,
                 DataValidade            = orcamento.DataValidade,
                 Desconto                = orcamento.Desconto,
@@ -173,6 +174,7 @@ namespace Valisys_Production.Controllers
                 if (!ok) return NotFoundProblem($"Orçamento '{id}' não encontrado.");
                 return NoContent();
             }
+            catch (ArgumentException ex)         { return Problem(ex.Message); }
             catch (InvalidOperationException ex) { return ConflictProblem(ex.Message); }
             catch (KeyNotFoundException ex)      { return NotFoundProblem(ex.Message); }
         }
@@ -190,6 +192,7 @@ namespace Valisys_Production.Controllers
                 if (!ok) return NotFoundProblem($"Orçamento '{id}' não encontrado.");
                 return NoContent();
             }
+            catch (ArgumentException ex)         { return Problem(ex.Message); }
             catch (InvalidOperationException ex) { return ConflictProblem(ex.Message); }
             catch (KeyNotFoundException ex)      { return NotFoundProblem(ex.Message); }
         }
@@ -207,6 +210,7 @@ namespace Valisys_Production.Controllers
                 if (!ok) return NotFoundProblem($"Orçamento '{id}' não encontrado.");
                 return NoContent();
             }
+            catch (ArgumentException ex)         { return Problem(ex.Message); }
             catch (InvalidOperationException ex) { return ConflictProblem(ex.Message); }
             catch (KeyNotFoundException ex)      { return NotFoundProblem(ex.Message); }
         }

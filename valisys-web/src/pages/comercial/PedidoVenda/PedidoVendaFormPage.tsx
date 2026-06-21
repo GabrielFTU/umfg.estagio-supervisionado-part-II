@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
-  Loader2, Plus, Trash2, Search, Package,
-  ChevronLeft, CheckCircle2, XCircle, TrendingUp, ChevronDown,
+  Loader2, Plus, Trash2, Search,
+  ChevronLeft, ChevronRight, CheckCircle2, XCircle, TrendingUp, ChevronDown, Home,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -18,8 +17,6 @@ const STATUS_CFG: Record<number, { label: string; color: string }> = {
   2: { label: 'Concluído',  color: 'text-emerald-600 bg-emerald-50' },
   3: { label: 'Cancelado',  color: 'text-red-500 bg-red-50'       },
 };
-
-// ─── Helpers numéricos ────────────────────────────────────────────────────────
 
 function maskCurrency(raw: string): string {
   const digits = raw.replace(/\D/g, '');
@@ -43,7 +40,6 @@ function toDateInput(iso: string | null | undefined): string {
   return iso.split('T')[0];
 }
 
-// ─── Campo underline base ─────────────────────────────────────────────────────
 
 function UField({ label, required, error, children }: {
   label: string; required?: boolean; error?: string; children: React.ReactNode;
@@ -64,7 +60,6 @@ function UField({ label, required, error, children }: {
 
 const uCls = 'w-full bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-300';
 
-// ─── SelectField — combobox com busca + lista limitada ────────────────────────
 
 interface SelectOption { value: string; label: string }
 
@@ -149,7 +144,6 @@ function SelectField({ label, required, value, onChange, options, placeholder, r
   );
 }
 
-// Wrapper para posicionar o dropdown corretamente
 function SelectWrap(props: Parameters<typeof SelectField>[0]) {
   return (
     <div className="relative">
@@ -157,8 +151,6 @@ function SelectWrap(props: Parameters<typeof SelectField>[0]) {
     </div>
   );
 }
-
-// ─── Busca de clientes (autocomplete) ────────────────────────────────────────
 
 interface ClienteOption { id: string; nome: string; doc: string }
 
@@ -238,7 +230,6 @@ function ClienteSearch({
   );
 }
 
-// ─── Linha de item ────────────────────────────────────────────────────────────
 
 interface ItemLocal {
   localId: string; id?: string; produtoId: string;
@@ -297,14 +288,21 @@ const ItemRow = memo(function ItemRow({
   );
 });
 
-// ─── Modal de produto ─────────────────────────────────────────────────────────
-
 interface ProdutoOption { id: string; nome: string; codigo: string; unidade: string; preco: number }
 
-function ProdutoModal({ onSelect, onClose }: { onSelect: (p: ProdutoOption) => void; onClose: () => void }) {
-  const [search, setSearch]     = useState('');
-  const [produtos, setProdutos] = useState<ProdutoOption[]>([]);
-  const [loading, setLoading]   = useState(true);
+function ProdutoModal({ onAdd, onClose }: {
+  onAdd: (p: ProdutoOption, quantidade: number, valorUnitario: number, descontoUnitario: number) => void;
+  onClose: () => void;
+}) {
+  const [produtos, setProdutos]         = useState<ProdutoOption[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [produtoId, setProdutoId]       = useState('');
+  const [aplicarDesconto, setAplicarDesconto] = useState(false);
+  const [continuar, setContinuar]       = useState(false);
+  const [quantidade, setQuantidade]     = useState('1');
+  const [valorUnitario, setValorUnitario]     = useState('');
+  const [descontoUnitario, setDescontoUnitario] = useState('');
+  const [erroProduto, setErroProduto]   = useState('');
 
   useEffect(() => {
     const fn = async () => {
@@ -321,58 +319,167 @@ function ProdutoModal({ onSelect, onClose }: { onSelect: (p: ProdutoOption) => v
     fn();
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return produtos.filter(p => p.nome.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q));
-  }, [search, produtos]);
+  const produtoOptions: SelectOption[] = useMemo(
+    () => produtos.map(p => ({ value: p.id, label: p.nome + (p.codigo ? ` (${p.codigo})` : '') })),
+    [produtos],
+  );
+
+  const produtoSelecionado = useMemo(() => produtos.find(p => p.id === produtoId) ?? null, [produtos, produtoId]);
+
+  useEffect(() => {
+    if (produtoSelecionado) setValorUnitario(floatToMask(produtoSelecionado.preco));
+    else setValorUnitario('');
+  }, [produtoId]); 
+
+  const valorTotal =
+    (parseCurrency(valorUnitario) - (aplicarDesconto ? parseCurrency(descontoUnitario) : 0)) *
+    (parseInt(quantidade, 10) || 0);
+
+  const handleAdicionar = () => {
+    if (!produtoSelecionado) { setErroProduto('Selecione um produto.'); return; }
+    onAdd(
+      produtoSelecionado,
+      parseInt(quantidade, 10) || 1,
+      parseCurrency(valorUnitario),
+      aplicarDesconto ? parseCurrency(descontoUnitario) : 0,
+    );
+    if (continuar) {
+      setProdutoId(''); setQuantidade('1');
+      setValorUnitario(''); setDescontoUnitario('');
+      setAplicarDesconto(false); setErroProduto('');
+    } else {
+      onClose();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[70vh]">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between shrink-0">
-          <h3 className="text-sm font-semibold text-gray-700">Selecionar Produto</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
-        </div>
-        <div className="p-3 border-b border-gray-100 shrink-0">
-          <div className="flex items-center gap-2 border-b border-gray-300 focus-within:border-[#3B82F6] pb-1 transition-colors">
-            <Search size={14} className="text-gray-400 shrink-0" />
-            <input autoFocus className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-300"
-              placeholder="Buscar por nome ou código…" value={search} onChange={e => setSearch(e.target.value)} />
+    <div className="fixed inset-0 z-50 bg-[#f5f5f5] flex flex-col">
+
+      {/* Breadcrumb */}
+      <div className="shrink-0 px-8 py-3 bg-white border-b border-gray-100 flex items-center gap-1.5 text-sm text-gray-400">
+        <Home size={13} />
+        <ChevronRight size={13} />
+        <span>Pedido de venda</span>
+        <ChevronRight size={13} />
+        <span className="text-gray-700 font-medium">Produto</span>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-auto p-8">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+
+          {/* Produto select */}
+          <div className="relative">
+            <SelectField
+              label="Produto"
+              required
+              value={produtoId}
+              onChange={v => { setProdutoId(v); setErroProduto(''); }}
+              options={produtoOptions}
+              placeholder={loading ? 'Carregando…' : 'Selecione o produto'}
+              error={erroProduto}
+            />
+          </div>
+
+          {/* Toggle desconto */}
+          <div className="mt-1 flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-sm text-gray-600">Aplicar desconto</span>
+            <button
+              type="button"
+              onClick={() => setAplicarDesconto(v => !v)}
+              className={cn(
+                'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none',
+                aplicarDesconto ? 'bg-[#3B82F6]' : 'bg-gray-200',
+              )}
+            >
+              <span className={cn(
+                'inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform',
+                aplicarDesconto ? 'translate-x-[18px]' : 'translate-x-[2px]',
+              )} />
+            </button>
+          </div>
+
+          {/* Tabela */}
+          <div className="mt-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left text-xs text-gray-500 font-semibold pb-2 pr-4">Produto</th>
+                  <th className="text-right text-xs text-gray-500 font-semibold pb-2 pr-4 w-32">Valor unitário</th>
+                  {aplicarDesconto && (
+                    <th className="text-right text-xs text-gray-500 font-semibold pb-2 pr-4 w-32">Desconto unit.</th>
+                  )}
+                  <th className="text-right text-xs text-gray-500 font-semibold pb-2 pr-4 w-32">Valor total</th>
+                  <th className="text-right text-xs text-gray-500 font-semibold pb-2 w-28">Quantidade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!produtoSelecionado ? (
+                  <tr>
+                    <td colSpan={aplicarDesconto ? 5 : 4} className="py-10 text-center text-sm text-gray-400">
+                      Nenhum registro encontrado.
+                    </td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <td className="py-3 pr-4">
+                      <p className="text-sm text-gray-700">{produtoSelecionado.nome}</p>
+                      <p className="text-[11px] text-gray-400">{produtoSelecionado.codigo} · {produtoSelecionado.unidade}</p>
+                    </td>
+                    <td className="py-3 pr-4 w-32">
+                      <input value={valorUnitario} onChange={e => setValorUnitario(maskCurrency(e.target.value))}
+                        className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#3B82F6] transition-colors pb-0.5 placeholder:text-gray-300"
+                        placeholder="0,00" />
+                    </td>
+                    {aplicarDesconto && (
+                      <td className="py-3 pr-4 w-32">
+                        <input value={descontoUnitario} onChange={e => setDescontoUnitario(maskCurrency(e.target.value))}
+                          className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#3B82F6] transition-colors pb-0.5 placeholder:text-gray-300"
+                          placeholder="0,00" />
+                      </td>
+                    )}
+                    <td className="py-3 pr-4 w-32 text-right">
+                      <span className="text-sm text-gray-700">{formatCurrency(valorTotal)}</span>
+                    </td>
+                    <td className="py-3 w-28">
+                      <input type="number" min={1} value={quantidade} onChange={e => setQuantidade(e.target.value)}
+                        className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#3B82F6] transition-colors pb-0.5" />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-        <div className="flex-1 overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-12 gap-2 text-gray-400 text-sm">
-              <Loader2 size={16} className="animate-spin" /> Carregando…
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-400 text-sm">
-              <Package size={28} className="text-gray-200" /> Nenhum produto encontrado
-            </div>
-          ) : filtered.map(p => (
-            <button key={p.id} type="button" onClick={() => onSelect(p)}
-              className="w-full text-left px-4 py-2.5 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">{p.nome}</p>
-                  <p className="text-[11px] text-gray-400">{p.codigo} · {p.unidade}</p>
-                </div>
-                {p.preco > 0 && <span className="text-xs text-gray-500 ml-4 shrink-0">{formatCurrency(p.preco)}</span>}
-              </div>
-            </button>
-          ))}
+      </div>
+
+      {/* Footer */}
+      <div className="shrink-0 px-8 py-4 bg-white border-t border-gray-100 flex items-center justify-between">
+        <button type="button" onClick={onClose}
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          Cancelar
+        </button>
+        <div className="flex items-center gap-5">
+          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+            <input type="checkbox" checked={continuar} onChange={e => setContinuar(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 accent-[#3B82F6]" />
+            Continuar adicionando
+          </label>
+          <button type="button" onClick={handleAdicionar}
+            className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors">
+            Adicionar
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Página ───────────────────────────────────────────────────────────────────
 
 interface FormState {
   clienteId: string; representanteNome: string; formaPagamentoId: string;
-  finalidade: string; dataPrevisaoEntrega: string; desconto: string;
-  observacaoInterna: string; observacaoExterna: string;
+  condicaoPagamentoId: string; finalidade: string; dataPrevisaoEntrega: string;
+  desconto: string; observacaoInterna: string; observacaoExterna: string;
 }
 
 export function PedidoVendaFormPage() {
@@ -392,18 +499,18 @@ export function PedidoVendaFormPage() {
   const [codigoPedido, setCodigoPedido]   = useState<number | null>(null);
   const [pedidoId, setPedidoId]           = useState<string | null>(id ?? null);
   const [showModal, setShowModal]         = useState(false);
-  const [formasPagamento, setFormasPagamento] = useState<SelectOption[]>([]);
-  const [finalidades, setFinalidades]         = useState<SelectOption[]>([]);
+  const [formasPagamento, setFormasPagamento]     = useState<SelectOption[]>([]);
+  const [condicoesPagamento, setCondicoesPagamento] = useState<SelectOption[]>([]);
+  const [finalidades, setFinalidades]             = useState<SelectOption[]>([]);
 
   const [cliente, setCliente] = useState<{ id: string; nome: string } | null>(null);
   const [form, setForm] = useState<FormState>({
     clienteId: '', representanteNome: '', formaPagamentoId: '',
-    finalidade: '', dataPrevisaoEntrega: '', desconto: '',
-    observacaoInterna: '', observacaoExterna: '',
+    condicaoPagamentoId: '', finalidade: '', dataPrevisaoEntrega: '',
+    desconto: '', observacaoInterna: '', observacaoExterna: '',
   });
   const [itens, setItens] = useState<ItemLocal[]>([]);
 
-  // ── Carregar formas de pagamento e finalidades ────────────────────────────
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -413,12 +520,15 @@ export function PedidoVendaFormPage() {
       .then(r => r.ok ? r.json() : [])
       .then((data: any[]) => setFormasPagamento(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
 
+    fetch('/api/condicoes-pagamento', { headers: h })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setCondicoesPagamento(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
+
     fetch('/api/finalidades', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((data: any[]) => setFinalidades(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
   }, []);
 
-  // ── Carregar pedido ───────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!id) return;
@@ -431,7 +541,9 @@ export function PedidoVendaFormPage() {
       setCliente({ id: data.clienteId, nome: data.clienteNome });
       setForm({
         clienteId: data.clienteId, representanteNome: data.representanteNome ?? '',
-        formaPagamentoId: data.formaPagamento ?? '', finalidade: data.finalidade ?? '',
+        formaPagamentoId: data.formaPagamento ?? '',
+        condicaoPagamentoId: data.condicaoPagamento ?? '',
+        finalidade: data.finalidade ?? '',
         dataPrevisaoEntrega: toDateInput(data.dataPrevisaoEntrega), desconto: floatToMask(data.desconto),
         observacaoInterna: data.observacaoInterna ?? '', observacaoExterna: data.observacaoExterna ?? '',
       });
@@ -446,7 +558,6 @@ export function PedidoVendaFormPage() {
     fn();
   }, [id, navigate]);
 
-  // ── Totais ────────────────────────────────────────────────────────────────
 
   const { subtotal, desconto, total } = useMemo(() => {
     const sub = itens.reduce((s, i) =>
@@ -455,20 +566,22 @@ export function PedidoVendaFormPage() {
     return { subtotal: sub, desconto: desc, total: sub - desc };
   }, [itens, form.desconto]);
 
-  // ── Handlers de item ──────────────────────────────────────────────────────
-
-  const addProduto = (p: ProdutoOption) => {
-    setShowModal(false);
+  const addProduto = (p: ProdutoOption, quantidade: number, valorUnitario: number, descontoUnitario: number) => {
     const exists = itens.find(i => i.produtoId === p.id);
     if (exists) {
-      setItens(prev => prev.map(i => i.produtoId === p.id ? { ...i, quantidade: String(parseInt(i.quantidade, 10) + 1) } : i));
-      return;
+      setItens(prev => prev.map(i => i.produtoId === p.id
+        ? { ...i, quantidade: String(quantidade), valorUnitario: floatToMask(valorUnitario), descontoUnitario: floatToMask(descontoUnitario) }
+        : i,
+      ));
+    } else {
+      setItens(prev => [...prev, {
+        localId: crypto.randomUUID(), produtoId: p.id, produtoNome: p.nome,
+        produtoCodigo: p.codigo, unidadeMedida: p.unidade,
+        quantidade: String(quantidade),
+        valorUnitario: floatToMask(valorUnitario),
+        descontoUnitario: floatToMask(descontoUnitario),
+      }]);
     }
-    setItens(prev => [...prev, {
-      localId: crypto.randomUUID(), produtoId: p.id, produtoNome: p.nome,
-      produtoCodigo: p.codigo, unidadeMedida: p.unidade, quantidade: '1',
-      valorUnitario: floatToMask(p.preco), descontoUnitario: '',
-    }]);
   };
 
   const updateItem = (localId: string, field: keyof ItemLocal, value: string) =>
@@ -481,7 +594,10 @@ export function PedidoVendaFormPage() {
   const validar = () => {
     const e: Record<string, string> = {};
     if (!form.clienteId) e.clienteId = 'Selecione um cliente.';
-    if (itens.length === 0) e.itens = 'Adicione ao menos um item.';
+    if (!form.finalidade) e.finalidade = 'Selecione a finalidade.';
+    if (!form.formaPagamentoId) e.formaPagamentoId = 'Selecione a forma de pagamento.';
+    if (!form.condicaoPagamentoId) e.condicaoPagamentoId = 'Selecione a condição de pagamento.';
+    if (itens.length === 0) e.itens = 'Adicione ao menos um produto.';
     setErros(e);
     return Object.keys(e).length === 0;
   };
@@ -496,6 +612,7 @@ export function PedidoVendaFormPage() {
     const payload = {
       clienteId: form.clienteId,
       formaPagamento: form.formaPagamentoId || undefined,
+      condicaoPagamento: form.condicaoPagamentoId || undefined,
       finalidade: form.finalidade || undefined,
       dataPrevisaoEntrega: form.dataPrevisaoEntrega || undefined,
       desconto: parseCurrency(form.desconto),
@@ -621,20 +738,35 @@ export function PedidoVendaFormPage() {
 
             <SelectWrap
               label="Finalidade de pedido"
+              required
               value={form.finalidade}
               onChange={setF('finalidade')}
               options={finalidades}
               placeholder="Selecione a finalidade"
               readOnly={readOnly}
+              error={erros.finalidade}
             />
 
             <SelectWrap
               label="Forma de Pagamento"
+              required
               value={form.formaPagamentoId}
               onChange={setF('formaPagamentoId')}
               options={formasPagamento}
               placeholder="Selecione a forma de pagamento"
               readOnly={readOnly}
+              error={erros.formaPagamentoId}
+            />
+
+            <SelectWrap
+              label="Condição de Pagamento"
+              required
+              value={form.condicaoPagamentoId}
+              onChange={setF('condicaoPagamentoId')}
+              options={condicoesPagamento}
+              placeholder="Selecione a condição de pagamento"
+              readOnly={readOnly}
+              error={erros.condicaoPagamentoId}
             />
 
             <UField label="Previsão de Entrega">
@@ -750,7 +882,7 @@ export function PedidoVendaFormPage() {
         </div>
       )}
 
-      {showModal && <ProdutoModal onSelect={addProduto} onClose={() => setShowModal(false)} />}
+      {showModal && <ProdutoModal onAdd={addProduto} onClose={() => setShowModal(false)} />}
     </div>
   );
 }

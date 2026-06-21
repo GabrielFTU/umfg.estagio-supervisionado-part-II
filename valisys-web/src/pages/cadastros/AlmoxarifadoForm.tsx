@@ -212,7 +212,7 @@ export function AlmoxarifadoFormPage() {
                 disabled={readonly}
                 value={localizacao}
                 onChange={e => { setLocalizacao(e.target.value); clearErr('localizacao'); }}
-                placeholder="Ex: Galpão A, Bloco 2"
+                placeholder="Ex: Matriz, Unidade 2"
                 maxLength={100}
                 className={underline(fieldErrors.localizacao)}
               />
@@ -262,15 +262,14 @@ export function AlmoxarifadoFormPage() {
               disabled={readonly}
               value={descricao}
               onChange={e => setDescricao(e.target.value)}
-              placeholder={readonly ? '—' : 'Descreva o propósito deste almoxarifado…'}
+              placeholder={readonly ? '—' : 'Descreva brevemente o proposito deste almoxarifado…'}
               rows={3}
               maxLength={255}
               className={cn(
                 'w-full bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none pt-1',
                 'border-gray-300 focus:border-[#3B82F6]',
                 readonly && 'opacity-60 cursor-default',
-              )}
-            />
+              )}/>
           </div>
 
           {/* Contato + E-mail */}
@@ -298,15 +297,13 @@ export function AlmoxarifadoFormPage() {
                 onChange={e => { setEmail(e.target.value); clearErr('email'); }}
                 placeholder="almox@empresa.com"
                 maxLength={100}
-                className={underline(fieldErrors.email)}
-              />
+                className={underline(fieldErrors.email)}/>
               {fieldErrors.email && (
                 <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.email}</p>
               )}
             </div>
           </div>
 
-          {/* Status toggle — apenas modo editar */}
           {modo === 'editar' && (
             <div className="flex items-center justify-between py-4 border-b border-gray-100">
               <span className="text-sm text-gray-700">Ativo?</span>

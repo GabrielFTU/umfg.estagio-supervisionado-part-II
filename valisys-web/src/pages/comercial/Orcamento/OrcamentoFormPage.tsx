@@ -370,7 +370,7 @@ function ProdutoModal({ onSelect, onClose }: { onSelect: (p: ProdutoOption) => v
 // ─── Página ───────────────────────────────────────────────────────────────────
 
 interface FormState {
-  clienteId: string; formaPagamentoId: string;
+  clienteId: string; formaPagamentoId: string; condicaoPagamentoId: string;
   dataValidade: string; desconto: string;
   observacaoInterna: string; observacaoExterna: string;
 }
@@ -393,12 +393,13 @@ export function OrcamentoFormPage() {
   const [orcamentoId, setOrcamentoId]           = useState<string | null>(id ?? null);
   const [pedidoConvertidoId, setPedidoConvertidoId] = useState<string | null>(null);
   const [showModal, setShowModal]               = useState(false);
-  const [formasPagamento, setFormasPagamento]   = useState<SelectOption[]>([]);
-  const [convertendo, setConvertendo]           = useState(false);
+  const [formasPagamento, setFormasPagamento]     = useState<SelectOption[]>([]);
+  const [condicoesPagamento, setCondicoesPagamento] = useState<SelectOption[]>([]);
+  const [convertendo, setConvertendo]             = useState(false);
 
   const [cliente, setCliente] = useState<{ id: string; nome: string } | null>(null);
   const [form, setForm] = useState<FormState>({
-    clienteId: '', formaPagamentoId: '',
+    clienteId: '', formaPagamentoId: '', condicaoPagamentoId: '',
     dataValidade: '', desconto: '',
     observacaoInterna: '', observacaoExterna: '',
   });
@@ -406,9 +407,13 @@ export function OrcamentoFormPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    fetch('/api/formas-pagamento', { headers: { Authorization: `Bearer ${token}` } })
+    const h = { Authorization: `Bearer ${token}` };
+    fetch('/api/formas-pagamento', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((data: any[]) => setFormasPagamento(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
+    fetch('/api/condicoes-pagamento', { headers: h })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setCondicoesPagamento(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
   }, []);
 
   useEffect(() => {
@@ -426,6 +431,7 @@ export function OrcamentoFormPage() {
       setForm({
         clienteId: data.clienteId,
         formaPagamentoId: data.formaPagamento ?? '',
+        condicaoPagamentoId: data.condicaoPagamento ?? '',
         dataValidade: toDateInput(data.dataValidade),
         desconto: floatToMask(data.desconto),
         observacaoInterna: data.observacaoInterna ?? '',
@@ -485,6 +491,7 @@ export function OrcamentoFormPage() {
     const payload = {
       clienteId: form.clienteId,
       formaPagamento: form.formaPagamentoId || undefined,
+      condicaoPagamento: form.condicaoPagamentoId || undefined,
       dataValidade: form.dataValidade || undefined,
       desconto: parseCurrency(form.desconto),
       observacaoInterna: form.observacaoInterna || undefined,
@@ -678,6 +685,15 @@ export function OrcamentoFormPage() {
               placeholder="Selecione a forma de pagamento"
               readOnly={readOnly}
               error={erros.formaPagamentoId}
+            />
+
+            <SelectWrap
+              label="Condição de Pagamento"
+              value={form.condicaoPagamentoId}
+              onChange={setF('condicaoPagamentoId')}
+              options={condicoesPagamento}
+              placeholder="Selecione a condição de pagamento"
+              readOnly={readOnly}
             />
 
             <UField label="Data de Validade">
