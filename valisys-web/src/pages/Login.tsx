@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { login, saveSession } from '@/services/auth';
+import { Eye, EyeOff } from 'lucide-react';
 
 type Mode = 'login';
 
@@ -14,6 +15,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +30,9 @@ export function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const switchMode = (next: Mode) => {
@@ -101,18 +106,37 @@ export function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       autoComplete="email"/>
-                    <div>
+                    <div style={{ position: 'relative' }}>
                       <Input
                         id="senha"
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         label={<span>Senha <span style={{ color: 'red' }}>*</span></span>}
                         value={senha}
                         onChange={(e) => setSenha(e.target.value)}
-                        autoComplete="current-password"/>
+                        autoComplete="current-password"
+                        style={{ paddingRight: '40px', width: '100%' }}/>
+                      <button
+                        type='button'
+                        onClick={togglePasswordVisibility}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '4px'
+                        }}
+                      >
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
                     </div>
 
                     {error && <p className="text-sm text-red-500 -mt-1">{error}</p>}
-
                     <button
                       type="submit"
                       disabled={loading}
