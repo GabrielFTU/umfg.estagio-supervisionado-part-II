@@ -18,7 +18,6 @@ namespace Valisys_Production.Data
         private static readonly Guid SampleAlmoxarifadoId = Guid.Parse("C0DE0000-0000-0000-0000-000000000009");
         private static readonly Guid AdminUserId = Guid.Parse("C0DE0000-0000-0000-0000-000000000000");
 
-        // ─── Pessoa ───────────────────────────────────────────────────────────
         public DbSet<Pessoa> Pessoas { get; set; }
         public DbSet<PessoaFisica> PessoasFisicas { get; set; }
         public DbSet<PessoaJuridica> PessoasJuridicas { get; set; }
@@ -54,6 +53,7 @@ namespace Valisys_Production.Data
         public DbSet<ItemPedido> ItensPedido { get; set; }
         public DbSet<Orcamento> Orcamentos { get; set; }
         public DbSet<ItemOrcamento> ItensOrcamento { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<FormaPagamento> FormasPagamento { get; set; }
         public DbSet<FormaPagamentoVendedor> FormaPagamentoVendedores { get; set; }
         public DbSet<Finalidade> Finalidades { get; set; }
@@ -64,8 +64,6 @@ namespace Valisys_Production.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // ─── Pessoa TPT ───────────────────────────────────────────────────
-            // Pessoas → tabela base, PessoasFisicas / PessoasJuridicas → tabelas filhas (TPT)
             modelBuilder.Entity<Pessoa>().UseTptMappingStrategy();
 
             modelBuilder.Entity<Pessoa>()
@@ -85,8 +83,6 @@ namespace Valisys_Production.Data
             modelBuilder.Entity<PessoaJuridica>()
                 .HasIndex(pj => pj.Cnpj)
                 .IsUnique();
-
-            // ─────────────────────────────────────────────────────────────────
 
             modelBuilder.Entity<Produto>()
                 .HasIndex(p => p.CodigoInternoProduto)
@@ -275,8 +271,6 @@ namespace Valisys_Production.Data
                 .WithOne(p => p.LimiteCredito)
                 .HasForeignKey<LimiteCredito>(l => l.PessoaId);
 
-            // ─── Forma de Pagamento ───────────────────────────────────────────
-
             modelBuilder.Entity<FormaPagamento>()
                 .Navigation(f => f.Vendedores).HasField("_vendedores");
 
@@ -299,15 +293,11 @@ namespace Valisys_Production.Data
                 .HasIndex(v => new { v.FormaPagamentoId, v.VendedorId })
                 .IsUnique();
 
-            // ─── Finalidade ───────────────────────────────────────────────────
-
             modelBuilder.Entity<Finalidade>()
                 .HasIndex(f => f.Codigo).IsUnique();
 
             modelBuilder.Entity<Finalidade>()
                 .HasIndex(f => f.Nome).IsUnique();
-
-            // ─── Condição de Pagamento ────────────────────────────────────────
 
             modelBuilder.Entity<CondicaoPagamento>()
                 .HasIndex(c => c.Codigo).IsUnique();
@@ -327,8 +317,6 @@ namespace Valisys_Production.Data
             modelBuilder.Entity<ParcelaCondicao>()
                 .Property(p => p.Percentual)
                 .HasPrecision(8, 4);
-
-            // ─── Pedido de Venda ──────────────────────────────────────────────
 
             modelBuilder.Entity<PedidoVenda>()
                 .Navigation(p => p.Itens).HasField("_itens");
@@ -361,8 +349,6 @@ namespace Valisys_Production.Data
                 .HasForeignKey(i => i.PedidoVendaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ─── Orçamento ────────────────────────────────────────────────────
-
             modelBuilder.Entity<Orcamento>()
                 .Navigation(o => o.Itens).HasField("_itens");
 
@@ -394,7 +380,60 @@ namespace Valisys_Production.Data
                 .HasForeignKey(i => i.OrcamentoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Seed Data
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne(r => r.Usuario)
+                .WithMany()
+                .HasForeignKey(r => r.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(r => r.Token)
+                .IsUnique();
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(r => new { r.UsuarioId, r.IsRevoked });
+
+
+            modelBuilder.Entity<Usuario>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<Orcamento>()
+                .HasIndex(o => o.ClienteId);
+
+            modelBuilder.Entity<Orcamento>()
+                .HasIndex(o => o.Status);
+
+            modelBuilder.Entity<Orcamento>()
+                .HasIndex(o => o.DataEmissao);
+
+            modelBuilder.Entity<Orcamento>()
+                .HasIndex(o => o.RepresentanteId);
+
+            modelBuilder.Entity<PedidoVenda>()
+                .HasIndex(p => p.ClienteId);
+
+            modelBuilder.Entity<PedidoVenda>()
+                .HasIndex(p => p.Status);
+
+            modelBuilder.Entity<LogSistema>()
+                .HasIndex(l => l.DataHora);
+
+            modelBuilder.Entity<LogSistema>()
+                .HasIndex(l => l.UsuarioId);
+
+            modelBuilder.Entity<ContaReceber>()
+                .HasIndex(c => c.PessoaId);
+
+            modelBuilder.Entity<ContaReceber>()
+                .HasIndex(c => c.Status);
+
+            modelBuilder.Entity<ContaPagar>()
+                .HasIndex(c => c.FornecedorId);
+
+            modelBuilder.Entity<ContaPagar>()
+                .HasIndex(c => c.Status);
+
             var seedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
             var adminPerfil = new Perfil("Administrador");

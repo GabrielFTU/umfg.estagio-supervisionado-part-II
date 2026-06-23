@@ -1,0 +1,33 @@
+# Modo de desenvolvimento local:
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Sobe APENAS o banco de dados.
+# Backend e frontend rodam diretamente na máquina para ter hot-reload.
+#
+# Depois de subir o banco, inicie em terminais separados:
+#   Terminal 1 (backend):  cd Valisys_Production && dotnet run
+#   Terminal 2 (frontend): cd valisys-web && npm run dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: valisys_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpass}
+      POSTGRES_DB:       ${DB_NAME:-ValisysProduction}
+      PGDATA:            /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_dev_data:
+    driver: local

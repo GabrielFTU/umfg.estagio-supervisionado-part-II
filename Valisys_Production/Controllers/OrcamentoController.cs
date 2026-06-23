@@ -15,34 +15,44 @@ namespace Valisys_Production.Controllers
     {
         private readonly IOrcamentoService _service;
         private readonly ApplicationDbContext _ctx;
+        private readonly ICurrentUserService _currentUser;
 
-        public OrcamentoController(IOrcamentoService service, ApplicationDbContext ctx)
+        public OrcamentoController(IOrcamentoService service, ApplicationDbContext ctx, ICurrentUserService currentUser)
         {
-            _service = service;
-            _ctx     = ctx;
+            _service     = service;
+            _ctx         = ctx;
+            _currentUser = currentUser;
         }
 
         // ─── GET /api/orcamentos ──────────────────────────────────────────────────
 
         [HttpGet]
         [HasPermission(Permissions.Orcamentos.Visualizar)]
-        public async Task<ActionResult<IEnumerable<OrcamentoListDto>>> GetAll()
+        public async Task<ActionResult<PagedResultDto<OrcamentoListDto>>> GetAll([FromQuery] OrcamentoPagedQueryDto query)
         {
-            var orcamentos = await _service.GetAllAsync();
+            // Row-Level Security: não-admins só veem os próprios orçamentos
+            if (!_currentUser.IsAdmin)
+                query.RepresentanteId = _currentUser.UserId;
 
-            var clientes = await _ctx.Pessoas
-                .AsNoTracking()
+            var paged = await _service.GetPagedAsync(query);
+
+            var clienteIds = paged.Items.Select(o => o.ClienteId).Distinct().ToList();
+            var usuarioIds = paged.Items.Select(o => o.RepresentanteId).Distinct().ToList();
+            var produtoIds = paged.Items.SelectMany(o => o.Itens.Select(i => i.ProdutoId)).Distinct().ToList();
+
+            var clientes = await _ctx.Pessoas.AsNoTracking()
+                .Where(p => clienteIds.Contains(p.Id))
                 .ToDictionaryAsync(p => p.Id, p => p.Nome);
 
-            var usuarios = await _ctx.Usuarios
-                .AsNoTracking()
+            var usuarios = await _ctx.Usuarios.AsNoTracking()
+                .Where(u => usuarioIds.Contains(u.Id))
                 .ToDictionaryAsync(u => u.Id, u => u.Nome);
 
-            var produtos = await _ctx.Produtos
-                .AsNoTracking()
+            var produtos = await _ctx.Produtos.AsNoTracking()
+                .Where(p => produtoIds.Contains(p.Id))
                 .ToDictionaryAsync(p => p.Id, p => p.Nome);
 
-            var result = orcamentos.Select(o => new OrcamentoListDto
+            var items = paged.Items.Select(o => new OrcamentoListDto
             {
                 Id                = o.Id,
                 Codigo            = o.Codigo,
@@ -61,7 +71,13 @@ namespace Valisys_Production.Controllers
                 }).ToList(),
             });
 
-            return Ok(result);
+            return Ok(new PagedResultDto<OrcamentoListDto>
+            {
+                Items      = items,
+                TotalCount = paged.TotalCount,
+                Page       = paged.Page,
+                PageSize   = paged.PageSize,
+            });
         }
 
         // ─── GET /api/orcamentos/{id} ─────────────────────────────────────────────

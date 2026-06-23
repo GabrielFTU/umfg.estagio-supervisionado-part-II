@@ -1,10 +1,12 @@
-﻿using Amazon.S3;
+using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Threading.RateLimiting;
 using Valisys_Production.Common;
 using Valisys_Production.Data;
 using Valisys_Production.Helpers;
@@ -17,14 +19,39 @@ using Valisys_Production.Services.Interfaces;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+// Carrega o arquivo .env da raiz do repositório (desenvolvimento local sem Docker).
+// Em Docker/produção, as variáveis de ambiente já estão definidas no ambiente do container.
+LoadDotEnv(Directory.GetCurrentDirectory());
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Em desenvolvimento, constrói a connection string e demais segredos a partir do .env.
+// Isso sobrescreve qualquer valor em appsettings.Development.json para manter
+// o .env como fonte única de verdade.
+if (builder.Environment.IsDevelopment())
+{
+    var dbUser   = Env("DB_USER",   "postgres");
+    var dbPass   = Env("DB_PASSWORD", "");
+    var dbName   = Env("DB_NAME",   "ValisysProduction");
+    var dbPort   = Env("DB_PORT",   "5433");
+    var dbHost   = Env("DB_HOST",   "localhost");
+
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+    {
+        ["ConnectionStrings:DefaultConnection"] =
+            $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPass};Timeout=30;Command Timeout=30;",
+        ["JwtSettings:SecretKey"] = Env("JWT_SECRET", ""),
+        ["Aws:BucketName"]        = Env("AWS_BUCKET_NAME", ""),
+        ["Aws:Region"]            = Env("AWS_REGION", "sa-east-1"),
+        ["AWS__AccessKey"]        = Env("AWS_ACCESS_KEY", ""),
+        ["AWS__SecretKey"]        = Env("AWS_SECRET_KEY", ""),
+    });
+}
 
 var secretKey = builder.Configuration["JwtSettings:SecretKey"];
 
 if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
-{
     throw new InvalidOperationException("A chave JWT (JwtSettings:SecretKey) deve ter no mínimo 32 caracteres.");
-}
 
 var key = Encoding.ASCII.GetBytes(secretKey);
 
@@ -47,13 +74,38 @@ builder.Services.AddAuthentication(x =>
     };
 });
 
-builder.Services.AddHttpContextAccessor(); 
+builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddControllers()
-    .ConfigureApiBehaviorOptions(options =>
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddSlidingWindowLimiter("login", opt =>
     {
-        options.SuppressModelStateInvalidFilter = true;
+        opt.PermitLimit     = 5;
+        opt.Window          = TimeSpan.FromMinutes(1);
+        opt.SegmentsPerWindow = 6;
+        opt.QueueLimit      = 0;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync(
+            "{\"message\":\"Muitas tentativas. Aguarde um momento antes de tentar novamente.\"}",
+            token);
+    };
+});
+
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<XssSanitizationFilter>();
+})
+.ConfigureApiBehaviorOptions(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -83,6 +135,10 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+// Limita o corpo das requisições a 10 MB (padrão é 28 MB no Kestrel)
+builder.WebHost.ConfigureKestrel(opt =>
+    opt.Limits.MaxRequestBodySize = 10 * 1024 * 1024);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
@@ -116,9 +172,9 @@ builder.Services.AddScoped<ITipoOrdemDeProducaoService, TipoOrdemDeProducaoServi
 builder.Services.AddScoped<IOrdemDeProducaoRepository, OrdemDeProducaoRepository>();
 builder.Services.AddScoped<IOrdemDeProducaoService, OrdemDeProducaoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IPdfReportService, PdfReportService>();
 
-// AWS S3
 builder.Services.AddSingleton<IAmazonS3>(_ =>
 {
     var cfg = builder.Configuration;
@@ -127,7 +183,7 @@ builder.Services.AddSingleton<IAmazonS3>(_ =>
     var region    = Amazon.RegionEndpoint.GetBySystemName(cfg["Aws:Region"] ?? "us-east-1");
 
     return string.IsNullOrEmpty(accessKey)
-        ? new Amazon.S3.AmazonS3Client(region)                                    // usa credenciais do ambiente (IAM role)
+        ? new Amazon.S3.AmazonS3Client(region)
         : new Amazon.S3.AmazonS3Client(accessKey, secretKey, region);
 });
 builder.Services.AddScoped<IS3Service, S3Service>();
@@ -162,6 +218,10 @@ builder.Services.AddScoped<IPessoaFisicaService, PessoaFisicaService>();
 builder.Services.AddScoped<IPessoaJuridicaRepository, PessoaJuridicaRepository>();
 builder.Services.AddScoped<IPessoaJuridicaService, PessoaJuridicaService>();
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? ["http://31.97.27.244:5173", "https://www.valisys.com.br"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("MyAllowSpecificOrigins", policy =>
@@ -169,15 +229,15 @@ builder.Services.AddCors(options =>
         policy
             .SetIsOriginAllowed(origin =>
             {
-                // Aceita qualquer porta de localhost (desenvolvimento) + domínios de produção
-                if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                    return uri.Host == "localhost" ||
-                           origin == "http://31.97.27.244:5173" ||
-                           origin == "https://www.valisys.com.br";
-                return false;
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
+
+                if (builder.Environment.IsDevelopment() && uri.Host == "localhost")
+                    return true;
+
+                return allowedOrigins.Contains(origin);
             })
-            .AllowAnyHeader()
-            .AllowAnyMethod()
+            .WithHeaders("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With")
+            .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
             .AllowCredentials();
     });
 });
@@ -200,6 +260,15 @@ using (var scope = app.Services.CreateScope())
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
+// Content-Security-Policy: impede execução de scripts injetados caso algum dado chegue ao frontend via SSR
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    ctx.Response.Headers.Append("X-Frame-Options", "DENY");
+    ctx.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
+
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
 Directory.CreateDirectory(uploadsPath);
 app.UseStaticFiles(new StaticFileOptions
@@ -215,6 +284,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("MyAllowSpecificOrigins");
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -222,3 +292,32 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// ── Helpers para carregamento do .env ─────────────────────────────────────────
+
+static string Env(string key, string fallback = "") =>
+    Environment.GetEnvironmentVariable(key) ?? fallback;
+
+static void LoadDotEnv(string startDir)
+{
+    var candidates = new[]
+    {
+        Path.Combine(startDir, ".env"),
+        Path.Combine(startDir, "..", ".env"),
+    };
+    var path = Array.Find(candidates, File.Exists);
+    if (path is null) return;
+
+    foreach (var line in File.ReadAllLines(path))
+    {
+        var t = line.Trim();
+        if (t.Length == 0 || t[0] == '#') continue;
+        var eq = t.IndexOf('=');
+        if (eq < 1) continue;
+        var k = t[..eq].Trim();
+        var v = t[(eq + 1)..].Trim();
+        // Variáveis do sistema/Docker têm prioridade sobre o .env
+        if (Environment.GetEnvironmentVariable(k) is null)
+            Environment.SetEnvironmentVariable(k, v);
+    }
+}

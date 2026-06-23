@@ -119,8 +119,9 @@ namespace Valisys_Production.Controllers
 
             try
             {
-                var url = await _s3.UploadAsync(arquivo, "produtos");
-                return Ok(new { url });
+                var key = await _s3.UploadAsync(arquivo, "produtos");
+                var url = await _s3.GetPresignedUrlAsync(key, expirationMinutes: 60 * 24 * 7); // 7 dias
+                return Ok(new { url, key });
             }
             catch (AmazonS3Exception ex)
             {

@@ -17,11 +17,14 @@ namespace Valisys_Production.Services
             _region = config["Aws:Region"]     ?? "us-east-1";
         }
 
+        /// <summary>
+        /// Faz upload com ACL privada (sem acesso público).
+        /// Retorna a key do objeto — guarde-a no banco, não a URL pública.
+        /// </summary>
         public async Task<string> UploadAsync(IFormFile arquivo, string pasta)
         {
-            var ext      = Path.GetExtension(arquivo.FileName).ToLowerInvariant();
-            var chave    = $"{pasta.Trim('/')}/{Guid.NewGuid()}{ext}";
-            var mimeType = arquivo.ContentType;
+            var ext   = Path.GetExtension(arquivo.FileName).ToLowerInvariant();
+            var chave = $"{pasta.Trim('/')}/{Guid.NewGuid()}{ext}";
 
             await using var stream = arquivo.OpenReadStream();
 
@@ -30,22 +33,40 @@ namespace Valisys_Production.Services
                 BucketName  = _bucket,
                 Key         = chave,
                 InputStream = stream,
-                ContentType = mimeType,
-                CannedACL   = S3CannedACL.PublicRead,
+                ContentType = arquivo.ContentType,
+                // Sem CannedACL: o objeto herda a política do bucket (privado por padrão)
             };
 
             await _s3.PutObjectAsync(request);
-
-            return $"https://{_bucket}.s3.{_region}.amazonaws.com/{chave}";
+            return chave;
         }
 
-        public async Task DeleteAsync(string url)
+        /// <summary>
+        /// Gera URL pré-assinada de acesso temporário ao objeto privado.
+        /// </summary>
+        public async Task<string> GetPresignedUrlAsync(string key, int expirationMinutes = 60)
         {
-            // Extrai a chave a partir da URL pública
-            var uri   = new Uri(url);
-            var chave = uri.AbsolutePath.TrimStart('/');
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = _bucket,
+                Key        = key,
+                Expires    = DateTime.UtcNow.AddMinutes(expirationMinutes),
+                Protocol   = Protocol.HTTPS,
+                Verb       = HttpVerb.GET,
+            };
 
-            await _s3.DeleteObjectAsync(_bucket, chave);
+            // GetPreSignedURL é síncrono na SDK v3; envolto em Task para manter a interface assíncrona
+            return await Task.FromResult(_s3.GetPreSignedURL(request));
+        }
+
+        public async Task DeleteAsync(string keyOrUrl)
+        {
+            // Aceita tanto a key direta quanto a URL completa do S3
+            var key = keyOrUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? new Uri(keyOrUrl).AbsolutePath.TrimStart('/')
+                : keyOrUrl;
+
+            await _s3.DeleteObjectAsync(_bucket, key);
         }
     }
 }

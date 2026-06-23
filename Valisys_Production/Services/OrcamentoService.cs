@@ -1,3 +1,4 @@
+using Valisys_Production.Data;
 using Valisys_Production.DTOs;
 using Valisys_Production.Models;
 using Valisys_Production.Models.Enums;
@@ -11,13 +12,15 @@ namespace Valisys_Production.Services
         private readonly IOrcamentoRepository _repository;
         private readonly ILogSistemaService _log;
         private readonly IPedidoVendaService _pedidoVendaService;
+        private readonly ApplicationDbContext _context;
 
         public OrcamentoService(IOrcamentoRepository repository, ILogSistemaService log,
-                                IPedidoVendaService pedidoVendaService)
+                                IPedidoVendaService pedidoVendaService, ApplicationDbContext context)
         {
-            _repository          = repository;
-            _log                 = log;
-            _pedidoVendaService  = pedidoVendaService;
+            _repository         = repository;
+            _log                = log;
+            _pedidoVendaService = pedidoVendaService;
+            _context            = context;
         }
 
         public async Task<Orcamento> CreateAsync(OrcamentoCreateDto dto, Guid usuarioId)
@@ -28,8 +31,8 @@ namespace Valisys_Production.Services
             if (!dto.Itens.Any())
                 throw new ArgumentException("O orçamento deve conter ao menos um item.");
 
-            var codigo           = await _repository.GetProximoCodigoAsync();
-            var representanteId  = dto.RepresentanteId ?? usuarioId;
+            var codigo          = await _repository.GetProximoCodigoAsync();
+            var representanteId = dto.RepresentanteId ?? usuarioId;
 
             var orcamento = new Orcamento(codigo, dto.ClienteId, representanteId, dto.DataValidade);
 
@@ -46,8 +49,7 @@ namespace Valisys_Production.Services
 
             var criado = await _repository.AddAsync(orcamento);
 
-            await _log.RegistrarAsync("Criação", "Orcamentos",
-                $"Criou o Orçamento #{codigo}");
+            await _log.RegistrarAsync("Criação", "Orcamentos", $"Criou o Orçamento #{codigo}");
 
             return criado;
         }
@@ -55,8 +57,17 @@ namespace Valisys_Production.Services
         public async Task<Orcamento?> GetByIdAsync(Guid id)
             => await _repository.GetByIdWithItensAsync(id);
 
-        public async Task<IEnumerable<Orcamento>> GetAllAsync()
-            => await _repository.GetAllWithClienteAsync();
+        public async Task<PagedResultDto<Orcamento>> GetPagedAsync(OrcamentoPagedQueryDto query)
+        {
+            var (items, total) = await _repository.GetPagedAsync(query);
+            return new PagedResultDto<Orcamento>
+            {
+                Items      = items,
+                TotalCount = total,
+                Page       = Math.Max(1, query.Page),
+                PageSize   = Math.Clamp(query.PageSize, 1, 100),
+            };
+        }
 
         public async Task<bool> UpdateAsync(OrcamentoUpdateDto dto, Guid usuarioId)
         {
@@ -85,8 +96,7 @@ namespace Valisys_Production.Services
             var ok = await _repository.UpdateWithItensAsync(existente, novosItens);
 
             if (ok)
-                await _log.RegistrarAsync("Edição", "Orcamentos",
-                    $"Editou o Orçamento #{existente.Codigo}");
+                await _log.RegistrarAsync("Edição", "Orcamentos", $"Editou o Orçamento #{existente.Codigo}");
 
             return ok;
         }
@@ -98,24 +108,11 @@ namespace Valisys_Production.Services
 
             switch (novoStatus)
             {
-                case StatusOrcamento.Enviado:
-                    orcamento.Enviar();
-                    break;
-
-                case StatusOrcamento.Aprovado:
-                    orcamento.Aprovar();
-                    break;
-
-                case StatusOrcamento.Expirado:
-                    orcamento.Expirar();
-                    break;
-
-                case StatusOrcamento.Cancelado:
-                    orcamento.Cancelar();
-                    break;
-
-                default:
-                    throw new ArgumentException("Transição de status inválida.");
+                case StatusOrcamento.Enviado:    orcamento.Enviar();   break;
+                case StatusOrcamento.Aprovado:   orcamento.Aprovar();  break;
+                case StatusOrcamento.Expirado:   orcamento.Expirar();  break;
+                case StatusOrcamento.Cancelado:  orcamento.Cancelar(); break;
+                default: throw new ArgumentException("Transição de status inválida.");
             }
 
             var ok = await _repository.AtualizarStatusAsync(id, novoStatus);
@@ -141,9 +138,6 @@ namespace Valisys_Production.Services
             if (!orcamento.Itens.Any())
                 throw new InvalidOperationException("O orçamento não possui itens para conversão.");
 
-            // Cap the global discount so it never exceeds the actual item subtotal.
-            // Orcamento.Atualizar only rejects negative discounts, so an orcamento can
-            // be saved with Desconto > Subtotal — which would fail PedidoVenda validation.
             var descontoConvertido = Math.Min(orcamento.Desconto, orcamento.Subtotal);
 
             var pedidoDto = new PedidoVendaCreateDto
@@ -165,26 +159,35 @@ namespace Valisys_Production.Services
                 }).ToList(),
             };
 
-            var pedido = await _pedidoVendaService.CreateAsync(pedidoDto, usuarioId);
-
-            // Use direct SQL to avoid change-tracker navigation processing on the
-            // AsNoTracking entity that has items already loaded in _itens.
-            await _repository.AtualizarStatusAsync(orcamento.Id, StatusOrcamento.ConvertidoEmPedido, pedido.Id);
-
-            await _log.RegistrarAsync("Conversão", "Orcamentos",
-                $"Converteu o Orçamento #{orcamento.Codigo} no Pedido de Venda #{pedido.Codigo}");
-
-            return new ConverterEmPedidoResultDto
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                PedidoVendaId     = pedido.Id,
-                PedidoVendaCodigo = pedido.Codigo,
-            };
+                var pedido = await _pedidoVendaService.CreateAsync(pedidoDto, usuarioId);
+
+                await _repository.AtualizarStatusAsync(orcamento.Id, StatusOrcamento.ConvertidoEmPedido, pedido.Id);
+
+                await transaction.CommitAsync();
+
+                await _log.RegistrarAsync("Conversão", "Orcamentos",
+                    $"Converteu o Orçamento #{orcamento.Codigo} no Pedido de Venda #{pedido.Codigo}");
+
+                return new ConverterEmPedidoResultDto
+                {
+                    PedidoVendaId     = pedido.Id,
+                    PedidoVendaCodigo = pedido.Codigo,
+                };
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento, string? condicaoPagamento)
         {
             var partes = new List<string>();
-            if (!string.IsNullOrWhiteSpace(formaPagamento))   partes.Add($"[Pagamento: {formaPagamento}]");
+            if (!string.IsNullOrWhiteSpace(formaPagamento))    partes.Add($"[Pagamento: {formaPagamento}]");
             if (!string.IsNullOrWhiteSpace(condicaoPagamento)) partes.Add($"[Condicao: {condicaoPagamento}]");
             if (!string.IsNullOrWhiteSpace(obs))               partes.Add(obs);
             return partes.Count > 0 ? string.Join(" | ", partes) : null;

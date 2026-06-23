@@ -1,66 +1,74 @@
 services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: valisys_db
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER}
+      POSTGRES_USER:     ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB:       ${DB_NAME}
+      PGDATA:            /var/lib/postgresql/data/pgdata
     ports:
-      - "5433:5432"
+      - "5433:5432"          # expõe para o host (útil em modo dev local)
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 10
+      start_period: 15s
     networks:
-      - valisys_network
+      - valisys_net
 
+  # ── Backend (.NET 8) ──────────────────────────────────────────────────────────
   backend:
     build:
       context: ./Valisys_Production
       dockerfile: Dockerfile
     container_name: valisys_backend
-    restart: always
+    restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};Timeout=30;Command Timeout=30;
-      - JwtSettings__SecretKey=${JWT_SECRET}
-      - Aws__BucketName=${AWS_BUCKET_NAME}
-      - Aws__Region=${AWS_REGION}
-      - AWS__AccessKey=${AWS_ACCESS_KEY}
-      - AWS__SecretKey=${AWS_SECRET_KEY}
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS:        http://+:8080
+      # Usa host "db" (nome do serviço) como endereço interno — não localhost
+      ConnectionStrings__DefaultConnection: >-
+        Host=db;Port=5432;Database=${DB_NAME};
+        Username=${DB_USER};Password=${DB_PASSWORD};
+        Timeout=30;Command Timeout=30;
+      JwtSettings__SecretKey: ${JWT_SECRET}
+      Aws__BucketName:  ${AWS_BUCKET_NAME:-}
+      Aws__Region:      ${AWS_REGION:-sa-east-1}
+      AWS__AccessKey:   ${AWS_ACCESS_KEY:-}
+      AWS__SecretKey:   ${AWS_SECRET_KEY:-}
     ports:
       - "5019:8080"
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy   # espera o banco estar pronto (sem sleep)
     networks:
-      - valisys_network
+      - valisys_net
     volumes:
       - uploads_data:/app/uploads
-    entrypoint: ["/bin/sh", "-c", "sleep 10 && dotnet Valisys_Production.dll"]
 
+  # ── Frontend (React + Nginx) ──────────────────────────────────────────────────
   frontend:
     build:
       context: ./valisys-web
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=http://localhost:5019/api
+        # O browser acessa o backend pelo endereço do HOST, não pelo container
+        VITE_API_URL: http://localhost:5019/api
     container_name: valisys_frontend
-    restart: always
+    restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:
       - backend
     networks:
-      - valisys_network
+      - valisys_net
 
 volumes:
   postgres_data:
@@ -69,5 +77,5 @@ volumes:
     driver: local
 
 networks:
-  valisys_network:
+  valisys_net:
     driver: bridge

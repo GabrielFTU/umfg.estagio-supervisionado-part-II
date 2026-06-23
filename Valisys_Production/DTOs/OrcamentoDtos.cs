@@ -18,12 +18,12 @@ namespace Valisys_Production.DTOs
     {
         [Required] public Guid ClienteId { get; set; }
         public Guid? RepresentanteId { get; set; }
-        public string? FormaPagamento { get; set; }
-        public string? CondicaoPagamento { get; set; }
+        [MaxLength(100)] public string? FormaPagamento { get; set; }
+        [MaxLength(100)] public string? CondicaoPagamento { get; set; }
         public DateTime? DataValidade { get; set; }
         [Range(0, double.MaxValue)] public decimal Desconto { get; set; }
-        public string? ObservacaoInterna { get; set; }
-        public string? ObservacaoExterna { get; set; }
+        [MaxLength(4000)] public string? ObservacaoInterna { get; set; }
+        [MaxLength(4000)] public string? ObservacaoExterna { get; set; }
         public List<ItemOrcamentoCreateDto> Itens { get; set; } = new();
     }
 
@@ -43,12 +43,12 @@ namespace Valisys_Production.DTOs
         [Required] public Guid Id { get; set; }
         [Required] public Guid ClienteId { get; set; }
         public Guid? RepresentanteId { get; set; }
-        public string? FormaPagamento { get; set; }
-        public string? CondicaoPagamento { get; set; }
+        [MaxLength(100)] public string? FormaPagamento { get; set; }
+        [MaxLength(100)] public string? CondicaoPagamento { get; set; }
         public DateTime? DataValidade { get; set; }
         [Range(0, double.MaxValue)] public decimal Desconto { get; set; }
-        public string? ObservacaoInterna { get; set; }
-        public string? ObservacaoExterna { get; set; }
+        [MaxLength(4000)] public string? ObservacaoInterna { get; set; }
+        [MaxLength(4000)] public string? ObservacaoExterna { get; set; }
         public List<ItemOrcamentoUpdateDto> Itens { get; set; } = new();
     }
 

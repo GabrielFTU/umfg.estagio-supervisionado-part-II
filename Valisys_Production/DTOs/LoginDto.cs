@@ -6,9 +6,11 @@ namespace Valisys_Production.DTOs
     {
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        [MaxLength(254)]
+        public string Email { get; set; } = string.Empty;
 
         [Required]
-        public string Senha { get; set; }
+        [MaxLength(128)]
+        public string Senha { get; set; } = string.Empty;
     }
 }

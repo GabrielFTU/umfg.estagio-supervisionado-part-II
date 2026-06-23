@@ -17,6 +17,9 @@ wwwroot/dist/
 Dockerfile
 appsettings.Development.json
 appsettings.*.json
+# Nunca commitar o appsettings principal com credenciais reais
+# Use appsettings.Development.json (local) ou variáveis de ambiente (produção)
+appsettings.json
 .env
 .docker-compose.override.yml
 

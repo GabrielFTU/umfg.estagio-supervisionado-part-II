@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Valisys_Production.Data;
+using Valisys_Production.DTOs;
 using Valisys_Production.Models;
 using Valisys_Production.Models.Enums;
 using Valisys_Production.Repositories.Interfaces;
@@ -19,14 +20,37 @@ namespace Valisys_Production.Repositories
                 .Include(o => o.Representante)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
-        public async Task<IEnumerable<Orcamento>> GetAllWithClienteAsync()
-            => await _dbSet.AsNoTracking()
+        public async Task<(IEnumerable<Orcamento> Items, int TotalCount)> GetPagedAsync(OrcamentoPagedQueryDto query)
+        {
+            var q = _dbSet.AsNoTracking()
                 .Include(o => o.Cliente)
                 .Include(o => o.Representante)
                 .Include(o => o.Itens)
                     .ThenInclude(i => i.Produto)
+                .AsQueryable();
+
+            if (query.Status.HasValue)
+                q = q.Where(o => o.Status == query.Status.Value);
+
+            if (query.ClienteId.HasValue)
+                q = q.Where(o => o.ClienteId == query.ClienteId.Value);
+
+            if (query.RepresentanteId.HasValue)
+                q = q.Where(o => o.RepresentanteId == query.RepresentanteId.Value);
+
+            var total = await q.CountAsync();
+
+            var pageSize = Math.Clamp(query.PageSize, 1, 100);
+            var page     = Math.Max(1, query.Page);
+
+            var items = await q
                 .OrderByDescending(o => o.DataEmissao)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return (items, total);
+        }
 
         public async Task<int> GetProximoCodigoAsync()
         {

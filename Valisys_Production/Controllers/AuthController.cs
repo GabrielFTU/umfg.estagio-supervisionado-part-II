@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Valisys_Production.DTOs;
 using Valisys_Production.Services.Interfaces;
-using AutoMapper; 
-using Valisys_Production.Models;
 
 namespace Valisys_Production.Controllers
 {
@@ -13,35 +13,28 @@ namespace Valisys_Production.Controllers
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
 
-        public AuthController(IAuthService authService, IMapper mapper) 
+        public AuthController(IAuthService authService, IMapper mapper)
         {
             _authService = authService;
             _mapper = mapper;
         }
 
         [HttpPost("login")]
-        [ProducesResponseType(typeof(object), 200)]
+        [EnableRateLimiting("login")]
+        [ProducesResponseType(typeof(AuthResponseDto), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
+        [ProducesResponseType(429)]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             try
             {
-                var (token, usuario) = await _authService.LoginAsync(loginDto);
-
-                if (string.IsNullOrEmpty(token))
-                {
-                    return Unauthorized(new { message = "Credenciais inválidas." });
-                }
-
+                var (accessToken, refreshToken, usuario) = await _authService.LoginAsync(loginDto);
                 var userDto = _mapper.Map<UsuarioReadDto>(usuario);
-
-                return Ok(new { token, user = userDto }); 
+                return Ok(new AuthResponseDto { Token = accessToken, RefreshToken = refreshToken, User = userDto });
             }
             catch (ArgumentException ex)
             {
@@ -51,6 +44,37 @@ namespace Valisys_Production.Controllers
             {
                 return Unauthorized(new { message = "Credenciais inválidas." });
             }
+        }
+
+        [HttpPost("refresh")]
+        [ProducesResponseType(typeof(object), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var (accessToken, newRefreshToken) = await _authService.RefreshAsync(dto.RefreshToken);
+                return Ok(new { token = accessToken, refreshToken = newRefreshToken });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { message = "Refresh token inválido ou expirado." });
+            }
+        }
+
+        [HttpPost("logout")]
+        [ProducesResponseType(204)]
+        public async Task<IActionResult> Logout([FromBody] RefreshTokenRequestDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            await _authService.LogoutAsync(dto.RefreshToken);
+            return NoContent();
         }
     }
 }
