@@ -249,6 +249,59 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var conn = dbContext.Database.GetDbConnection();
+        await conn.OpenAsync();
+
+        bool hasHistory = false;
+        bool hasExistingSchema = false;
+
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory')";
+            hasHistory = (bool)(await cmd.ExecuteScalarAsync())!;
+        }
+
+        if (!hasHistory)
+        {
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Usuarios')";
+                hasExistingSchema = (bool)(await cmd.ExecuteScalarAsync())!;
+            }
+        }
+
+        if (hasExistingSchema && !hasHistory)
+        {
+            Console.WriteLine("Banco pré-existente detectado. Registrando migrations e criando tabelas faltantes...");
+
+            await using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = """
+                    CREATE TABLE "__EFMigrationsHistory" (
+                        "MigrationId" character varying(150) NOT NULL,
+                        "ProductVersion" character varying(32) NOT NULL,
+                        CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+                    );
+                    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+                    VALUES ('20260623223725_AddRefreshTokens', '8.0.2');
+                    CREATE TABLE IF NOT EXISTS "RefreshTokens" (
+                        "Id" uuid NOT NULL,
+                        "UsuarioId" uuid NOT NULL,
+                        "Token" text NOT NULL,
+                        "ExpiresAt" timestamp without time zone NOT NULL,
+                        "IsRevoked" boolean NOT NULL,
+                        "CriadoEm" timestamp without time zone NOT NULL,
+                        CONSTRAINT "PK_RefreshTokens" PRIMARY KEY ("Id"),
+                        CONSTRAINT "FK_RefreshTokens_Usuarios_UsuarioId" FOREIGN KEY ("UsuarioId")
+                            REFERENCES "Usuarios" ("Id") ON DELETE CASCADE
+                    );
+                    CREATE INDEX IF NOT EXISTS "IX_RefreshTokens_UsuarioId" ON "RefreshTokens" ("UsuarioId");
+                    """;
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        await conn.CloseAsync();
         dbContext.Database.Migrate();
         Console.WriteLine("Banco de Dados migrado com sucesso!");
     }
@@ -260,7 +313,6 @@ using (var scope = app.Services.CreateScope())
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// Content-Security-Policy: impede execução de scripts injetados caso algum dado chegue ao frontend via SSR
 app.Use(async (ctx, next) =>
 {
     ctx.Response.Headers.Append("X-Content-Type-Options", "nosniff");
@@ -293,7 +345,6 @@ app.MapControllers();
 
 app.Run();
 
-// ── Helpers para carregamento do .env ─────────────────────────────────────────
 
 static string Env(string key, string fallback = "") =>
     Environment.GetEnvironmentVariable(key) ?? fallback;
@@ -316,7 +367,6 @@ static void LoadDotEnv(string startDir)
         if (eq < 1) continue;
         var k = t[..eq].Trim();
         var v = t[(eq + 1)..].Trim();
-        // Variáveis do sistema/Docker têm prioridade sobre o .env
         if (Environment.GetEnvironmentVariable(k) is null)
             Environment.SetEnvironmentVariable(k, v);
     }

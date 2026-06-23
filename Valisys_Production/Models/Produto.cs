@@ -57,10 +57,12 @@ namespace Valisys_Production.Models
             ImagemUrl          = imagemUrl;
         }
 
+        public bool DisponivelParaVenda { get; private set; } = true;
+
         public void DefinirCodigo(int codigo) => CodigoInternoProduto = codigo;
         public void DefinirSku(string? sku) => Sku = string.IsNullOrWhiteSpace(sku) ? null : sku.Trim().ToUpperInvariant();
-
         public void DefinirImagem(string? imagemUrl) => ImagemUrl = imagemUrl;
+        public void ToggleDisponivelParaVenda() => DisponivelParaVenda = !DisponivelParaVenda;
 
         public void Atualizar(
             string nome, string descricao, ClassificacaoEnum classificacao,

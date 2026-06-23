@@ -17,6 +17,7 @@ namespace Valisys_Production.DTOs
         public bool ControlarPorLote { get; set; }
         public decimal EstoqueMinimo { get; set; }
         public bool Ativo { get; set; }
+        public bool DisponivelParaVenda { get; set; }
 
         // Fiscal
         public string? Ncm { get; set; }

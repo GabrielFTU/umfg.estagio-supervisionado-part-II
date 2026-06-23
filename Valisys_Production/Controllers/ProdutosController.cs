@@ -89,6 +89,15 @@ namespace Valisys_Production.Controllers
             catch (KeyNotFoundException ex) { return NotFoundProblem(ex.Message); }
         }
 
+        [HttpPatch("{id:guid}/disponibilidade")]
+        [HasPermission(Permissions.Produtos.Editar)]
+        public async Task<IActionResult> ToggleDisponibilidade(Guid id)
+        {
+            var resultado = await _service.ToggleDisponivelParaVendaAsync(id);
+            if (resultado is null) return NotFoundProblem($"Produto '{id}' não encontrado.");
+            return Ok(new { disponivelParaVenda = resultado.Value });
+        }
+
         [HttpDelete("{id:guid}")]
         [HasPermission(Permissions.Produtos.Inativar)]
         public async Task<IActionResult> Delete(Guid id)

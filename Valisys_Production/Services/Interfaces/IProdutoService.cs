@@ -10,5 +10,6 @@ namespace Valisys_Production.Services.Interfaces
         Task<IEnumerable<Produto>> GetAllAsync();
         Task<bool> UpdateAsync(ProdutoUpdateDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<bool?> ToggleDisponivelParaVendaAsync(Guid id);
     }
 }

@@ -92,6 +92,21 @@ namespace Valisys_Production.Services
             return deleted;
         }
 
+        public async Task<bool?> ToggleDisponivelParaVendaAsync(Guid id)
+        {
+            var existing = await _repository.GetByIdAsync(id);
+            if (existing == null) return null;
+
+            existing.ToggleDisponivelParaVenda();
+            var updated = await _repository.UpdateAsync(existing);
+
+            if (updated)
+                await _logService.RegistrarAsync("Atualização", "Produtos",
+                    $"Alterou disponibilidade para venda do produto '{existing.Nome}' para {(existing.DisponivelParaVenda ? "disponível" : "indisponível")}");
+
+            return updated ? existing.DisponivelParaVenda : null;
+        }
+
         private async Task<int> GerarProximoCodigoSequencialAsync()
         {
             var ultimo = await _repository.GetUltimoCodigoAsync();
