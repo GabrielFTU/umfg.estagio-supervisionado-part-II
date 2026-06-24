@@ -72,38 +72,44 @@ function ToggleSwitch({ value, onChange, loading }: {
   );
 }
 
+const CLASSIF_ACCENT: Record<string, string> = {
+  MateriaPrima:    'bg-amber-400',
+  Componente:      'bg-blue-500',
+  SemiAcabado:     'bg-violet-500',
+  ProdutoAcabado:  'bg-emerald-500',
+  MaterialConsumo: 'bg-gray-400',
+};
+
 function CardProduto({ p, onToggle, toggling, onClick }: {
   p: ProdutoCatalogo;
   onToggle: () => void;
   toggling: boolean;
   onClick: () => void;
 }) {
+  const accent = CLASSIF_ACCENT[p.classificacao] ?? 'bg-gray-300';
   return (
     <div
       onClick={onClick}
       className={cn(
-        'bg-white rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group overflow-hidden flex flex-col',
+        'bg-white border border-gray-200 hover:border-[#3B82F6]/40 hover:bg-blue-50/20 transition-colors cursor-pointer group flex flex-col',
         !p.disponivelParaVenda && 'opacity-60',
       )}
     >
-      <div className="relative w-full h-40 bg-gray-50 overflow-hidden shrink-0">
+      {/* Barra de classificação */}
+      <div className={cn('h-1 w-full shrink-0', accent)} />
+
+      <div className="relative w-full h-36 bg-gray-50 overflow-hidden shrink-0">
         {p.imagemUrl
           ? <img src={p.imagemUrl} alt={p.nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           : (
             <div className="w-full h-full flex items-center justify-center">
-              <Package size={36} className="text-gray-200" />
+              <Package size={32} className="text-gray-200" />
             </div>
           )
         }
-        <span className={cn(
-          'absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full border',
-          CLASSIF_COLORS[p.classificacao] ?? 'bg-gray-100 text-gray-500 border-gray-200',
-        )}>
-          {CLASSIF_LABEL[p.classificacao] ?? p.classificacao}
-        </span>
         {!p.disponivelParaVenda && (
           <div className="absolute inset-0 bg-gray-900/10 flex items-center justify-center">
-            <span className="bg-white/90 text-gray-500 text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1">
+            <span className="bg-white/90 text-gray-500 text-xs font-medium px-2 py-1 flex items-center gap-1">
               <EyeOff size={11} /> Suspenso
             </span>
           </div>
@@ -112,15 +118,22 @@ function CardProduto({ p, onToggle, toggling, onClick }: {
 
       <div className="flex flex-col flex-1 p-3 gap-2">
         <div>
-          <p className="text-[11px] text-gray-400 font-mono">#{p.codigo}</p>
+          <p className="text-[10px] text-gray-400 font-mono uppercase tracking-wide">#{p.codigo}</p>
           <h3 className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 mt-0.5">{p.nome}</h3>
         </div>
 
+        <span className={cn(
+          'self-start text-[10px] font-semibold px-2 py-0.5 border',
+          CLASSIF_COLORS[p.classificacao] ?? 'bg-gray-100 text-gray-500 border-gray-200',
+        )}>
+          {CLASSIF_LABEL[p.classificacao] ?? p.classificacao}
+        </span>
+
         <div className="flex flex-wrap gap-1 mt-auto">
-          <span className="text-[10px] text-gray-500 bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5">
+          <span className="text-[10px] text-gray-500 border border-gray-200 px-1.5 py-0.5">
             {p.categoriaNome}
           </span>
-          <span className="text-[10px] text-gray-500 bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5">
+          <span className="text-[10px] text-gray-500 border border-gray-200 px-1.5 py-0.5">
             {p.unidadeSigla}
           </span>
         </div>
@@ -129,7 +142,6 @@ function CardProduto({ p, onToggle, toggling, onClick }: {
           <div className="flex items-center gap-1">
             <Tag size={11} className="text-gray-400" />
             <span className="text-sm font-bold text-gray-700">{fmt(p.custoPadrao)}</span>
-            <span className="text-[10px] text-gray-400">ref.</span>
           </div>
         )}
 
@@ -141,7 +153,7 @@ function CardProduto({ p, onToggle, toggling, onClick }: {
             'text-[11px] font-medium',
             p.disponivelParaVenda ? 'text-emerald-600' : 'text-gray-400',
           )}>
-            {p.disponivelParaVenda ? 'Disponível p/ venda' : 'Suspenso p/ venda'}
+            {p.disponivelParaVenda ? 'Disponível p/ venda' : 'Suspenso'}
           </span>
           <ToggleSwitch value={p.disponivelParaVenda} onChange={onToggle} loading={toggling} />
         </div>
@@ -160,34 +172,34 @@ function RowProduto({ p, onToggle, toggling, onClick }: {
     <tr
       onClick={onClick}
       className={cn(
-        'border-b border-gray-50 hover:bg-blue-50/30 transition-colors cursor-pointer',
+        'border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer',
         !p.disponivelParaVenda && 'opacity-55',
       )}
     >
-      <td className="py-2.5 pl-4 pr-2 w-10">
-        <div className="w-9 h-9 rounded-lg border border-gray-100 bg-gray-50 overflow-hidden flex items-center justify-center shrink-0">
+      <td className="py-3 pl-6 pr-4 w-12">
+        <div className="w-9 h-9 border border-gray-100 bg-gray-50 overflow-hidden flex items-center justify-center shrink-0">
           {p.imagemUrl
             ? <img src={p.imagemUrl} alt={p.nome} className="w-full h-full object-cover" />
             : <Package size={14} className="text-gray-300" />}
         </div>
       </td>
-      <td className="py-3 pr-4 text-xs text-gray-400 font-mono tabular-nums">#{p.codigo}</td>
+      <td className="py-3 pr-4 text-sm text-gray-500 font-mono">#{p.codigo}</td>
       <td className="py-3 pr-6 max-w-[220px]">
-        <p className="text-sm font-medium text-gray-800 truncate">{p.nome}</p>
+        <p className="text-sm text-gray-700">{p.nome}</p>
         {p.descricao && <p className="text-[11px] text-gray-400 truncate mt-0.5">{p.descricao}</p>}
       </td>
       <td className="py-3 pr-4">
-        <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full border',
+        <span className={cn('text-[10px] font-semibold px-2 py-0.5 border',
           CLASSIF_COLORS[p.classificacao] ?? 'bg-gray-100 text-gray-500 border-gray-200')}>
           {CLASSIF_LABEL[p.classificacao] ?? p.classificacao}
         </span>
       </td>
-      <td className="py-3 pr-4 text-xs text-gray-500">{p.categoriaNome}</td>
-      <td className="py-3 pr-4 text-xs text-gray-500 tabular-nums">{p.unidadeSigla}</td>
-      <td className="py-3 pr-6 text-sm font-semibold text-gray-700 tabular-nums">
+      <td className="py-3 pr-4 text-sm text-gray-500">{p.categoriaNome}</td>
+      <td className="py-3 pr-4 text-sm text-gray-500">{p.unidadeSigla}</td>
+      <td className="py-3 pr-6 text-right text-sm font-semibold text-gray-700">
         {fmt(p.custoPadrao)}
       </td>
-      <td className="py-3 pr-4 text-right" onClick={e => e.stopPropagation()}>
+      <td className="py-3 pr-6 text-right" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-end gap-2">
           <span className={cn('text-[11px] font-medium hidden xl:block',
             p.disponivelParaVenda ? 'text-emerald-600' : 'text-gray-400')}>
@@ -411,7 +423,7 @@ export function CatalogoProdutosPage() {
       </div>
 
       {/* Conteúdo */}
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-4">
+      <div className="flex-1 overflow-auto">
 
         {loading && (
           <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
@@ -428,7 +440,7 @@ export function CatalogoProdutosPage() {
 
         {!loading && !error && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
+            <div className="w-16 h-16 bg-blue-50 flex items-center justify-center">
               <Package size={28} className="text-[#3B82F6]" />
             </div>
             <div>
@@ -442,64 +454,60 @@ export function CatalogoProdutosPage() {
           </div>
         )}
 
-        {/* Legenda de disponibilidade */}
-        {!loading && !error && filtered.length > 0 && (
-          <div className="flex items-center gap-3 mb-3 text-[11px] text-gray-400">
-            <span>{filtered.length} produto{filtered.length !== 1 ? 's' : ''}</span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" /> disponível para venda
-            </span>
-            <span className="flex items-center gap-1">
-              <Eye size={11} /> clique para ver detalhes
-            </span>
-          </div>
-        )}
-
         {/* Grid view */}
         {!loading && !error && filtered.length > 0 && view === 'grid' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filtered.map(p => (
-              <CardProduto
-                key={p.id}
-                p={p}
-                onToggle={() => handleToggle(p)}
-                toggling={!!toggling[p.id]}
-                onClick={() => navigate(`/cadastros/produtos/${p.id}`)}
-              />
-            ))}
+          <div className="px-4 sm:px-6 py-4">
+            <div className="flex items-center gap-3 mb-3 text-[11px] text-gray-400">
+              <span>{filtered.length} produto{filtered.length !== 1 ? 's' : ''}</span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-emerald-400" /> disponível para venda
+              </span>
+              <span className="flex items-center gap-1">
+                <Eye size={11} /> clique para ver detalhes
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {filtered.map(p => (
+                <CardProduto
+                  key={p.id}
+                  p={p}
+                  onToggle={() => handleToggle(p)}
+                  toggling={!!toggling[p.id]}
+                  onClick={() => navigate(`/cadastros/produtos/${p.id}`)}
+                />
+              ))}
+            </div>
           </div>
         )}
 
-        {/* List view */}
+        {/* List view — edge-to-edge como almoxarifado */}
         {!loading && !error && filtered.length > 0 && view === 'list' && (
-          <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[820px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="w-12 py-2.5 pl-4" />
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Código</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Nome / Descrição</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Classificação</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Categoria</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">UM</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Preço ref.</th>
-                    <th className="text-right text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Venda</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(p => (
-                    <RowProduto
-                      key={p.id}
-                      p={p}
-                      onToggle={() => handleToggle(p)}
-                      toggling={!!toggling[p.id]}
-                      onClick={() => navigate(`/cadastros/produtos/${p.id}`)}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="overflow-x-auto bg-white">
+            <table className="w-full text-sm min-w-[820px]">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="w-12 py-3 pl-6" />
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Código</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome / Descrição</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Classificação</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Categoria</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">UM</th>
+                  <th className="text-right font-semibold text-gray-700 px-4 py-3">Preço ref.</th>
+                  <th className="text-right font-semibold text-gray-700 px-4 py-3 w-32">Venda</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(p => (
+                  <RowProduto
+                    key={p.id}
+                    p={p}
+                    onToggle={() => handleToggle(p)}
+                    toggling={!!toggling[p.id]}
+                    onClick={() => navigate(`/cadastros/produtos/${p.id}`)}
+                  />
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

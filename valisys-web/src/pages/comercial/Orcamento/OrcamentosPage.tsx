@@ -484,9 +484,10 @@ export function OrcamentosPage() {
     setLoading(true); setError('');
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/orcamentos', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch('/api/orcamentos?pageSize=500', { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error();
-      setOrcamentos(await res.json());
+      const data = await res.json();
+      setOrcamentos(Array.isArray(data) ? data : (data.items ?? []));
     } catch { setError('Não foi possível carregar os orçamentos.'); }
     finally { setLoading(false); }
   };
@@ -496,7 +497,7 @@ export function OrcamentosPage() {
 
   const clienteOptions  = useMemo(() => [...new Set(orcamentos.map(o => o.clienteNome))].sort(), [orcamentos]);
   const vendedorOptions = useMemo(() => [...new Set(orcamentos.map(o => o.representanteNome).filter(Boolean) as string[])].sort(), [orcamentos]);
-  const produtoOptions  = useMemo(() => [...new Set(orcamentos.flatMap(o => o.produtos.map(p => p.nome)))].sort(), [orcamentos]);
+  const produtoOptions  = useMemo(() => [...new Set(orcamentos.flatMap(o => (o.produtos ?? []).map(p => p.nome)))].sort(), [orcamentos]);
 
   const filtered = useMemo(() => orcamentos.filter(o => {
     const q = search.toLowerCase();
@@ -504,7 +505,7 @@ export function OrcamentosPage() {
     if (filters.statuses.length > 0 && !filters.statuses.includes(o.status)) return false;
     if (filters.cliente && !o.clienteNome.toLowerCase().includes(filters.cliente.toLowerCase())) return false;
     if (filters.vendedor && !(o.representanteNome ?? '').toLowerCase().includes(filters.vendedor.toLowerCase())) return false;
-    if (filters.produto && !o.produtos.some(p => p.nome.toLowerCase().includes(filters.produto.toLowerCase()))) return false;
+    if (filters.produto && !(o.produtos ?? []).some(p => p.nome.toLowerCase().includes(filters.produto.toLowerCase()))) return false;
     if (filters.codigo && String(o.codigo) !== filters.codigo) return false;
     if (filters.emissaoFrom && o.dataEmissao < filters.emissaoFrom) return false;
     if (filters.emissaoTo && o.dataEmissao > filters.emissaoTo + 'T23:59:59') return false;
@@ -751,7 +752,7 @@ export function OrcamentosPage() {
                     </td>
                     <td className="py-3 pr-4 text-sm text-gray-800 max-w-[160px] truncate">{o.clienteNome}</td>
                     <td className="py-3 pr-4 relative" onClick={e => e.stopPropagation()}>
-                      <ProdutosCell produtos={o.produtos} />
+                      <ProdutosCell produtos={o.produtos ?? []} />
                     </td>
                     <td className="py-3 pr-4">
                       <span className={cn('inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full', sc.badge)}>

@@ -252,6 +252,8 @@ using (var scope = app.Services.CreateScope())
         var conn = dbContext.Database.GetDbConnection();
         await conn.OpenAsync();
 
+        const string initialMigrationId = "20260623223725_AddRefreshTokens";
+
         bool hasHistory = false;
         bool hasExistingSchema = false;
 
@@ -265,7 +267,7 @@ using (var scope = app.Services.CreateScope())
         {
             await using (var cmd = conn.CreateCommand())
             {
-                cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Usuarios')";
+                cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Almoxarifados')";
                 hasExistingSchema = (bool)(await cmd.ExecuteScalarAsync())!;
             }
         }
@@ -299,6 +301,19 @@ using (var scope = app.Services.CreateScope())
                     """;
                 await cmd.ExecuteNonQueryAsync();
             }
+        }
+        else if (hasHistory)
+        {
+            // Histórico existe mas pode faltar a entry da migration inicial (bancos criados por
+            // migrations antigas excluídas da compilação). Sem essa entrada, dotnet ef tenta
+            // recriar todas as tabelas e falha com "relation already exists".
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"""
+                INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+                VALUES ('{initialMigrationId}', '8.0.2')
+                ON CONFLICT ("MigrationId") DO NOTHING
+                """;
+            await cmd.ExecuteNonQueryAsync();
         }
 
         await conn.CloseAsync();

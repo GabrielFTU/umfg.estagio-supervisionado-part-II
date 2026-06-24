@@ -1,9 +1,9 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Valisys_Production.DTOs;
 using Valisys_Production.Infrastructure.Authorization;
 using Valisys_Production.Models;
+using Valisys_Production.Models.Enums;
 using Valisys_Production.Services.Interfaces;
 
 namespace Valisys_Production.Controllers
@@ -19,14 +19,46 @@ namespace Valisys_Production.Controllers
         public MovimentacoesController(IMovimentacaoService service, IMapper mapper)
         {
             _service = service;
-            _mapper = mapper;
+            _mapper  = mapper;
         }
 
         [HttpGet]
         [HasPermission(Permissions.Movimentacoes.Visualizar)]
         [ProducesResponseType(typeof(IEnumerable<MovimentacaoReadDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<MovimentacaoReadDto>>> GetAll()
-            => Ok(_mapper.Map<IEnumerable<MovimentacaoReadDto>>(await _service.GetAllAsync()));
+        public async Task<ActionResult<IEnumerable<MovimentacaoReadDto>>> GetAll(
+            [FromQuery] Guid?   produtoId   = null,
+            [FromQuery] Guid?   depositoId  = null,
+            [FromQuery] string? tipo        = null,
+            [FromQuery] string? usuarioNome = null,
+            [FromQuery] DateTime? de        = null,
+            [FromQuery] DateTime? ate       = null)
+        {
+            var movs = await _service.GetAllAsync();
+
+            if (produtoId.HasValue)
+                movs = movs.Where(m => m.ProdutoId == produtoId.Value);
+
+            if (depositoId.HasValue)
+                movs = movs.Where(m => m.DepositoOrigemId == depositoId.Value
+                                    || m.DepositoDestinoId == depositoId.Value);
+
+            if (!string.IsNullOrEmpty(tipo) && Enum.TryParse<TipoMovimentacao>(tipo, true, out var tipoEnum))
+                movs = movs.Where(m => m.Tipo == tipoEnum);
+
+            if (de.HasValue)
+                movs = movs.Where(m => m.DataMovimentacao >= de.Value.ToUniversalTime());
+
+            if (ate.HasValue)
+                movs = movs.Where(m => m.DataMovimentacao <= ate.Value.ToUniversalTime().AddDays(1).AddSeconds(-1));
+
+            var dtos = _mapper.Map<IEnumerable<MovimentacaoReadDto>>(
+                movs.OrderByDescending(m => m.DataMovimentacao));
+
+            if (!string.IsNullOrEmpty(usuarioNome))
+                dtos = dtos.Where(d => d.UsuarioNome.Contains(usuarioNome, StringComparison.OrdinalIgnoreCase));
+
+            return Ok(dtos);
+        }
 
         [HttpGet("{id:guid}")]
         [HasPermission(Permissions.Movimentacoes.Visualizar)]
@@ -39,40 +71,22 @@ namespace Valisys_Production.Controllers
             return Ok(_mapper.Map<MovimentacaoReadDto>(mov));
         }
 
-        [HttpPost]
+        [HttpPost("lote")]
         [HasPermission(Permissions.Movimentacoes.Criar)]
-        [ProducesResponseType(typeof(MovimentacaoReadDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(IEnumerable<MovimentacaoReadDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<MovimentacaoReadDto>> Create([FromBody] MovimentacaoCreateDto dto)
+        public async Task<ActionResult<IEnumerable<MovimentacaoReadDto>>> CreateLote(
+            [FromBody] MovimentacaoLoteCreateDto dto)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             try
             {
                 var usuarioId = GetAuthenticatedUserId();
-                var criada = await _service.CreateAsync(dto, usuarioId);
-                var readDto = _mapper.Map<MovimentacaoReadDto>(criada);
-                return CreatedAtAction(nameof(GetById), new { id = readDto.Id }, readDto);
+                var criadas   = await _service.CreateLoteAsync(dto, usuarioId);
+                return Ok(_mapper.Map<IEnumerable<MovimentacaoReadDto>>(criadas));
             }
-            catch (ArgumentException ex) { return Problem(ex.Message); }
+            catch (ArgumentException ex)          { return Problem(ex.Message); }
             catch (UnauthorizedAccessException ex) { return Problem(ex.Message, StatusCodes.Status401Unauthorized); }
-        }
-
-        [HttpPut("{id:guid}")]
-        [HasPermission(Permissions.Movimentacoes.Editar)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Update(Guid id, [FromBody] MovimentacaoUpdateDto dto)
-        {
-            if (id != dto.Id) return Problem("O ID da rota não corresponde ao ID do corpo.");
-            try
-            {
-                var ok = await _service.UpdateAsync(dto);
-                if (!ok) return NotFoundProblem($"Movimentação '{id}' não encontrada.");
-                return NoContent();
-            }
-            catch (ArgumentException ex) { return Problem(ex.Message); }
-            catch (KeyNotFoundException) { return NotFoundProblem($"Movimentação '{id}' não encontrada."); }
         }
 
         [HttpDelete("{id:guid}")]

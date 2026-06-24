@@ -80,10 +80,11 @@ namespace Valisys_Production.Services
 
                 var mov = new Movimentacao(
                     novaOrdem.ProdutoId, novaOrdem.Quantidade,
-                    almoxarifadoMP.Id, novaOrdem.AlmoxarifadoId,
-                    usuarioId, DateTime.UtcNow,
                     $"Início de Produção OP: {novaOrdem.CodigoOrdem}",
-                    novaOrdem.Id);
+                    almoxarifadoMP.Id, null,
+                    novaOrdem.AlmoxarifadoId, null,
+                    usuarioId,
+                    ordemDeProducaoId: novaOrdem.Id);
                 await _movimentacaoRepository.AddAsync(mov);
                 await transaction.CommitAsync();
 
@@ -124,10 +125,11 @@ namespace Valisys_Production.Services
 
                 var mov = new Movimentacao(
                     ordem.ProdutoId, ordem.Quantidade,
-                    almoxarifadoMP.Id, ordem.AlmoxarifadoId,
-                    usuarioId, DateTime.UtcNow,
                     $"Finalização OP: {ordem.CodigoOrdem}",
-                    ordem.Id);
+                    almoxarifadoMP.Id, null,
+                    ordem.AlmoxarifadoId, null,
+                    usuarioId,
+                    ordemDeProducaoId: ordem.Id);
                 await _movimentacaoRepository.AddAsync(mov);
 
                 await _repository.UpdateAsync(ordem);

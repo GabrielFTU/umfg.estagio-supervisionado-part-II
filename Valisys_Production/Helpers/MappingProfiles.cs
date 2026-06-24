@@ -71,10 +71,17 @@ namespace Valisys_Production.Helpers
 
             // Movimentação
             CreateMap<Movimentacao, MovimentacaoReadDto>()
-                .ForMember(dest => dest.ProdutoNome, opt => opt.MapFrom(src => src.Produto.Nome))
-                .ForMember(dest => dest.AlmoxarifadoOrigemNome, opt => opt.MapFrom(src => src.AlmoxarifadoOrigem.Nome))
-                .ForMember(dest => dest.AlmoxarifadoDestinoNome, opt => opt.MapFrom(src => src.AlmoxarifadoDestino.Nome))
-                .ForMember(dest => dest.UsuarioNome, opt => opt.MapFrom(src => src.Usuario.Nome));
+                .ForMember(dest => dest.Tipo,                   opt => opt.MapFrom(src => src.Tipo.ToString()))
+                .ForMember(dest => dest.ProdutoId,              opt => opt.MapFrom(src => src.ProdutoId))
+                .ForMember(dest => dest.ProdutoNome,            opt => opt.MapFrom(src => src.Produto != null ? src.Produto.Nome : string.Empty))
+                .ForMember(dest => dest.ProdutoCodigo,          opt => opt.MapFrom(src => src.Produto != null ? src.Produto.CodigoInternoProduto.ToString() : string.Empty))
+                .ForMember(dest => dest.ProdutoUnidade,         opt => opt.MapFrom(src => src.Produto != null && src.Produto.UnidadeMedida != null ? src.Produto.UnidadeMedida.Sigla : string.Empty))
+                .ForMember(dest => dest.AlmoxarifadoOrigemNome, opt => opt.MapFrom(src => src.AlmoxarifadoOrigem != null ? src.AlmoxarifadoOrigem.Nome : null))
+                .ForMember(dest => dest.DepositoOrigemNome,     opt => opt.MapFrom(src => src.DepositoOrigem != null ? src.DepositoOrigem.Nome : null))
+                .ForMember(dest => dest.AlmoxarifadoDestinoNome, opt => opt.MapFrom(src => src.AlmoxarifadoDestino != null ? src.AlmoxarifadoDestino.Nome : null))
+                .ForMember(dest => dest.DepositoDestinoNome,    opt => opt.MapFrom(src => src.DepositoDestino != null ? src.DepositoDestino.Nome : null))
+                .ForMember(dest => dest.UsuarioNome,            opt => opt.MapFrom(src => src.Usuario != null ? src.Usuario.Nome : string.Empty))
+                .ForMember(dest => dest.PedidoVendaCodigo,      opt => opt.MapFrom(src => src.PedidoVenda != null ? src.PedidoVenda.Codigo.ToString() : null));
 
             // Ordem de Produção
             CreateMap<OrdemDeProducao, OrdemDeProducaoReadDto>()

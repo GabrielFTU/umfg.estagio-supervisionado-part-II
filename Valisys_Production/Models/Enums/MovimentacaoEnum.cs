@@ -1,8 +1,10 @@
-﻿namespace Valisys_Production.Models.Enums
+namespace Valisys_Production.Models.Enums
 {
-    public enum MovimentacaoEnum
+    public enum TipoMovimentacao
     {
-        Entrada = 0,
-        Saida = 1
+        Entrada       = 0,
+        Saida         = 1,
+        Transferencia = 2,
+        Baixa         = 3
     }
 }

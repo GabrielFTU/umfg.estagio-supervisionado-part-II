@@ -15,9 +15,4 @@
         Cancelado = 2
     }
 
-    public enum TipoMovimentacao
-    {
-        Entrada = 0,
-        Saida = 1
-    }
 }

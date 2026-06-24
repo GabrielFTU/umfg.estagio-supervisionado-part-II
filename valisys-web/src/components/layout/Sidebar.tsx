@@ -86,7 +86,6 @@ const NAV_ITEMS: NavItemDef[] = [
     children: [
       { label: 'Inventário',    href: '/estoque/inventario' },
       { label: 'Movimentações', href: '/estoque/movimentacoes' },
-      { label: 'Produtos',      href: '/estoque/produtos' },
     ],
   },
   {

@@ -37,6 +37,8 @@ import { CondicoesPagamentoPage } from './pages/cadastros/CondicoesPagamentoPage
 import { CondicaoPagamentoFormPage } from './pages/cadastros/CondicaoPagamentoFormPage';
 import { InventariosPage } from './pages/estoque/InventariosPage';
 import { InventarioFormPage } from './pages/estoque/InventarioFormPage';
+import { MovimentacoesPage } from './pages/estoque/MovimentacoesPage';
+import { MovimentacaoFormPage } from './pages/estoque/MovimentacaoFormPage';
 import { FichaTecnicasPage } from './pages/producao/FichaTecnicasPage';
 import { ProdutosSemFichaPage } from './pages/producao/ProdutosSemFichaPage';
 import { FichaTecnicaPainelPage } from './pages/producao/FichaTecnicaPainelPage';
@@ -186,6 +188,9 @@ const App = () => (
       <Route path="/estoque/inventario/novo" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/estoque/inventario/:id/editar" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/estoque/inventario/:id" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/estoque/movimentacoes" element={<PrivateRoute><AppLayout><MovimentacoesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/movimentacoes/novo" element={<PrivateRoute><AppLayout><MovimentacaoFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/producao/fichas-tecnicas" element={<PrivateRoute><AppLayout><FichaTecnicasPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas/novo" element={<PrivateRoute><AppLayout><ProdutosSemFichaPage /></AppLayout></PrivateRoute>} />

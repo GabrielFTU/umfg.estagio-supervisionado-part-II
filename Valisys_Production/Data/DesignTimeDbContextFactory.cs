@@ -2,12 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace Valisys_Production.Data;
-
-/// <summary>
-/// Usada pelas ferramentas do EF Core (dotnet ef migrations add / database update).
-/// Carrega o .env da raiz do repositório para que não seja necessário
-/// appsettings.Development.json com credenciais reais.
-/// </summary>
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
     public ApplicationDbContext CreateDbContext(string[] args)
@@ -27,7 +21,43 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Applicatio
             .UseNpgsql(connectionString)
             .Options;
 
-        return new ApplicationDbContext(options);
+        var ctx = new ApplicationDbContext(options);
+
+        EnsureInitialMigrationRegistered(connectionString);
+
+        return ctx;
+    }
+
+    private static void EnsureInitialMigrationRegistered(string connectionString)
+    {
+        const string migrationId = "20260623223725_AddRefreshTokens";
+        try
+        {
+            using var conn = new Npgsql.NpgsqlConnection(connectionString);
+            conn.Open();
+
+            using var checkCmd = conn.CreateCommand();
+            checkCmd.CommandText = """
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_name = '__EFMigrationsHistory'
+                ) AND EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_name = 'Almoxarifados'
+                )
+                """;
+            var schemaExists = (bool)checkCmd.ExecuteScalar()!;
+            if (!schemaExists) return;
+
+            using var insertCmd = conn.CreateCommand();
+            insertCmd.CommandText = $"""
+                INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+                VALUES ('{migrationId}', '8.0.2')
+                ON CONFLICT ("MigrationId") DO NOTHING
+                """;
+            insertCmd.ExecuteNonQuery();
+        }
+        catch { }
     }
 
     private static string Env(string key, string fallback = "") =>
