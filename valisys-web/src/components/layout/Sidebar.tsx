@@ -104,11 +104,9 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Produção',
     href: '/producao',
     children: [
-      { label: 'Apontamentos',       href: '/apontamentos' },
       { label: 'Kanban',             href: '/producao/kanban' },
       { label: 'Lotes',              href: '/lotes' },
       { label: 'Ordens de Produção', href: '/producao/ordens' },
-      { label: 'Produção',           href: '/producao' },
       { label: 'Roteiros de Produção', href: '/roteirosProducao' },
     ],
   },

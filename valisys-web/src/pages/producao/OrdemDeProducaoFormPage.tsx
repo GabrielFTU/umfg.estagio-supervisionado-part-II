@@ -26,6 +26,7 @@ interface TipoOrdemOption { id: string; nome: string }
 interface LoteOption { id: string; numero: string; produtoId?: string }
 interface AlmoxarifadoOption { id: string; nome: string }
 interface RoteiroOption { id: string; label: string; produtoId: string }
+interface FaseOption { id: string; nome: string }
 
 const STATUS_MAP: Record<number, { label: string; color: string }> = {
   1: { label: 'Ativa',      color: 'text-green-600 bg-green-50 border-green-200' },
@@ -40,6 +41,7 @@ interface FormState {
   tipoOrdemDeProducaoId: string;
   almoxarifadoId: string;
   roteiroProducaoId: string;
+  faseAtualId: string;
   loteId: string;
   quantidade: string;
   status: number;
@@ -51,6 +53,7 @@ interface FormErrors {
   produtoVariacaoId?: string;
   tipoOrdemDeProducaoId?: string;
   almoxarifadoId?: string;
+  faseAtualId?: string;
   loteId?: string;
   quantidade?: string;
 }
@@ -355,6 +358,7 @@ export function OrdemDeProducaoFormPage() {
   const [lotes, setLotes]                 = useState<LoteOption[]>([]);
   const [almoxarifados, setAlmoxarifados] = useState<AlmoxarifadoOption[]>([]);
   const [roteiros, setRoteiros]           = useState<RoteiroOption[]>([]);
+  const [fases, setFases]                 = useState<FaseOption[]>([]);
 
   const [selectedProduto, setSelectedProduto] = useState<ProdutoOption | null>(null);
   const [variacoes, setVariacoes]       = useState<VariacaoOption[]>([]);
@@ -371,6 +375,7 @@ export function OrdemDeProducaoFormPage() {
     tipoOrdemDeProducaoId: '',
     almoxarifadoId: '',
     roteiroProducaoId: '',
+    faseAtualId: '',
     loteId: '',
     quantidade: '1',
     status: 1,
@@ -386,12 +391,13 @@ export function OrdemDeProducaoFormPage() {
   const loadRefs = useCallback(async () => {
     setLoadingRefs(true);
     try {
-      const [resProdutos, resAlmox, resTipos, resLotes, resRoteiros] = await Promise.allSettled([
+      const [resProdutos, resAlmox, resTipos, resLotes, resRoteiros, resFases] = await Promise.allSettled([
         fetchWithAuth('/api/produtos'),
         fetchWithAuth('/api/almoxarifados'),
         fetchWithAuth('/api/tipos-ordem-producao'),
         fetchWithAuth('/api/lotes'),
         fetchWithAuth('/api/roteiros-producao'),
+        fetchWithAuth('/api/fases-producao'),
       ]);
 
       if (resProdutos.status === 'fulfilled' && resProdutos.value.ok) {
@@ -435,6 +441,11 @@ export function OrdemDeProducaoFormPage() {
           label: r.versao ? `${r.codigo} — v${r.versao}` : r.codigo,
           produtoId: r.produtoId ?? '',
         })));
+      }
+
+      if (resFases.status === 'fulfilled' && resFases.value.ok) {
+        const data = await resFases.value.json();
+        setFases(data.map((f: any) => ({ id: f.id, nome: f.nome ?? '' })));
       }
     } finally {
       setLoadingRefs(false);
@@ -516,6 +527,7 @@ export function OrdemDeProducaoFormPage() {
     : [];
 
   const mostrarLote = lotesParaProduto.length > 0;
+  const semRoteiro = modo === 'criar' && !!selectedProduto && roteirosDoProduto.length === 0;
 
   const validate = (): boolean => {
     const errs: FormErrors = {};
@@ -524,6 +536,7 @@ export function OrdemDeProducaoFormPage() {
       errs.produtoVariacaoId = 'Selecione a cor/variação.';
     if (!form.tipoOrdemDeProducaoId) errs.tipoOrdemDeProducaoId = 'Selecione o tipo de ordem.';
     if (!form.almoxarifadoId) errs.almoxarifadoId = 'Selecione o almoxarifado.';
+    if (semRoteiro && !form.faseAtualId) errs.faseAtualId = 'Selecione a fase inicial da ordem.';
     if (mostrarLote && !form.loteId) errs.loteId = 'Produto exige lote.';
     const qtd = parseInt(form.quantidade, 10);
     if (!form.quantidade || isNaN(qtd) || qtd < 1) errs.quantidade = 'Informe uma quantidade válida.';
@@ -543,6 +556,7 @@ export function OrdemDeProducaoFormPage() {
           tipoOrdemDeProducaoId: form.tipoOrdemDeProducaoId,
           almoxarifadoId: form.almoxarifadoId,
           roteiroProducaoId: form.roteiroProducaoId || undefined,
+          faseAtualId: form.faseAtualId || undefined,
           loteId: form.loteId || undefined,
           observacoes: form.observacoes || undefined,
           produtoVariacaoId: form.produtoVariacaoId || undefined,
@@ -644,8 +658,8 @@ export function OrdemDeProducaoFormPage() {
             value={form.produtoId}
             options={produtos}
             onChange={(pid) => {
-              setForm(prev => ({ ...prev, produtoId: pid, produtoVariacaoId: '', loteId: '', roteiroProducaoId: '' }));
-              setErrors(prev => ({ ...prev, produtoId: undefined, produtoVariacaoId: undefined, loteId: undefined }));
+              setForm(prev => ({ ...prev, produtoId: pid, produtoVariacaoId: '', loteId: '', roteiroProducaoId: '', faseAtualId: '' }));
+              setErrors(prev => ({ ...prev, produtoId: undefined, produtoVariacaoId: undefined, loteId: undefined, faseAtualId: undefined }));
             }}
             error={errors.produtoId}
             readOnly={readOnly || modo === 'editar'}
@@ -733,6 +747,27 @@ export function OrdemDeProducaoFormPage() {
                 />
               )}
             </UField>
+          )}
+
+          {/* Fase inicial — aparece quando o produto não tem roteiro definido */}
+          {semRoteiro && (
+            <>
+              <div className="mb-2 mt-3 flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200">
+                <AlertTriangle size={13} className="text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-700">
+                  Este produto não possui roteiro definido. Selecione a fase inicial manualmente.
+                </p>
+              </div>
+              <UField label="Fase inicial" required error={errors.faseAtualId}>
+                <SelectDropdown
+                  value={form.faseAtualId}
+                  onChange={v => setField('faseAtualId', v)}
+                  options={fases.map(f => ({ value: f.id, label: f.nome }))}
+                  placeholder="Selecionar fase…"
+                  searchable
+                />
+              </UField>
+            </>
           )}
 
           {/* Código da ordem — somente leitura, exibido em editar/visualizar */}

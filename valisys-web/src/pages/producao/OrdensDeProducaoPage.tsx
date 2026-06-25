@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus, Search, SlidersHorizontal, Factory, Home, ChevronRight,
+  Plus, Search, SlidersHorizontal, Factory,
   Loader2, MoreHorizontal, Play, Printer, Eye, Pencil, XCircle,
-  AlertTriangle, ShoppingBag, ArrowUpDown, X, RefreshCw, ChevronUp,
-  ChevronDown, LayoutGrid, List as ListIcon, AlertCircle,
+  AlertTriangle, ShoppingBag, X, AlertCircle, ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
@@ -35,11 +34,7 @@ type OrdemItem = {
   pedidoClienteNome?: string;
 };
 
-type SortField = 'codigoOrdem' | 'produtoNome' | 'dataInicio' | 'status' | 'faseAtualNome';
-type SortDir = 'asc' | 'desc';
-type ViewMode = 'table' | 'grid';
-
-// ─── Constants ────────────────────────────────────────────────────────────────
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 const STATUS_LABEL: Record<string, string> = {
   Ativa: 'Em Produção',
@@ -73,8 +68,6 @@ function statusStr(s: string | number): string {
   return String(s);
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
 function StatusBadge({ status }: { status: string | number }) {
   const s = statusStr(status);
   return (
@@ -102,8 +95,7 @@ function PedidoIndicator({ pedidoId, pedidoCodigo, clienteNome }: {
         px-2.5 py-2 rounded-lg bg-gray-800 text-white text-xs whitespace-nowrap
         opacity-0 group-hover/pedido:opacity-100
         -translate-y-1 group-hover/pedido:translate-y-0
-        transition-all duration-150 z-50 shadow-lg
-        min-w-max
+        transition-all duration-150 z-50 shadow-lg min-w-max
       ">
         <p className="font-semibold">Pedido {pedidoCodigo ?? pedidoId}</p>
         {clienteNome && <p className="text-gray-300 mt-0.5">{clienteNome}</p>}
@@ -113,46 +105,22 @@ function PedidoIndicator({ pedidoId, pedidoCodigo, clienteNome }: {
   );
 }
 
-function SortHeader({ label, field, current, dir, onSort }: {
-  label: string; field: SortField; current: SortField; dir: SortDir;
-  onSort: (f: SortField) => void;
-}) {
-  const active = current === field;
-  return (
-    <button
-      onClick={() => onSort(field)}
-      className="flex items-center gap-1 text-xs font-semibold text-gray-400 uppercase tracking-wide hover:text-gray-600 transition-colors group"
-    >
-      {label}
-      <span className={cn('transition-colors', active ? 'text-[#3B82F6]' : 'text-gray-300 group-hover:text-gray-400')}>
-        {active
-          ? (dir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />)
-          : <ArrowUpDown size={11} />}
-      </span>
-    </button>
-  );
-}
-
 // ─── Row Menu ────────────────────────────────────────────────────────────────
 
-interface RowMenuProps {
+function RowMenu({ ordem, onView, onEdit, onIniciar, onAvancar, onCancelar, onImprimir }: {
   ordem: OrdemItem;
-  onView: () => void;
-  onEdit: () => void;
-  onIniciar: () => void;
-  onCancelar: () => void;
-  onImprimir: () => void;
-}
-
-function RowMenu({ ordem, onView, onEdit, onIniciar, onCancelar, onImprimir }: RowMenuProps) {
+  onView: () => void; onEdit: () => void;
+  onIniciar: () => void; onAvancar: () => void; onCancelar: () => void; onImprimir: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const s = statusStr(ordem.status);
-  const podeIniciar = s === 'Aguardando' || s === '2';
-  const podeEditar = s !== 'Finalizada' && s !== 'Cancelada' && s !== '3' && s !== '4';
+  const podeIniciar  = s === 'Aguardando' || s === '2';
+  const podeAvancar  = s === 'Ativa' || s === '1';
+  const podeEditar   = s !== 'Finalizada' && s !== 'Cancelada' && s !== '3' && s !== '4';
   const podeCancelar = s !== 'Finalizada' && s !== 'Cancelada' && s !== '3' && s !== '4';
 
   const handleToggle = () => {
@@ -185,10 +153,7 @@ function RowMenu({ ordem, onView, onEdit, onIniciar, onCancelar, onImprimir }: R
       <button
         ref={btnRef}
         onClick={handleToggle}
-        className={cn(
-          'p-1.5 rounded-md transition-colors',
-          open ? 'bg-gray-100 text-gray-700' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100',
-        )}
+        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
       >
         <MoreHorizontal size={15} />
       </button>
@@ -197,19 +162,18 @@ function RowMenu({ ordem, onView, onEdit, onIniciar, onCancelar, onImprimir }: R
         <div
           ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-44 bg-white border border-gray-200 rounded-lg shadow-lg shadow-black/[0.07] py-0.5 text-[13px]"
+          className="w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]"
         >
           <button onClick={() => { setOpen(false); onView(); }}
-            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors">
             <Eye size={13} /> Visualizar
           </button>
           {podeEditar && (
             <button onClick={() => { setOpen(false); onEdit(); }}
-              className="w-full flex items-center gap-2.5 px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+              className="w-full flex items-center gap-2.5 px-3 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors">
               <Pencil size={13} /> Editar
             </button>
           )}
-
           {podeIniciar && (
             <>
               <div className="my-0.5 mx-2 border-t border-gray-100" />
@@ -219,13 +183,20 @@ function RowMenu({ ordem, onView, onEdit, onIniciar, onCancelar, onImprimir }: R
               </button>
             </>
           )}
-
+          {podeAvancar && (
+            <>
+              <div className="my-0.5 mx-2 border-t border-gray-100" />
+              <button onClick={() => { setOpen(false); onAvancar(); }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 transition-colors">
+                <ArrowRight size={13} /> Avançar Fase
+              </button>
+            </>
+          )}
           <div className="my-0.5 mx-2 border-t border-gray-100" />
           <button onClick={() => { setOpen(false); onImprimir(); }}
-            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors">
             <Printer size={13} /> Imprimir
           </button>
-
           {podeCancelar && (
             <>
               <div className="my-0.5 mx-2 border-t border-gray-100" />
@@ -253,7 +224,6 @@ function CancelModal({ ordem, loading, onConfirm, onCancel }: {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
-
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
     document.addEventListener('keydown', h);
@@ -278,20 +248,15 @@ function CancelModal({ ordem, loading, onConfirm, onCancel }: {
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-800 leading-snug">Cancelar Ordem</p>
-              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
-                {ordem.codigoOrdem} — {ordem.produtoNome}
-              </p>
+              <p className="mt-1 text-xs text-gray-500">{ordem.codigoOrdem} — {ordem.produtoNome}</p>
             </div>
           </div>
           <button onClick={onCancel} className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors ml-2">
             <X size={14} />
           </button>
         </div>
-
         <div className="px-5 pb-2">
-          <p className="text-xs text-gray-500 mb-2">
-            Esta ação não pode ser desfeita. Informe o motivo do cancelamento:
-          </p>
+          <p className="text-xs text-gray-500 mb-2">Esta ação não pode ser desfeita. Informe o motivo:</p>
           <textarea
             ref={inputRef}
             value={texto}
@@ -301,7 +266,7 @@ function CancelModal({ ordem, loading, onConfirm, onCancel }: {
             rows={3}
             className={cn(
               'w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:border-red-400 resize-none placeholder:text-gray-300',
-              invalid ? 'border-red-300 focus:ring-2 focus:ring-red-100' : 'border-gray-200',
+              invalid ? 'border-red-300' : 'border-gray-200',
             )}
           />
           {invalid && (
@@ -312,7 +277,6 @@ function CancelModal({ ordem, loading, onConfirm, onCancel }: {
           )}
           <p className="text-[11px] text-gray-400 mt-1">Ctrl+Enter para confirmar</p>
         </div>
-
         <div className="flex gap-2 px-5 pb-5 pt-3">
           <button onClick={onCancel} disabled={loading}
             className="flex-1 h-9 rounded-lg border border-gray-200 text-sm text-gray-600 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
@@ -320,7 +284,7 @@ function CancelModal({ ordem, loading, onConfirm, onCancel }: {
           </button>
           <button onClick={handleConfirm} disabled={loading}
             className="flex-1 h-9 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
-            {loading ? <Loader2 size={13} className="animate-spin" /> : null}
+            {loading && <Loader2 size={13} className="animate-spin" />}
             Confirmar Cancelamento
           </button>
         </div>
@@ -350,13 +314,11 @@ function PrintModal({ ordem, onClose }: { ordem: OrdemItem; onClose: () => void 
             <X size={14} />
           </button>
         </div>
-
-        <div className="px-5 py-4 space-y-3 text-sm" id="print-content">
+        <div className="px-5 py-4 space-y-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold text-gray-800">{ordem.codigoOrdem}</span>
             <StatusBadge status={ordem.status} />
           </div>
-
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
               <p className="text-gray-400 mb-0.5">Produto</p>
@@ -397,20 +359,17 @@ function PrintModal({ ordem, onClose }: { ordem: OrdemItem; onClose: () => void 
               </div>
             )}
           </div>
-
           {ordem.observacoes && (
             <div className="pt-2 border-t border-gray-100">
               <p className="text-gray-400 text-xs mb-0.5">Observações</p>
               <p className="text-xs text-gray-600">{ordem.observacoes}</p>
             </div>
           )}
-
           <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
             <span>Impresso em {new Date().toLocaleString('pt-BR')}</span>
             <span className="font-mono text-gray-500">{ordem.codigoOrdem}</span>
           </div>
         </div>
-
         <div className="flex gap-2 px-5 pb-5">
           <button onClick={onClose}
             className="flex-1 h-9 rounded-lg border border-gray-200 text-sm text-gray-600 font-medium hover:bg-gray-50 transition-colors">
@@ -433,7 +392,6 @@ interface FilterState {
   fase: string;
   dateFrom: string;
   dateTo: string;
-  atrasadas: boolean;
 }
 
 function FilterPanel({
@@ -448,9 +406,9 @@ function FilterPanel({
   const [local, setLocal] = useState<FilterState>(filters);
 
   return (
-    <div className="absolute z-30 top-full right-0 mt-1.5 w-72 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4">
+    <div className="absolute z-30 top-full right-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-600">Filtros</span>
+        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Filtros</span>
         <button onClick={onClear} className="text-[11px] text-red-400 hover:text-red-600 transition-colors">
           Limpar tudo
         </button>
@@ -464,9 +422,7 @@ function FilterPanel({
               key={s}
               onClick={() => setLocal(prev => ({
                 ...prev,
-                status: prev.status.includes(s)
-                  ? prev.status.filter(x => x !== s)
-                  : [...prev.status, s],
+                status: prev.status.includes(s) ? prev.status.filter(x => x !== s) : [...prev.status, s],
               }))}
               className={cn(
                 'text-xs py-1 px-2.5 rounded-full border transition-colors',
@@ -519,19 +475,6 @@ function FilterPanel({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="atrasadas"
-          checked={local.atrasadas}
-          onChange={e => setLocal(prev => ({ ...prev, atrasadas: e.target.checked }))}
-          className="w-3.5 h-3.5 rounded border-gray-300 text-[#3B82F6] focus:ring-[#3B82F6]"
-        />
-        <label htmlFor="atrasadas" className="text-xs text-gray-600 cursor-pointer">
-          Apenas ordens atrasadas
-        </label>
-      </div>
-
       <div className="flex gap-2 pt-1 border-t border-gray-100">
         <button onClick={onClose}
           className="flex-1 h-8 text-xs text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium">
@@ -546,74 +489,27 @@ function FilterPanel({
   );
 }
 
-// ─── Card (grid view) ────────────────────────────────────────────────────────
-
-function OrdemCard({ ordem, onView, onEdit, onIniciar, onCancelar, onImprimir }: {
-  ordem: OrdemItem;
-  onView: () => void; onEdit: () => void;
-  onIniciar: () => void; onCancelar: () => void; onImprimir: () => void;
-}) {
-  return (
-    <div
-      className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer"
-      onClick={onView}
-    >
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0">
-          <p className="text-xs font-bold text-gray-700 font-mono">{ordem.codigoOrdem}</p>
-          {ordem.loteNumero && (
-            <p className="text-[10px] text-gray-400 mt-0.5">Lote {ordem.loteNumero}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {ordem.pedidoId && (
-            <PedidoIndicator pedidoId={ordem.pedidoId} pedidoCodigo={ordem.pedidoCodigo} clienteNome={ordem.pedidoClienteNome} />
-          )}
-          <RowMenu ordem={ordem} onView={onView} onEdit={onEdit} onIniciar={onIniciar} onCancelar={onCancelar} onImprimir={onImprimir} />
-        </div>
-      </div>
-
-      <p className="text-sm font-medium text-gray-800 truncate mb-2">{ordem.produtoNome}</p>
-
-      <div className="flex items-center justify-between text-[11px] text-gray-500 mb-3">
-        <span>Qtd: <strong className="text-gray-700">{ordem.quantidade.toLocaleString('pt-BR')}</strong></span>
-        <span>{ordem.faseAtualNome || '—'}</span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <StatusBadge status={ordem.status} />
-        <span className="text-[10px] text-gray-400">{fmtDate(ordem.dataInicio)}</span>
-      </div>
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function OrdensDeProducaoPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const [ordens, setOrdens]       = useState<OrdemItem[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState('');
+  const [ordens, setOrdens]           = useState<OrdemItem[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<SortField>('dataInicio');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
-
-  const [filters, setFilters] = useState<FilterState>({
-    status: [], fase: '', dateFrom: '', dateTo: '', atrasadas: false,
-  });
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [search, setSearch]           = useState('');
+  const [filters, setFilters]         = useState<FilterState>({ status: [], fase: '', dateFrom: '', dateTo: '' });
+  const [filterOpen, setFilterOpen]   = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  const [cancelTarget, setCancelTarget] = useState<OrdemItem | null>(null);
-  const [printTarget, setPrintTarget] = useState<OrdemItem | null>(null);
+  const [page, setPage]               = useState(1);
+  const [pageSize, setPageSize]       = useState(10);
 
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [cancelTarget, setCancelTarget] = useState<OrdemItem | null>(null);
+  const [printTarget, setPrintTarget]   = useState<OrdemItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -632,7 +528,7 @@ export function OrdensDeProducaoPage() {
       if (res.status === 403) { setOrdens([]); return; }
       if (!res.ok) throw new Error();
       const data: any[] = await res.json();
-      const lista: OrdemItem[] = data.map(o => ({
+      setOrdens(data.map(o => ({
         id: o.id,
         codigoOrdem: o.codigoOrdem,
         quantidade: o.quantidade ?? 0,
@@ -653,8 +549,7 @@ export function OrdensDeProducaoPage() {
         pedidoId: o.pedidoId ?? undefined,
         pedidoCodigo: o.pedidoCodigo ?? undefined,
         pedidoClienteNome: o.pedidoClienteNome ?? undefined,
-      }));
-      setOrdens(lista);
+      })));
     } catch {
       setError('Não foi possível carregar as ordens de produção.');
     } finally {
@@ -664,17 +559,18 @@ export function OrdensDeProducaoPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleIniciarProducao = async (ordem: OrdemItem) => {
+  const handleAvancarFase = async (ordem: OrdemItem, acao: 'iniciar' | 'avancar' = 'avancar') => {
     setActionLoading(true);
     try {
-      const res = await fetchWithAuth(`/api/ordens-producao/${ordem.id}/avancar-fase`, {
-        method: 'POST',
-      });
-      if (!res.ok) throw new Error('Não foi possível iniciar a produção.');
-      showToast(`Produção iniciada: ${ordem.codigoOrdem}`);
+      const res = await fetchWithAuth(`/api/ordens-producao/${ordem.id}/avancar-fase`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.detail ?? err?.title ?? (acao === 'iniciar' ? 'Não foi possível iniciar a produção.' : 'Não foi possível avançar a fase.'));
+      }
+      showToast(acao === 'iniciar' ? `Produção iniciada: ${ordem.codigoOrdem}` : `Fase avançada: ${ordem.codigoOrdem}`);
       load();
     } catch (e: any) {
-      showToast(e.message ?? 'Erro ao iniciar produção.');
+      showToast(e.message ?? 'Erro ao avançar fase.');
     } finally {
       setActionLoading(false);
     }
@@ -699,27 +595,10 @@ export function OrdensDeProducaoPage() {
     }
   };
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortField(field); setSortDir('asc'); }
-  };
-
-  const toggleSelect = (id: string) =>
-    setSelected(prev => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
-
-  const toggleSelectAll = (visible: OrdemItem[]) =>
-    setSelected(prev =>
-      prev.size === visible.length ? new Set() : new Set(visible.map(o => o.id)),
-    );
-
   const fases = Array.from(new Set(ordens.map(o => o.faseAtualNome).filter(Boolean)));
 
   const filtrosAtivos = filters.status.length + (filters.fase ? 1 : 0) +
-    (filters.dateFrom ? 1 : 0) + (filters.dateTo ? 1 : 0) + (filters.atrasadas ? 1 : 0);
+    (filters.dateFrom ? 1 : 0) + (filters.dateTo ? 1 : 0);
 
   const filtered = ordens.filter(o => {
     if (search) {
@@ -737,183 +616,103 @@ export function OrdensDeProducaoPage() {
     return true;
   });
 
-  const sorted = [...filtered].sort((a, b) => {
-    let va: string | number = a[sortField] as string ?? '';
-    let vb: string | number = b[sortField] as string ?? '';
-    if (sortField === 'dataInicio') {
-      va = new Date(a.dataInicio).getTime();
-      vb = new Date(b.dataInicio).getTime();
-    }
-    if (va < vb) return sortDir === 'asc' ? -1 : 1;
-    if (va > vb) return sortDir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
 
-  const removeStatusFilter = (s: string) =>
-    setFilters(prev => ({ ...prev, status: prev.status.filter(x => x !== s) }));
-
-  const clearFilters = () =>
-    setFilters({ status: [], fase: '', dateFrom: '', dateTo: '', atrasadas: false });
+  const clearFilters = () => setFilters({ status: [], fase: '', dateFrom: '', dateTo: '' });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
 
-      {/* Breadcrumb */}
-      <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200/70">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Home size={11} /><ChevronRight size={11} />
-          <span>Produção</span><ChevronRight size={11} />
-          <span className="text-gray-600 font-medium">Ordens de Produção</span>
+      {/* ── Toolbar ── */}
+      <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            placeholder="Buscar por ordem, produto ou lote…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+          />
         </div>
-      </div>
 
-      {/* Toolbar */}
-      <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-gray-200/50 bg-white">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <button
+          onClick={() => navigate('/producao/ordens/novo')}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors shrink-0"
+        >
+          <Plus size={14} /> Nova Ordem
+        </button>
 
-          {/* Search */}
-          <div className="relative flex-1 min-w-0 sm:max-w-md">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6] transition-all placeholder:text-gray-400"
-              placeholder="Buscar por ordem, produto ou lote…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-
-          {/* Filter button */}
-          <div ref={filterRef} className="relative shrink-0">
-            <button
-              onMouseDown={e => e.stopPropagation()}
-              onClick={() => setFilterOpen(v => !v)}
-              className={cn(
-                'flex items-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors',
-                filtrosAtivos
-                  ? 'bg-blue-50 border-[#3B82F6] text-[#3B82F6]'
-                  : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400',
-              )}
-            >
-              <SlidersHorizontal size={13} />
-              Filtros
-              {filtrosAtivos > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex items-center justify-center">
-                  {filtrosAtivos}
-                </span>
-              )}
-            </button>
-            {filterOpen && (
-              <div onMouseDown={e => e.stopPropagation()}>
-                <FilterPanel
-                  fases={fases}
-                  filters={filters}
-                  onApply={setFilters}
-                  onClear={clearFilters}
-                  onClose={() => setFilterOpen(false)}
-                />
-              </div>
+        <div ref={filterRef} className="relative shrink-0">
+          <button
+            onClick={() => setFilterOpen(v => !v)}
+            className={cn(
+              'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
+              filtrosAtivos
+                ? 'border-[#3B82F6] bg-blue-50 text-[#3B82F6]'
+                : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
             )}
-          </div>
-
-          {/* Right side */}
-          <div className="flex items-center gap-1.5 sm:ml-auto">
-            <button
-              onClick={load}
-              className="h-9 w-9 flex items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
-              title="Atualizar"
-            >
-              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-            </button>
-
-            {/* View toggle */}
-            <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-              <button
-                onClick={() => setViewMode('table')}
-                className={cn(
-                  'h-9 w-9 flex items-center justify-center transition-colors',
-                  viewMode === 'table' ? 'bg-[#3B82F6] text-white' : 'text-gray-500 hover:bg-gray-50',
-                )}
-                title="Visualização em lista"
-              >
-                <ListIcon size={13} />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={cn(
-                  'h-9 w-9 flex items-center justify-center transition-colors',
-                  viewMode === 'grid' ? 'bg-[#3B82F6] text-white' : 'text-gray-500 hover:bg-gray-50',
-                )}
-                title="Visualização em grade"
-              >
-                <LayoutGrid size={13} />
-              </button>
+          >
+            <SlidersHorizontal size={15} />
+          </button>
+          {filtrosAtivos > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[9px] font-bold flex items-center justify-center pointer-events-none">
+              {filtrosAtivos}
+            </span>
+          )}
+          {filterOpen && (
+            <div onMouseDown={e => e.stopPropagation()}>
+              <FilterPanel
+                fases={fases}
+                filters={filters}
+                onApply={f => { setFilters(f); setPage(1); }}
+                onClear={() => { clearFilters(); setPage(1); }}
+                onClose={() => setFilterOpen(false)}
+              />
             </div>
-
-            <button
-              onClick={() => navigate('/producao/ordens/novo')}
-              className="flex items-center gap-2 h-9 px-4 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] shadow-sm shadow-blue-200 transition-colors shrink-0"
-            >
-              <Plus size={15} /> Nova Ordem
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Active filter chips */}
+      {/* ── Chips filtros ativos ── */}
       {filtrosAtivos > 0 && (
-        <div className="shrink-0 px-4 sm:px-6 py-2 border-b border-gray-100 bg-white flex flex-wrap gap-2">
+        <div className="shrink-0 px-6 py-2 border-b border-gray-100 flex flex-wrap items-center gap-2">
           {filters.status.map(s => (
-            <span key={s} className="flex items-center gap-1 h-6 px-2.5 rounded-full bg-blue-50 text-[#3B82F6] text-xs font-medium border border-blue-200">
+            <span key={s} className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Status: {STATUS_LABEL[s]}
-              <button onClick={() => removeStatusFilter(s)} className="hover:text-blue-800 transition-colors ml-0.5">
-                <X size={10} />
-              </button>
+              <button onClick={() => setFilters(p => ({ ...p, status: p.status.filter(x => x !== s) }))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           ))}
           {filters.fase && (
-            <span className="flex items-center gap-1 h-6 px-2.5 rounded-full bg-blue-50 text-[#3B82F6] text-xs font-medium border border-blue-200">
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Fase: {filters.fase}
-              <button onClick={() => setFilters(p => ({ ...p, fase: '' }))} className="hover:text-blue-800 transition-colors ml-0.5">
-                <X size={10} />
-              </button>
+              <button onClick={() => setFilters(p => ({ ...p, fase: '' }))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {filters.dateFrom && (
-            <span className="flex items-center gap-1 h-6 px-2.5 rounded-full bg-blue-50 text-[#3B82F6] text-xs font-medium border border-blue-200">
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               A partir de: {new Date(filters.dateFrom).toLocaleDateString('pt-BR')}
-              <button onClick={() => setFilters(p => ({ ...p, dateFrom: '' }))} className="hover:text-blue-800 transition-colors ml-0.5">
-                <X size={10} />
-              </button>
+              <button onClick={() => setFilters(p => ({ ...p, dateFrom: '' }))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {filters.dateTo && (
-            <span className="flex items-center gap-1 h-6 px-2.5 rounded-full bg-blue-50 text-[#3B82F6] text-xs font-medium border border-blue-200">
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Até: {new Date(filters.dateTo).toLocaleDateString('pt-BR')}
-              <button onClick={() => setFilters(p => ({ ...p, dateTo: '' }))} className="hover:text-blue-800 transition-colors ml-0.5">
-                <X size={10} />
-              </button>
+              <button onClick={() => setFilters(p => ({ ...p, dateTo: '' }))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
-          {filters.atrasadas && (
-            <span className="flex items-center gap-1 h-6 px-2.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">
-              <AlertTriangle size={9} /> Apenas atrasadas
-              <button onClick={() => setFilters(p => ({ ...p, atrasadas: false }))} className="hover:text-amber-900 transition-colors ml-0.5">
-                <X size={10} />
-              </button>
-            </span>
-          )}
-          <button onClick={clearFilters} className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors ml-1">
+          <button onClick={clearFilters} className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">
             Limpar tudo
           </button>
         </div>
       )}
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-4">
-
+      {/* ── Tabela ── */}
+      <div className="flex-1 overflow-auto">
         {loading && (
           <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
-            <Loader2 size={16} className="animate-spin" /> Carregando ordens de produção…
+            <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
         )}
 
@@ -925,173 +724,124 @@ export function OrdensDeProducaoPage() {
           </div>
         )}
 
-        {!loading && !error && sorted.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-              <Factory size={28} className="text-[#3B82F6]" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-700">
-                {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhuma ordem de produção cadastrada'}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {search || filtrosAtivos ? 'Ajuste os filtros ou a busca.' : 'Clique em "Nova Ordem" para criar a primeira.'}
-              </p>
-            </div>
-            {!search && !filtrosAtivos && (
-              <button
-                onClick={() => navigate('/producao/ordens/novo')}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#3B82F6] text-white text-sm hover:bg-[#2563eb] transition-colors"
-              >
-                <Plus size={14} /> Criar ordem de produção
-              </button>
-            )}
-          </div>
-        )}
-
-        {!loading && !error && sorted.length > 0 && viewMode === 'grid' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {sorted.map(o => (
-              <OrdemCard
-                key={o.id}
-                ordem={o}
-                onView={() => navigate(`/producao/ordens/${o.id}`)}
-                onEdit={() => navigate(`/producao/ordens/${o.id}/editar`)}
-                onIniciar={() => handleIniciarProducao(o)}
-                onCancelar={() => setCancelTarget(o)}
-                onImprimir={() => setPrintTarget(o)}
-              />
-            ))}
-          </div>
-        )}
-
-        {!loading && !error && sorted.length > 0 && viewMode === 'table' && (
-          <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[860px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="w-10 py-2.5 pl-4 pr-2">
-                      <input
-                        type="checkbox"
-                        checked={selected.size === sorted.length && sorted.length > 0}
-                        onChange={() => toggleSelectAll(sorted)}
-                        className="w-3.5 h-3.5 rounded border-gray-300 text-[#3B82F6] focus:ring-[#3B82F6]"
-                      />
-                    </th>
-                    <th className="text-left py-2.5 pr-4 min-w-[120px]">
-                      <SortHeader label="Ordem" field="codigoOrdem" current={sortField} dir={sortDir} onSort={handleSort} />
-                    </th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Lote</th>
-                    <th className="text-left py-2.5 pr-4 min-w-[200px]">
-                      <SortHeader label="Produto" field="produtoNome" current={sortField} dir={sortDir} onSort={handleSort} />
-                    </th>
-                    <th className="text-left py-2.5 pr-4 min-w-[120px]">
-                      <SortHeader label="Fase Atual" field="faseAtualNome" current={sortField} dir={sortDir} onSort={handleSort} />
-                    </th>
-                    <th className="text-left py-2.5 pr-4">
-                      <SortHeader label="Data Início" field="dataInicio" current={sortField} dir={sortDir} onSort={handleSort} />
-                    </th>
-                    <th className="text-right text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Qtd.</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Almoxarifado</th>
-                    <th className="text-left py-2.5 pr-4">
-                      <SortHeader label="Status" field="status" current={sortField} dir={sortDir} onSort={handleSort} />
-                    </th>
-                    <th className="w-10 pr-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map(o => (
-                    <tr
-                      key={o.id}
-                      className="border-b border-gray-50 hover:bg-blue-50/40 transition-colors"
-                    >
-                      <td className="py-3 pl-4 pr-2">
-                        <input
-                          type="checkbox"
-                          checked={selected.has(o.id)}
-                          onChange={() => toggleSelect(o.id)}
-                          onClick={e => e.stopPropagation()}
-                          className="w-3.5 h-3.5 rounded border-gray-300 text-[#3B82F6] focus:ring-[#3B82F6]"
-                        />
-                      </td>
-                      <td className="py-3 pr-4">
-                        <button
-                          onClick={() => navigate(`/producao/ordens/${o.id}`)}
-                          className="text-xs font-bold text-gray-700 font-mono hover:text-[#3B82F6] transition-colors"
-                        >
-                          {o.codigoOrdem}
-                        </button>
-                      </td>
-                      <td className="py-3 pr-4 text-xs text-gray-500">
-                        {o.loteNumero ? (
-                          <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[11px]">{o.loteNumero}</span>
-                        ) : '—'}
-                      </td>
-                      <td className="py-3 pr-4 max-w-[200px]">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <button
-                            onClick={() => navigate(`/producao/ordens/${o.id}`)}
-                            className="text-xs font-medium text-[#3B82F6] hover:text-[#2563eb] truncate transition-colors text-left"
-                          >
-                            {o.produtoNome}
-                          </button>
-                          {o.pedidoId && (
-                            <PedidoIndicator
-                              pedidoId={o.pedidoId}
-                              pedidoCodigo={o.pedidoCodigo}
-                              clienteNome={o.pedidoClienteNome}
-                            />
-                          )}
+        {!loading && !error && (
+          <>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-36">Ordem</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Produto</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden md:table-cell">Lote</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden lg:table-cell">Fase Atual</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden lg:table-cell">Data Início</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Status</th>
+                  <th className="w-10 pr-4" />
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
+                          <Factory size={24} className="text-[#3B82F6]" />
                         </div>
-                      </td>
-                      <td className="py-3 pr-4 text-xs text-gray-600">{o.faseAtualNome || '—'}</td>
-                      <td className="py-3 pr-4 text-xs text-gray-500 tabular-nums">{fmtDate(o.dataInicio)}</td>
-                      <td className="py-3 pr-4 text-xs text-right text-gray-700 font-medium tabular-nums">
-                        {o.quantidade.toLocaleString('pt-BR')}
-                      </td>
-                      <td className="py-3 pr-4 text-xs text-gray-500 truncate max-w-[120px]">{o.almoxarifadoNome}</td>
-                      <td className="py-3 pr-4">
-                        <StatusBadge status={o.status} />
-                      </td>
-                      <td className="py-3 pr-3 text-right">
-                        <RowMenu
-                          ordem={o}
-                          onView={() => navigate(`/producao/ordens/${o.id}`)}
-                          onEdit={() => navigate(`/producao/ordens/${o.id}/editar`)}
-                          onIniciar={() => handleIniciarProducao(o)}
-                          onCancelar={() => setCancelTarget(o)}
-                          onImprimir={() => setPrintTarget(o)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <p className="text-sm font-semibold text-gray-700">
+                          {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhuma ordem de produção cadastrada'}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {search || filtrosAtivos ? 'Ajuste os filtros ou a busca.' : 'Clique em "Nova Ordem" para criar a primeira.'}
+                        </p>
+                        {!search && !filtrosAtivos && (
+                          <button
+                            onClick={() => navigate('/producao/ordens/novo')}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#3B82F6] text-white text-sm hover:bg-[#2563eb] transition-colors mt-1"
+                          >
+                            <Plus size={14} /> Nova Ordem
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : paginated.map(o => (
+                  <tr
+                    key={o.id}
+                    onClick={() => navigate(`/producao/ordens/${o.id}`)}
+                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <td className="px-6 py-3">
+                      <span className="text-sm font-semibold text-gray-700 font-mono">{o.codigoOrdem}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm text-gray-700 truncate">{o.produtoNome}</span>
+                        {o.pedidoId && (
+                          <PedidoIndicator
+                            pedidoId={o.pedidoId}
+                            pedidoCodigo={o.pedidoCodigo}
+                            clienteNome={o.pedidoClienteNome}
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
+                      {o.loteNumero
+                        ? <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">{o.loteNumero}</span>
+                        : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell">{o.faseAtualNome || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell tabular-nums">{fmtDate(o.dataInicio)}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={o.status} />
+                    </td>
+                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                      <RowMenu
+                        ordem={o}
+                        onView={() => navigate(`/producao/ordens/${o.id}`)}
+                        onEdit={() => navigate(`/producao/ordens/${o.id}/editar`)}
+                        onIniciar={() => handleAvancarFase(o, 'iniciar')}
+                        onAvancar={() => handleAvancarFase(o, 'avancar')}
+                        onCancelar={() => setCancelTarget(o)}
+                        onImprimir={() => setPrintTarget(o)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-            {/* Table footer */}
-            <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-xs text-gray-400">
-                {sorted.length} ordem{sorted.length !== 1 ? 's' : ''}
-                {filtrosAtivos || search ? ` (filtrado de ${ordens.length})` : ''}
-              </span>
-              {selected.size > 0 && (
-                <span className="text-xs text-[#3B82F6] font-medium">
-                  {selected.size} selecionada{selected.size !== 1 ? 's' : ''}
+            {filtered.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+                <span className="mr-4">
+                  Exibindo {filtered.length} ordem{filtered.length !== 1 ? 's' : ''}
+                  {filtrosAtivos || search ? ` (filtrado de ${ordens.length})` : ''}.
                 </span>
-              )}
-            </div>
-          </div>
+                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => goPage(p)}
+                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                    {p}
+                  </button>
+                ))}
+                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Modals */}
+      {/* ── Modais ── */}
       {cancelTarget && (
         <CancelModal
           ordem={cancelTarget}
           loading={actionLoading}
-          onConfirm={(just) => handleCancelar(cancelTarget, just)}
+          onConfirm={just => handleCancelar(cancelTarget, just)}
           onCancel={() => setCancelTarget(null)}
         />
       )}
