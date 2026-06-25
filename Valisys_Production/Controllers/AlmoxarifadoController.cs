@@ -7,7 +7,7 @@ using Valisys_Production.DTOs;
 namespace Valisys_Production.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/almoxarifados")]
     public class AlmoxarifadoController : ControllerBase
     {
         private readonly IAlmoxarifadoService _service;

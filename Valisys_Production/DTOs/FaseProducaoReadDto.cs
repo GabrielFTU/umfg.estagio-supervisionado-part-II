@@ -1,4 +1,5 @@
 ﻿using System;
+using Valisys_Production.Models.Enums;
 
 namespace Valisys_Production.DTOs
 {
@@ -10,5 +11,6 @@ namespace Valisys_Production.DTOs
         public int Ordem { get; set; }
         public int TempoPadraoDias { get; set; }
         public bool Ativo { get; set; }
+        public TipoFase TipoFase { get; set; }
     }
 }

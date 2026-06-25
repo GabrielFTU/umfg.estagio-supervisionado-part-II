@@ -10,7 +10,7 @@ using Valisys_Production.DTOs;
 namespace Valisys_Production.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/tipos-ordem-producao")]
     public class TiposDeOrdemDeProducaoController : ControllerBase
     {
         private readonly ITipoOrdemDeProducaoService _service;

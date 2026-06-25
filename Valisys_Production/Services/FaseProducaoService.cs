@@ -21,7 +21,7 @@ namespace Valisys_Production.Services
             if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome da fase de produção é obrigatório.");
 
-            var fase = new FaseProducao(dto.Nome, dto.Ordem, dto.Descricao, dto.TempoPadraoDias);
+            var fase = new FaseProducao(dto.Nome, dto.Ordem, dto.Descricao, dto.TempoPadraoDias, dto.TipoFase);
             var created = await _repository.AddAsync(fase);
 
             await _logService.RegistrarAsync("Criação", "Fases de Produção",
@@ -46,7 +46,7 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(dto.Id)
                 ?? throw new KeyNotFoundException("Fase de Produção não encontrada.");
 
-            existing.Atualizar(dto.Nome, dto.Ordem, dto.Descricao, dto.TempoPadraoDias, dto.Ativo);
+            existing.Atualizar(dto.Nome, dto.Ordem, dto.Descricao, dto.TempoPadraoDias, dto.Ativo, dto.TipoFase);
             var updated = await _repository.UpdateAsync(existing);
 
             if (updated)

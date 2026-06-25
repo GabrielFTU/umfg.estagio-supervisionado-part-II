@@ -39,11 +39,14 @@ import { InventariosPage } from './pages/estoque/InventariosPage';
 import { InventarioFormPage } from './pages/estoque/InventarioFormPage';
 import { MovimentacoesPage } from './pages/estoque/MovimentacoesPage';
 import { MovimentacaoFormPage } from './pages/estoque/MovimentacaoFormPage';
+import { OrdensDeProducaoPage } from './pages/producao/OrdensDeProducaoPage';
+import { OrdemDeProducaoFormPage } from './pages/producao/OrdemDeProducaoFormPage';
 import { FichaTecnicasPage } from './pages/producao/FichaTecnicasPage';
 import { ProdutosSemFichaPage } from './pages/producao/ProdutosSemFichaPage';
 import { FichaTecnicaPainelPage } from './pages/producao/FichaTecnicaPainelPage';
 import { FichaConsumoPage } from './pages/producao/FichaConsumoPage';
 import { SequenciaOperacionalPage } from './pages/producao/SequenciaOperacionalPage';
+import { KanbanPage } from './pages/producao/KanbanPage';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -192,6 +195,11 @@ const App = () => (
       <Route path="/estoque/movimentacoes" element={<PrivateRoute><AppLayout><MovimentacoesPage /></AppLayout></PrivateRoute>} />
       <Route path="/estoque/movimentacoes/novo" element={<PrivateRoute><AppLayout><MovimentacaoFormPage /></AppLayout></PrivateRoute>} />
 
+      <Route path="/producao/ordens" element={<PrivateRoute><AppLayout><OrdensDeProducaoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/ordens/novo" element={<PrivateRoute><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/ordens/:id/editar" element={<PrivateRoute><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/ordens/:id" element={<PrivateRoute><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/kanban" element={<PrivateRoute><AppLayout><KanbanPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas" element={<PrivateRoute><AppLayout><FichaTecnicasPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas/novo" element={<PrivateRoute><AppLayout><ProdutosSemFichaPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas/:id" element={<PrivateRoute><AppLayout><FichaTecnicaPainelPage /></AppLayout></PrivateRoute>} />

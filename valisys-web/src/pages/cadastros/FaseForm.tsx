@@ -7,6 +7,25 @@ import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
+type TipoFase = 'Intermediaria' | 'Inicial' | 'Final' | 'Pausa' | 'Impedimento' | 'Conferencia';
+
+const TIPO_FASE_OPTIONS: { value: TipoFase; label: string }[] = [
+  { value: 'Inicial',       label: 'Fase Inicial' },
+  { value: 'Intermediaria', label: 'Fase Intermediária' },
+  { value: 'Final',         label: 'Fase Final' },
+  { value: 'Pausa',         label: 'Fase de Pausa' },
+  { value: 'Impedimento',   label: 'Fase de Impedimento' },
+  { value: 'Conferencia',   label: 'Fase de Conferência' },
+];
+
+const TIPO_FASE_ENUM: Record<number, TipoFase> = {
+  0: 'Intermediaria', 1: 'Inicial', 2: 'Final', 3: 'Pausa', 4: 'Impedimento', 5: 'Conferencia',
+};
+
+const TIPO_FASE_VALUE: Record<TipoFase, number> = {
+  Intermediaria: 0, Inicial: 1, Final: 2, Pausa: 3, Impedimento: 4, Conferencia: 5,
+};
+
 type FaseData = {
   id: string;
   nome: string;
@@ -14,6 +33,7 @@ type FaseData = {
   ordem: number;
   tempoPadraoDias: number;
   ativo: boolean;
+  tipoFase: number;
 };
 
 function Toggle({ checked, onChange, disabled }: {
@@ -66,6 +86,7 @@ export function FaseFormPage() {
   const [descricao, setDescricao] = useState('');
   const [ordem, setOrdem]         = useState<number | ''>(1);
   const [tempoDias, setTempoDias] = useState<number | ''>(0);
+  const [tipoFase, setTipoFase]   = useState<TipoFase>('Intermediaria');
   const [ativo, setAtivo]         = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -84,6 +105,7 @@ export function FaseFormPage() {
         setDescricao(data.descricao ?? '');
         setOrdem(data.ordem);
         setTempoDias(data.tempoPadraoDias ?? 0);
+        setTipoFase(TIPO_FASE_ENUM[data.tipoFase] ?? 'Intermediaria');
         setAtivo(data.ativo);
       } catch {
         setError('Não foi possível carregar a fase de produção.');
@@ -122,6 +144,7 @@ export function FaseFormPage() {
               descricao: descricao.trim() || undefined,
               ordem: Number(ordem),
               tempoPadraoDias: Number(tempoDias) || 0,
+              tipoFase: TIPO_FASE_VALUE[tipoFase],
             }),
           })
         : await fetch(`/api/fases-producao/${id}`, {
@@ -133,6 +156,7 @@ export function FaseFormPage() {
               descricao: descricao.trim() || undefined,
               ordem: Number(ordem),
               tempoPadraoDias: Number(tempoDias) || 0,
+              tipoFase: TIPO_FASE_VALUE[tipoFase],
               ativo,
             }),
           });
@@ -258,6 +282,28 @@ export function FaseFormPage() {
                 <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.tempoDias}</p>
               )}
             </div>
+          </div>
+
+          {/* Tipo de Fase */}
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">
+              Tipo de Fase {!readonly && <span className="text-red-400">*</span>}
+            </label>
+            {readonly ? (
+              <p className="text-sm text-gray-700 py-1">
+                {TIPO_FASE_OPTIONS.find(o => o.value === tipoFase)?.label ?? tipoFase}
+              </p>
+            ) : (
+              <select
+                value={tipoFase}
+                onChange={e => setTipoFase(e.target.value as TipoFase)}
+                className="w-full h-9 bg-transparent text-sm border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors text-gray-700"
+              >
+                {TIPO_FASE_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Descrição */}

@@ -22,5 +22,6 @@ namespace Valisys_Production.DTOs
         public Guid AlmoxarifadoId { get; set; }
 
         public Guid? LoteId { get; set; }
+        public Guid? ProdutoVariacaoId { get; set; }
     }
 }

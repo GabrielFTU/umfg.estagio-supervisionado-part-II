@@ -51,9 +51,16 @@ namespace Valisys_Production.Services
             if (produto == null) throw new KeyNotFoundException("Produto não encontrado.");
             if (produto.ControlarPorLote && dto.LoteId == null) throw new ArgumentException("Produto exige lote.");
 
+            if (dto.ProdutoVariacaoId.HasValue)
+            {
+                var variacao = await _context.Set<ProdutoVariacao>().FindAsync(dto.ProdutoVariacaoId.Value);
+                if (variacao == null || variacao.ProdutoId != dto.ProdutoId)
+                    throw new ArgumentException("Variação não pertence ao produto selecionado.");
+            }
+
             var faseAtualId = dto.FaseAtualId ?? Guid.Empty;
             var ordem = new OrdemDeProducao(dto.Quantidade, dto.ProdutoId, dto.AlmoxarifadoId,
-                faseAtualId, dto.TipoOrdemDeProducaoId, dto.LoteId, dto.Observacoes);
+                faseAtualId, dto.TipoOrdemDeProducaoId, dto.LoteId, dto.Observacoes, dto.ProdutoVariacaoId);
 
             var anoAtual = DateTime.UtcNow.Year;
             var sequencial = await _repository.ObterProximoSequencialAsync(anoAtual);
@@ -61,7 +68,7 @@ namespace Valisys_Production.Services
 
             var almoxarifadoMP = await GetAlmoxarifadoPrincipalAsync();
             await ValidarLoteUnicoAsync(dto.LoteId);
-            await ConfigurarRoteiroInicialAsync(ordem);
+            await ConfigurarRoteiroInicialAsync(ordem, dto.RoteiroProducaoId);
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -182,15 +189,19 @@ namespace Valisys_Production.Services
             }
         }
 
-        public async Task TrocarFaseAsync(Guid ordemId, Guid novaFaseId)
+        public async Task TrocarFaseAsync(Guid ordemId, Guid novaFaseId, string? justificativa = null)
         {
             var ordem = await _repository.GetByIdAsync(ordemId);
             if (ordem == null) throw new KeyNotFoundException("Ordem não encontrada.");
 
             ordem.AvancarFase(novaFaseId);
             await _repository.UpdateAsync(ordem);
-            await _logService.RegistrarAsync("Movimentação Manual", "Produção",
-                $"Moveu OP {ordem.CodigoOrdem} manualmente no Kanban");
+
+            var detalhe = string.IsNullOrWhiteSpace(justificativa)
+                ? $"Moveu OP {ordem.CodigoOrdem} manualmente no Kanban"
+                : $"Moveu OP {ordem.CodigoOrdem} manualmente no Kanban. Justificativa: {justificativa}";
+
+            await _logService.RegistrarAsync("Movimentação Manual", "Produção", detalhe);
         }
 
         public async Task<bool> UpdateAsync(OrdemDeProducaoUpdateDto dto)
@@ -200,7 +211,7 @@ namespace Valisys_Production.Services
 
             await ValidarLoteUnicoAsync(dto.LoteId, dto.Id);
 
-            existing.Atualizar(dto.Quantidade, dto.Observacoes, dto.AlmoxarifadoId, dto.Status, dto.LoteId);
+            existing.Atualizar(dto.Quantidade, dto.Observacoes, dto.AlmoxarifadoId, dto.Status, dto.LoteId, dto.ProdutoVariacaoId);
 
             var updated = await _repository.UpdateAsync(existing);
             if (updated)
@@ -252,10 +263,21 @@ namespace Valisys_Production.Services
             if (emUso) throw new InvalidOperationException("Lote já está em uso em outra OP.");
         }
 
-        private async Task ConfigurarRoteiroInicialAsync(OrdemDeProducao ordem)
+        private async Task ConfigurarRoteiroInicialAsync(OrdemDeProducao ordem, Guid? roteiroId = null)
         {
-            var roteiros = await _roteiroRepository.GetAllAsync();
-            var roteiro = roteiros.FirstOrDefault(r => r.ProdutoId == ordem.ProdutoId && r.Ativo);
+            RoteiroProducao? roteiro = null;
+
+            if (roteiroId.HasValue)
+            {
+                roteiro = await _roteiroRepository.GetByIdAsync(roteiroId.Value);
+                if (roteiro == null || roteiro.ProdutoId != ordem.ProdutoId)
+                    throw new ArgumentException("Roteiro não pertence ao produto selecionado.");
+            }
+            else
+            {
+                var roteiros = await _roteiroRepository.GetAllAsync();
+                roteiro = roteiros.FirstOrDefault(r => r.ProdutoId == ordem.ProdutoId && r.Ativo);
+            }
 
             if (roteiro != null && roteiro.Etapas.Any())
             {

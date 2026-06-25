@@ -76,7 +76,7 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Engenharia',
     href: '/engenharia',
     children: [
-      { label: 'Engenharia', href: '/engenharia' },
+      { label: 'Ficha Técnica',      href: '/producao/fichas-tecnicas' }
     ],
   },
   {
@@ -105,10 +105,9 @@ const NAV_ITEMS: NavItemDef[] = [
     href: '/producao',
     children: [
       { label: 'Apontamentos',       href: '/apontamentos' },
-      { label: 'Ficha Técnica',      href: '/producao/fichas-tecnicas' },
-      { label: 'Kanban',             href: '/kanban' },
+      { label: 'Kanban',             href: '/producao/kanban' },
       { label: 'Lotes',              href: '/lotes' },
-      { label: 'Ordens de Produção', href: '/ordensProducao' },
+      { label: 'Ordens de Produção', href: '/producao/ordens' },
       { label: 'Produção',           href: '/producao' },
       { label: 'Roteiros de Produção', href: '/roteirosProducao' },
     ],

@@ -16,6 +16,8 @@ namespace Valisys_Production.DTOs
         public Guid? FaseAtualId { get; set; }
         [Required(ErrorMessage = "O tipo de ordem é obrigatório.")]
         public Guid TipoOrdemDeProducaoId { get; set; }
+        public Guid? RoteiroProducaoId { get; set; }
         public Guid? LoteId { get; set; }
+        public Guid? ProdutoVariacaoId { get; set; }
     }
 }

@@ -22,6 +22,12 @@ namespace Valisys_Production.DTOs
         public Guid? LoteId { get; set; }
         public string? LoteNumero { get; set; }
 
+        public Guid? ProdutoVariacaoId { get; set; }
+        public string? ProdutoVariacaoNome { get; set; }
+
+        public Guid TipoOrdemDeProducaoId { get; set; }
+        public string? TipoOrdemDeProducaoNome { get; set; }
+
         public Guid? RoteiroProducaoId { get; set; }
         public string? RoteiroCodigo { get; set; }
     }

@@ -24,6 +24,9 @@ namespace Valisys_Production.Models
         public Guid? LoteId { get; private set; }
         public Lote? Lote { get; private set; }
 
+        public Guid? ProdutoVariacaoId { get; private set; }
+        public ProdutoVariacao? ProdutoVariacao { get; private set; }
+
         public Guid? RoteiroProducaoId { get; private set; }
         public RoteiroProducao? RoteiroProducao { get; private set; }
 
@@ -37,7 +40,7 @@ namespace Valisys_Production.Models
 
         public OrdemDeProducao(int quantidade, Guid produtoId, Guid almoxarifadoId,
             Guid faseAtualId, Guid tipoOrdemDeProducaoId,
-            Guid? loteId = null, string? observacoes = null)
+            Guid? loteId = null, string? observacoes = null, Guid? produtoVariacaoId = null)
         {
             Quantidade = quantidade;
             ProdutoId = produtoId;
@@ -46,6 +49,7 @@ namespace Valisys_Production.Models
             TipoOrdemDeProducaoId = tipoOrdemDeProducaoId;
             LoteId = loteId;
             Observacoes = observacoes;
+            ProdutoVariacaoId = produtoVariacaoId;
             Status = StatusOrdemDeProducao.Ativa;
             DataInicio = DateTime.UtcNow;
         }
@@ -75,13 +79,14 @@ namespace Valisys_Production.Models
         }
 
         public void Atualizar(int quantidade, string? observacoes, Guid almoxarifadoId,
-            StatusOrdemDeProducao status, Guid? loteId)
+            StatusOrdemDeProducao status, Guid? loteId, Guid? produtoVariacaoId = null)
         {
             Quantidade = quantidade;
             Observacoes = observacoes;
             AlmoxarifadoId = almoxarifadoId;
             Status = status;
             if (loteId.HasValue) LoteId = loteId;
+            ProdutoVariacaoId = produtoVariacaoId;
             RegistrarAtualizacao();
         }
     }

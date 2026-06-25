@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Valisys_Production.Models.Enums;
 
 namespace Valisys_Production.DTOs
 {
@@ -22,5 +23,7 @@ namespace Valisys_Production.DTOs
         public int TempoPadraoDias { get; set; }
 
         public bool Ativo { get; set; }
+
+        public TipoFase TipoFase { get; set; } = TipoFase.Intermediaria;
     }
 }

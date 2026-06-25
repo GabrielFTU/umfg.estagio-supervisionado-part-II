@@ -116,11 +116,11 @@ namespace Valisys_Production.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> TrocarFase(Guid id, Guid faseId)
+        public async Task<IActionResult> TrocarFase(Guid id, Guid faseId, [FromBody] TrocarFaseDto? dto = null)
         {
             try
             {
-                await _service.TrocarFaseAsync(id, faseId);
+                await _service.TrocarFaseAsync(id, faseId, dto?.Justificativa);
                 return NoContent();
             }
             catch (KeyNotFoundException ex) { return NotFoundProblem(ex.Message); }

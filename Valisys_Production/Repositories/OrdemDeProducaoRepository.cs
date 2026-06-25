@@ -14,6 +14,7 @@ namespace Valisys_Production.Repositories
             => await _dbSet.AsNoTracking()
                 .Include(o => o.Lote)
                 .Include(o => o.Produto).ThenInclude(p => p.UnidadeMedida)
+                .Include(o => o.ProdutoVariacao)
                 .Include(o => o.Almoxarifado)
                 .Include(o => o.FaseAtual)
                 .Include(o => o.TipoOrdemDeProducao)
@@ -49,6 +50,8 @@ namespace Valisys_Production.Repositories
 
         public async Task<IEnumerable<OrdemDeProducaoReadDto>> GetAllReadDtosAsync()
             => await _dbSet.AsNoTracking()
+                .Include(o => o.ProdutoVariacao)
+                .Include(o => o.TipoOrdemDeProducao)
                 .OrderByDescending(o => o.DataInicio)
                 .Take(80)
                 .Select(o => new OrdemDeProducaoReadDto
@@ -68,6 +71,10 @@ namespace Valisys_Production.Repositories
                     FaseAtualNome = o.FaseAtual.Nome,
                     LoteId = o.LoteId,
                     LoteNumero = o.Lote != null ? o.Lote.CodigoLote : null,
+                    ProdutoVariacaoId = o.ProdutoVariacaoId,
+                    ProdutoVariacaoNome = o.ProdutoVariacao != null ? o.ProdutoVariacao.Nome : null,
+                    TipoOrdemDeProducaoId = o.TipoOrdemDeProducaoId,
+                    TipoOrdemDeProducaoNome = o.TipoOrdemDeProducao != null ? o.TipoOrdemDeProducao.Nome : null,
                     RoteiroProducaoId = o.RoteiroProducaoId,
                     RoteiroCodigo = o.RoteiroProducao != null ? o.RoteiroProducao.Codigo : null
                 })

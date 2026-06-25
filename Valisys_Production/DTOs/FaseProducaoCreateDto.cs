@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Valisys_Production.Models.Enums;
 
 namespace Valisys_Production.DTOs
 {
@@ -17,5 +18,6 @@ namespace Valisys_Production.DTOs
         [Range(0, 365, ErrorMessage = "O tempo em dias deve ser entre 0 e 365.")]
         public int TempoPadraoDias { get; set; }
 
+        public TipoFase TipoFase { get; set; } = TipoFase.Intermediaria;
     }
 }
