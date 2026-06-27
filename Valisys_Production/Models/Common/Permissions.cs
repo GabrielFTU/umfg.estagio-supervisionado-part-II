@@ -50,6 +50,7 @@
             public const string Cancelar = "OrdensProducao.Cancelar";
             public const string Finalizar = "OrdensProducao.Finalizar";
             public const string AvancarFase = "OrdensProducao.AvancarFase";
+            public const string Estornar = "OrdensProducao.Estornar";
         }
 
         public static class Solicitacoes
@@ -204,7 +205,7 @@
             Almoxarifados.Visualizar, Almoxarifados.Criar, Almoxarifados.Editar, Almoxarifados.Inativar,
             Lotes.Visualizar, Lotes.Criar, Lotes.Editar, Lotes.Cancelar,
             OrdensProducao.Visualizar, OrdensProducao.Criar, OrdensProducao.Editar,
-            OrdensProducao.Cancelar, OrdensProducao.Finalizar, OrdensProducao.AvancarFase,
+            OrdensProducao.Cancelar, OrdensProducao.Finalizar, OrdensProducao.AvancarFase, OrdensProducao.Estornar,
             Solicitacoes.Visualizar, Solicitacoes.Criar, Solicitacoes.Aprovar, Solicitacoes.Cancelar,
             Movimentacoes.Visualizar, Movimentacoes.Criar, Movimentacoes.Editar, Movimentacoes.Excluir,
             FichasTecnicas.Visualizar, FichasTecnicas.Criar, FichasTecnicas.Editar, FichasTecnicas.Inativar,

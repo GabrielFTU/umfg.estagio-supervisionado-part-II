@@ -144,6 +144,24 @@ namespace Valisys_Production.Controllers
             catch (InvalidOperationException ex) { return Problem(ex.Message); }
         }
 
+        [HttpPost("{id:guid}/estornar")]
+        [HasPermission(Permissions.OrdensProducao.Estornar)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Estornar(Guid id)
+        {
+            try
+            {
+                var usuarioId = GetAuthenticatedUserId();
+                await _service.EstornarOrdemAsync(id, usuarioId);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex) { return NotFoundProblem(ex.Message); }
+            catch (InvalidOperationException ex) { return ConflictProblem(ex.Message); }
+        }
+
         [HttpDelete("{id:guid}")]
         [HasPermission(Permissions.OrdensProducao.Cancelar)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]

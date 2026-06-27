@@ -14,6 +14,7 @@ namespace Valisys_Production.Services.Interfaces
         Task<bool> DeleteAsync(Guid id);
         Task<bool> MovimentarProximaFaseAsync(Guid ordemId, Guid usuarioId);
         Task FinalizarOrdemAsync(Guid ordemId, Guid usuarioId);
+        Task EstornarOrdemAsync(Guid ordemId, Guid usuarioId);
         Task TrocarFaseAsync(Guid ordemId, Guid novaFaseId, string? justificativa = null);
     }
 }

@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Home, ChevronRight, Loader2, RefreshCw, AlertTriangle, Clock, Package,
-  GripVertical, X, AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/contexts/ToastContext';
 import { fetchWithAuth } from '@/services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,12 +42,12 @@ const TIPO_FASE_LABEL: Record<TipoFase, string> = {
 };
 
 const TIPO_FASE_COLORS: Record<TipoFase, { header: string; badge: string }> = {
-  Inicial:      { header: 'bg-blue-600',   badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-  Intermediaria:{ header: 'bg-gray-600',   badge: 'bg-gray-50 text-gray-700 border-gray-200' },
-  Final:        { header: 'bg-emerald-600',badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  Pausa:        { header: 'bg-amber-500',  badge: 'bg-amber-50 text-amber-700 border-amber-200' },
-  Impedimento:  { header: 'bg-red-600',    badge: 'bg-red-50 text-red-700 border-red-200' },
-  Conferencia:  { header: 'bg-purple-600', badge: 'bg-purple-50 text-purple-700 border-purple-200' },
+  Inicial:      { header: 'bg-blue-600',    badge: 'bg-blue-50 text-blue-700 border-blue-200' },
+  Intermediaria:{ header: 'bg-gray-600',    badge: 'bg-gray-50 text-gray-700 border-gray-200' },
+  Final:        { header: 'bg-emerald-600', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  Pausa:        { header: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 border-amber-200' },
+  Impedimento:  { header: 'bg-red-600',     badge: 'bg-red-50 text-red-700 border-red-200' },
+  Conferencia:  { header: 'bg-purple-600',  badge: 'bg-purple-50 text-purple-700 border-purple-200' },
 };
 
 const TIPO_FASE_ENUM: Record<number, TipoFase> = {
@@ -77,104 +75,27 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR');
 }
 
-// ─── Justification Modal ──────────────────────────────────────────────────────
-
-interface JustificativaModalProps {
-  faseNome: string;
-  onConfirm: (justificativa: string) => void;
-  onCancel: () => void;
-}
-
-function JustificativaModal({ faseNome, onConfirm, onCancel }: JustificativaModalProps) {
-  const [texto, setTexto] = useState('');
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => { inputRef.current?.focus(); }, []);
-
-  const handleConfirm = () => {
-    const v = texto.trim();
-    if (!v) { inputRef.current?.focus(); return; }
-    onConfirm(v);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2 text-amber-600">
-            <AlertCircle size={18} />
-            <span className="font-semibold text-sm text-gray-800">Justificativa obrigatória</span>
-          </div>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={16} />
-          </button>
-        </div>
-        <div className="px-5 py-4">
-          <p className="text-sm text-gray-600 mb-3">
-            A fase <strong>{faseNome}</strong> exige uma justificativa para mover a ordem.
-          </p>
-          <textarea
-            ref={inputRef}
-            value={texto}
-            onChange={e => setTexto(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) handleConfirm(); }}
-            placeholder="Descreva o motivo…"
-            rows={3}
-            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 resize-none placeholder:text-gray-400"
-          />
-          <p className="text-[11px] text-gray-400 mt-1">Ctrl+Enter para confirmar</p>
-        </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50">
-          <button
-            onClick={onCancel}
-            className="h-8 px-4 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!texto.trim()}
-            className="h-8 px-5 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Confirmar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Kanban Card ──────────────────────────────────────────────────────────────
 
 interface CardProps {
   ordem: OrdemKanban;
   fase: Fase;
-  onDragStart: (ordemId: string) => void;
 }
 
-function KanbanCard({ ordem, fase, onDragStart }: CardProps) {
+function KanbanCard({ ordem, fase }: CardProps) {
   const overdue = isOverdue(ordem, fase);
   const dias = diasNaFase(ordem.dataInicio);
 
   return (
     <div
-      draggable
-      onDragStart={e => {
-        e.dataTransfer.effectAllowed = 'move';
-        onDragStart(ordem.id);
-      }}
       className={cn(
-        'group bg-white border rounded-xl p-3 shadow-sm cursor-grab active:cursor-grabbing',
-        'hover:shadow-md transition-all select-none',
+        'bg-white border rounded-xl p-3 shadow-sm select-none',
         overdue ? 'border-red-300' : 'border-gray-200',
       )}
     >
       {/* Header row */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <GripVertical size={13} className="text-gray-300 shrink-0 group-hover:text-gray-400" />
-          <span className="text-xs font-bold text-gray-700 truncate">{ordem.codigoOrdem}</span>
-        </div>
+        <span className="text-xs font-bold text-gray-700 truncate">{ordem.codigoOrdem}</span>
         {overdue && (
           <span className="flex items-center gap-0.5 text-[10px] font-semibold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full shrink-0">
             <AlertTriangle size={9} /> Atrasado
@@ -223,14 +144,9 @@ function KanbanCard({ ordem, fase, onDragStart }: CardProps) {
 interface ColumnProps {
   fase: Fase;
   ordens: OrdemKanban[];
-  isDragOver: boolean;
-  onDragOver: (e: React.DragEvent, faseId: string) => void;
-  onDragLeave: () => void;
-  onDrop: (e: React.DragEvent, faseId: string) => void;
-  onDragStart: (ordemId: string) => void;
 }
 
-function KanbanColumn({ fase, ordens, isDragOver, onDragOver, onDragLeave, onDrop, onDragStart }: ColumnProps) {
+function KanbanColumn({ fase, ordens }: ColumnProps) {
   const tipo = fase.tipoFase;
   const colors = TIPO_FASE_COLORS[tipo];
   const overdueCount = ordens.filter(o => isOverdue(o, fase)).length;
@@ -257,36 +173,16 @@ function KanbanColumn({ fase, ordens, isDragOver, onDragOver, onDragLeave, onDro
         </div>
       </div>
 
-      {/* Drop zone */}
-      <div
-        onDragOver={e => onDragOver(e, fase.id)}
-        onDragLeave={onDragLeave}
-        onDrop={e => onDrop(e, fase.id)}
-        className={cn(
-          'flex-1 overflow-y-auto rounded-b-xl border-2 border-t-0 p-2 space-y-2 transition-colors',
-          isDragOver
-            ? 'border-blue-400 bg-blue-50/60'
-            : 'border-gray-200 bg-gray-50',
-        )}
-      >
-        {ordens.length === 0 && !isDragOver && (
+      {/* Cards */}
+      <div className="flex-1 overflow-y-auto rounded-b-xl border-2 border-t-0 border-gray-200 bg-gray-50 p-2 space-y-2">
+        {ordens.length === 0 && (
           <div className="flex items-center justify-center h-16 text-xs text-gray-400">
             Sem ordens
           </div>
         )}
-        {isDragOver && ordens.length === 0 && (
-          <div className="flex items-center justify-center h-16 rounded-lg border-2 border-dashed border-blue-400 text-xs text-blue-500">
-            Soltar aqui
-          </div>
-        )}
         {ordens.map(ordem => (
-          <KanbanCard key={ordem.id} ordem={ordem} fase={fase} onDragStart={onDragStart} />
+          <KanbanCard key={ordem.id} ordem={ordem} fase={fase} />
         ))}
-        {isDragOver && ordens.length > 0 && (
-          <div className="h-10 rounded-lg border-2 border-dashed border-blue-400 flex items-center justify-center text-xs text-blue-500">
-            Soltar aqui
-          </div>
-        )}
       </div>
     </div>
   );
@@ -295,21 +191,10 @@ function KanbanColumn({ fase, ordens, isDragOver, onDragOver, onDragLeave, onDro
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function KanbanPage() {
-  const { showToast } = useToast();
-
-  const [fases, setFases]   = useState<Fase[]>([]);
-  const [ordens, setOrdens] = useState<OrdemKanban[]>([]);
+  const [fases, setFases]     = useState<Fase[]>([]);
+  const [ordens, setOrdens]   = useState<OrdemKanban[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState('');
-
-  const [draggingId, setDraggingId]   = useState<string | null>(null);
-  const [dragOverId, setDragOverId]   = useState<string | null>(null);
-
-  const [pendingMove, setPendingMove] = useState<{
-    ordemId: string;
-    novaFaseId: string;
-    faseNome: string;
-  } | null>(null);
+  const [error, setError]     = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -337,8 +222,10 @@ export function KanbanPage() {
           ativo: f.ativo,
         }));
 
+      const STATUS_EXCLUIDOS = new Set(['3', '4', '5', 'Finalizada', 'Cancelada', 'Estornada']);
+
       const ordensKanban: OrdemKanban[] = ordensData
-        .filter((o: any) => o.status !== 'Finalizada' && o.status !== 'Cancelada')
+        .filter((o: any) => !STATUS_EXCLUIDOS.has(String(o.status)))
         .map((o: any) => ({
           id: o.id,
           codigoOrdem: o.codigoOrdem,
@@ -362,57 +249,9 @@ export function KanbanPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const moverOrdem = async (ordemId: string, novaFaseId: string, justificativa?: string) => {
-    setOrdens(prev => prev.map(o => o.id === ordemId ? { ...o, faseAtualId: novaFaseId } : o));
-
-    try {
-      const res = await fetchWithAuth(`/api/ordens-producao/${ordemId}/fase/${novaFaseId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ justificativa: justificativa ?? null }),
-      });
-      if (!res.ok) throw new Error('Erro ao atualizar fase.');
-      showToast();
-    } catch {
-      load();
-    }
-  };
-
-  const handleDragStart = (ordemId: string) => setDraggingId(ordemId);
-
-  const handleDragOver = (e: React.DragEvent, faseId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverId(faseId);
-  };
-
-  const handleDragLeave = () => setDragOverId(null);
-
-  const handleDrop = (e: React.DragEvent, novaFaseId: string) => {
-    e.preventDefault();
-    setDragOverId(null);
-
-    if (!draggingId || !novaFaseId) { setDraggingId(null); return; }
-
-    const ordem = ordens.find(o => o.id === draggingId);
-    if (!ordem || ordem.faseAtualId === novaFaseId) { setDraggingId(null); return; }
-
-    const novaFase = fases.find(f => f.id === novaFaseId);
-    setDraggingId(null);
-
-    if (novaFase && (novaFase.tipoFase === 'Pausa' || novaFase.tipoFase === 'Impedimento')) {
-      setPendingMove({ ordemId: draggingId || ordem.id, novaFaseId, faseNome: novaFase.nome });
-      return;
-    }
-
-    moverOrdem(ordem.id, novaFaseId);
-  };
-
-  const handleDragEnd = () => { setDraggingId(null); setDragOverId(null); };
-
   const ordensParaFase = (faseId: string) => ordens.filter(o => o.faseAtualId === faseId);
 
-  const totalOrdens   = ordens.length;
+  const totalOrdens    = ordens.length;
   const totalAtrasadas = ordens.filter(o => {
     const fase = fases.find(f => f.id === o.faseAtualId);
     return fase ? isOverdue(o, fase) : false;
@@ -437,7 +276,7 @@ export function KanbanPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white" onDragEnd={handleDragEnd}>
+    <div className="flex flex-col h-full bg-white">
 
       {/* Breadcrumb */}
       <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200">
@@ -487,27 +326,10 @@ export function KanbanPage() {
                 key={fase.id}
                 fase={fase}
                 ordens={ordensParaFase(fase.id)}
-                isDragOver={dragOverId === fase.id}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onDragStart={handleDragStart}
               />
             ))}
           </div>
         </div>
-      )}
-
-      {/* Justification modal */}
-      {pendingMove && (
-        <JustificativaModal
-          faseNome={pendingMove.faseNome}
-          onConfirm={justificativa => {
-            moverOrdem(pendingMove.ordemId, pendingMove.novaFaseId, justificativa);
-            setPendingMove(null);
-          }}
-          onCancel={() => setPendingMove(null)}
-        />
       )}
     </div>
   );

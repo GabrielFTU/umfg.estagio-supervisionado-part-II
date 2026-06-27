@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, Search, SlidersHorizontal, Factory,
   Loader2, MoreHorizontal, Play, Printer, Eye, Pencil, XCircle,
-  AlertTriangle, ShoppingBag, X, AlertCircle, ArrowRight,
+  AlertTriangle, ShoppingBag, X, AlertCircle, ArrowRight, RotateCcw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
@@ -41,10 +41,12 @@ const STATUS_LABEL: Record<string, string> = {
   Aguardando: 'Aguardando',
   Finalizada: 'Finalizada',
   Cancelada: 'Cancelada',
+  Estornada: 'Estornada',
   '1': 'Em Produção',
   '2': 'Aguardando',
   '3': 'Finalizada',
   '4': 'Cancelada',
+  '5': 'Estornada',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -52,13 +54,15 @@ const STATUS_COLORS: Record<string, string> = {
   Aguardando: 'bg-amber-50 text-amber-700 border border-amber-200',
   Finalizada: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
   Cancelada: 'bg-gray-100 text-gray-500 border border-gray-200',
+  Estornada: 'bg-orange-50 text-orange-600 border border-orange-200',
   '1': 'bg-blue-50 text-blue-700 border border-blue-200',
   '2': 'bg-amber-50 text-amber-700 border border-amber-200',
   '3': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
   '4': 'bg-gray-100 text-gray-500 border border-gray-200',
+  '5': 'bg-orange-50 text-orange-600 border border-orange-200',
 };
 
-const STATUS_KEYS = ['Ativa', 'Aguardando', 'Finalizada', 'Cancelada'];
+const STATUS_KEYS = ['Ativa', 'Aguardando', 'Finalizada', 'Cancelada', 'Estornada'];
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR');
@@ -107,10 +111,11 @@ function PedidoIndicator({ pedidoId, pedidoCodigo, clienteNome }: {
 
 // ─── Row Menu ────────────────────────────────────────────────────────────────
 
-function RowMenu({ ordem, onView, onEdit, onIniciar, onAvancar, onCancelar, onImprimir }: {
+function RowMenu({ ordem, onView, onEdit, onIniciar, onAvancar, onCancelar, onImprimir, onEstornar }: {
   ordem: OrdemItem;
   onView: () => void; onEdit: () => void;
   onIniciar: () => void; onAvancar: () => void; onCancelar: () => void; onImprimir: () => void;
+  onEstornar: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
@@ -118,10 +123,12 @@ function RowMenu({ ordem, onView, onEdit, onIniciar, onAvancar, onCancelar, onIm
   const menuRef = useRef<HTMLDivElement>(null);
 
   const s = statusStr(ordem.status);
-  const podeIniciar  = s === 'Aguardando' || s === '2';
-  const podeAvancar  = s === 'Ativa' || s === '1';
-  const podeEditar   = s !== 'Finalizada' && s !== 'Cancelada' && s !== '3' && s !== '4';
-  const podeCancelar = s !== 'Finalizada' && s !== 'Cancelada' && s !== '3' && s !== '4';
+  const semRoteiro    = !ordem.roteiroProducaoId;
+  const podeIniciar   = s === 'Aguardando' || s === '2';
+  const podeAvancar   = s === 'Ativa' || s === '1';
+  const podeEditar    = s !== 'Finalizada' && s !== 'Cancelada' && s !== 'Estornada' && s !== '3' && s !== '4' && s !== '5';
+  const podeCancelar  = s === 'Ativa' || s === '1';
+  const podeEstornar  = s === 'Finalizada' || s === '3';
 
   const handleToggle = () => {
     if (!open && btnRef.current) {
@@ -188,7 +195,7 @@ function RowMenu({ ordem, onView, onEdit, onIniciar, onAvancar, onCancelar, onIm
               <div className="my-0.5 mx-2 border-t border-gray-100" />
               <button onClick={() => { setOpen(false); onAvancar(); }}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 transition-colors">
-                <ArrowRight size={13} /> Avançar Fase
+                <ArrowRight size={13} /> {semRoteiro ? 'Concluir Produção' : 'Avançar Fase'}
               </button>
             </>
           )}
@@ -203,6 +210,15 @@ function RowMenu({ ordem, onView, onEdit, onIniciar, onAvancar, onCancelar, onIm
               <button onClick={() => { setOpen(false); onCancelar(); }}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 text-red-500 hover:bg-red-50 transition-colors">
                 <XCircle size={13} /> Cancelar Ordem
+              </button>
+            </>
+          )}
+          {podeEstornar && (
+            <>
+              <div className="my-0.5 mx-2 border-t border-gray-100" />
+              <button onClick={() => { setOpen(false); onEstornar(); }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-orange-500 hover:bg-orange-50 transition-colors">
+                <RotateCcw size={13} /> Estornar Produção
               </button>
             </>
           )}
@@ -293,95 +309,374 @@ function CancelModal({ ordem, loading, onConfirm, onCancel }: {
   );
 }
 
+// ─── Estornar Modal ───────────────────────────────────────────────────────────
+
+function EstornarModal({ ordem, loading, onConfirm, onCancel }: {
+  ordem: OrdemItem; loading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [onCancel]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
+      <div className="bg-white rounded-2xl shadow-xl shadow-black/10 w-full max-w-sm mx-4 overflow-hidden border border-gray-100">
+        <div className="flex items-start justify-between px-5 pt-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+              <RotateCcw size={17} className="text-orange-500" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-800 leading-snug">Estornar Produção</p>
+              <p className="mt-1 text-xs text-gray-500">{ordem.codigoOrdem} — {ordem.produtoNome}</p>
+            </div>
+          </div>
+          <button onClick={onCancel} className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors ml-2">
+            <X size={14} />
+          </button>
+        </div>
+        <div className="px-5 pb-4 space-y-2">
+          <p className="text-xs text-gray-600 font-medium">Esta ação irá:</p>
+          <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
+            <li>Reverter o consumo das matérias-primas ao estoque</li>
+            <li>Remover o produto acabado gerado pela produção</li>
+            <li>Registrar a movimentação de estorno</li>
+            <li>Alterar o status da O.P. para <span className="text-orange-600 font-medium">Estornada</span></li>
+          </ul>
+          <p className="text-xs text-red-500 font-medium pt-1">Esta ação não pode ser desfeita.</p>
+        </div>
+        <div className="flex gap-2 px-5 pb-5">
+          <button onClick={onCancel} disabled={loading}
+            className="flex-1 h-9 rounded-lg border border-gray-200 text-sm text-gray-600 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
+            Voltar
+          </button>
+          <button onClick={onConfirm} disabled={loading}
+            className="flex-1 h-9 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+            {loading && <Loader2 size={13} className="animate-spin" />}
+            Confirmar Estorno
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Print Modal ─────────────────────────────────────────────────────────────
 
-function PrintModal({ ordem, onClose }: { ordem: OrdemItem; onClose: () => void }) {
+function getCurrentUser(): { nome: string; email: string } | null {
+  try {
+    const raw = localStorage.getItem('user');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+
+function PrintModal({
+  ordem, filters, search, onClose,
+}: {
+  ordem: OrdemItem;
+  filters: FilterState;
+  search: string;
+  onClose: () => void;
+}) {
+  const user = getCurrentUser();
+  const emissao = new Date();
+  const statusLabel = STATUS_LABEL[statusStr(ordem.status)] ?? statusStr(ordem.status);
+
+  const filtrosDesc: string[] = [];
+  if (search) filtrosDesc.push(`Busca: "${search}"`);
+  if (filters.status.length) filtrosDesc.push(`Status: ${filters.status.map(s => STATUS_LABEL[s] ?? s).join(', ')}`);
+  if (filters.fase) filtrosDesc.push(`Fase: ${filters.fase}`);
+  if (filters.dateFrom) filtrosDesc.push(`De: ${new Date(filters.dateFrom + 'T00:00').toLocaleDateString('pt-BR')}`);
+  if (filters.dateTo) filtrosDesc.push(`Até: ${new Date(filters.dateTo + 'T00:00').toLocaleDateString('pt-BR')}`);
+
+  const docRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
   }, [onClose]);
 
+  const handlePrint = () => {
+    if (!docRef.current) return;
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <base href="${window.location.origin}/">
+  <title>Ordem de Produção ${ordem.codigoOrdem}</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: white; font-family: Arial, Helvetica, sans-serif; color: #111; }
+    table { border-collapse: collapse; }
+    img { display: block; }
+    @page { size: A4 portrait; margin: 1.2cm 1.5cm; }
+  </style>
+</head>
+<body>${docRef.current.innerHTML}</body>
+</html>`);
+    win.document.close();
+    win.onload = () => { win.print(); win.close(); };
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden border border-gray-100">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <>
+
+      {/* ── Fullscreen print-preview overlay ── */}
+      <div className="fixed inset-0 z-50 flex flex-col bg-black/60 backdrop-blur-[2px]">
+
+        {/* Toolbar */}
+        <div className="shrink-0 bg-white border-b border-gray-200 px-5 py-3 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2 text-gray-600">
+            <Printer size={15} />
+            <span className="font-semibold text-sm text-gray-800">Pré-visualização — Ordem de Produção</span>
+            <span className="ml-1 font-mono text-xs text-gray-400">{ordem.codigoOrdem}</span>
+          </div>
           <div className="flex items-center gap-2">
-            <Printer size={16} className="text-gray-500" />
-            <span className="font-semibold text-sm text-gray-800">Imprimir Ordem de Produção</span>
-          </div>
-          <button onClick={onClose} className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
-            <X size={14} />
-          </button>
-        </div>
-        <div className="px-5 py-4 space-y-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-gray-800">{ordem.codigoOrdem}</span>
-            <StatusBadge status={ordem.status} />
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <p className="text-gray-400 mb-0.5">Produto</p>
-              <p className="font-medium text-gray-700">{ordem.produtoNome}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 mb-0.5">Qtd. Planejada</p>
-              <p className="font-medium text-gray-700">{ordem.quantidade.toLocaleString('pt-BR')}</p>
-            </div>
-            {ordem.loteNumero && (
-              <div>
-                <p className="text-gray-400 mb-0.5">Lote</p>
-                <p className="font-medium text-gray-700">{ordem.loteNumero}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-gray-400 mb-0.5">Fase Atual</p>
-              <p className="font-medium text-gray-700">{ordem.faseAtualNome || '—'}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 mb-0.5">Almoxarifado</p>
-              <p className="font-medium text-gray-700">{ordem.almoxarifadoNome}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 mb-0.5">Data de Início</p>
-              <p className="font-medium text-gray-700">{fmtDate(ordem.dataInicio)}</p>
-            </div>
-            {ordem.roteiroCodigo && (
-              <div>
-                <p className="text-gray-400 mb-0.5">Roteiro</p>
-                <p className="font-medium text-gray-700">{ordem.roteiroCodigo}</p>
-              </div>
-            )}
-            {ordem.dataFim && (
-              <div>
-                <p className="text-gray-400 mb-0.5">Data de Conclusão</p>
-                <p className="font-medium text-gray-700">{fmtDate(ordem.dataFim)}</p>
-              </div>
-            )}
-          </div>
-          {ordem.observacoes && (
-            <div className="pt-2 border-t border-gray-100">
-              <p className="text-gray-400 text-xs mb-0.5">Observações</p>
-              <p className="text-xs text-gray-600">{ordem.observacoes}</p>
-            </div>
-          )}
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
-            <span>Impresso em {new Date().toLocaleString('pt-BR')}</span>
-            <span className="font-mono text-gray-500">{ordem.codigoOrdem}</span>
+            <button onClick={onClose}
+              className="h-8 px-4 rounded-lg border border-gray-200 text-sm text-gray-600 font-medium hover:bg-gray-50 transition-colors">
+              Fechar
+            </button>
+            <button onClick={handlePrint}
+              className="flex items-center gap-1.5 h-8 px-4 rounded-lg bg-[#3B82F6] hover:bg-[#2563eb] text-white text-sm font-medium transition-colors">
+              <Printer size={13} /> Imprimir
+            </button>
           </div>
         </div>
-        <div className="flex gap-2 px-5 pb-5">
-          <button onClick={onClose}
-            className="flex-1 h-9 rounded-lg border border-gray-200 text-sm text-gray-600 font-medium hover:bg-gray-50 transition-colors">
-            Fechar
-          </button>
-          <button onClick={() => window.print()}
-            className="flex-1 h-9 rounded-lg bg-[#3B82F6] hover:bg-[#2563eb] text-white text-sm font-medium transition-colors flex items-center justify-center gap-1.5">
-            <Printer size={13} /> Imprimir
-          </button>
+
+        {/* Paper area */}
+        <div className="flex-1 overflow-y-auto bg-[#5a5a5a] py-8 px-4 flex justify-center">
+
+          {/* A4 paper */}
+          <div
+            ref={docRef}
+            style={{
+              width: '21cm',
+              minHeight: '29.7cm',
+              backgroundColor: 'white',
+              boxShadow: '0 6px 32px rgba(0,0,0,0.45)',
+              padding: '1.2cm 1.5cm',
+              boxSizing: 'border-box',
+              fontFamily: 'Arial, Helvetica, sans-serif',
+              color: '#111',
+              flexShrink: 0,
+            }}
+          >
+            {/* ══ CABEÇALHO ══ */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              paddingBottom: '10px', marginBottom: '12px',
+              borderBottom: '2px solid #2c2c2c',
+            }}>
+              {/* Logo + sistema */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '160px' }}>
+                <img src="/icon-black.png" alt="" style={{ height: '42px', display: 'block' }} />
+                <div>
+                  <div style={{ fontSize: '8pt', fontWeight: 'bold', color: '#222', letterSpacing: '1px', textTransform: 'uppercase' }}>Valisys ERP</div>
+                  <div style={{ fontSize: '7pt', color: '#888', marginTop: '1px' }}>Sistema de Gestão Industrial</div>
+                </div>
+              </div>
+
+              {/* Título central */}
+              <div style={{ textAlign: 'center', flex: 1, padding: '0 20px' }}>
+                <div style={{ fontSize: '8.5pt', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '3px', color: '#555' }}>
+                  Ordem de Produção
+                </div>
+                <div style={{ fontSize: '22pt', fontWeight: 'bold', fontFamily: "'Courier New', monospace", color: '#000', lineHeight: 1.1, marginTop: '2px' }}>
+                  {ordem.codigoOrdem}
+                </div>
+              </div>
+
+              {/* Data + hora */}
+              <div style={{ textAlign: 'right', minWidth: '120px' }}>
+                <div style={{ fontSize: '6.5pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Emissão</div>
+                <div style={{ fontSize: '11pt', fontWeight: 'bold', color: '#222', marginTop: '2px' }}>
+                  {emissao.toLocaleDateString('pt-BR')}
+                </div>
+                <div style={{ fontSize: '8.5pt', color: '#666', marginTop: '1px' }}>
+                  {emissao.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+            </div>
+
+            {/* ══ CORPO (borda única envolvendo as seções) ══ */}
+            <div style={{ border: '1px solid #333' }}>
+
+              {/* ── Seção 1: DADOS DO PEDIDO ── */}
+              <div>
+                <div style={{
+                  backgroundColor: '#2c2c2c', color: 'white',
+                  fontSize: '6.5pt', fontWeight: 'bold',
+                  textTransform: 'uppercase', letterSpacing: '1.5px',
+                  padding: '3px 9px',
+                }}>
+                  Dados do Pedido
+                </div>
+
+                {/* Filtros aplicados (dentro da seção, antes dos campos) */}
+                {filtrosDesc.length > 0 && (
+                  <div style={{
+                    borderBottom: '1px solid #ddd',
+                    padding: '4px 9px',
+                    fontSize: '7pt', color: '#777',
+                    backgroundColor: '#fafafa',
+                  }}>
+                    <strong style={{ color: '#555' }}>Filtros:</strong>&nbsp;{filtrosDesc.join(' · ')}
+                  </div>
+                )}
+
+                {/* Linha 1: Código | Status | D.Início | D.Conclusão | Fase */}
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ border: '1px solid #ccc', borderLeft: 'none', padding: '4px 8px', width: '18%' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Código da O.P.</div>
+                        <div style={{ fontSize: '9.5pt', marginTop: '2px', color: '#444' }}>
+                          {ordem.codigoOrdem}
+                        </div>
+                      </td>
+                      <td style={{ border: '1px solid #ccc', padding: '4px 8px', width: '16%' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Status</div>
+                        <div style={{ fontSize: '9pt', marginTop: '2px', color: '#111' }}>{statusLabel}</div>
+                      </td>
+                      <td style={{ border: '1px solid #ccc', padding: '4px 8px', width: '16%' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Data de Início</div>
+                        <div style={{ fontSize: '9pt', marginTop: '2px', color: '#111' }}>{fmtDate(ordem.dataInicio)}</div>
+                      </td>
+                      <td style={{ border: '1px solid #ccc', padding: '4px 8px', width: '16%' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Data de Conclusão</div>
+                        <div style={{ fontSize: '9pt', marginTop: '2px', color: '#111' }}>{ordem.dataFim ? fmtDate(ordem.dataFim) : '—'}</div>
+                      </td>
+                      <td style={{ border: '1px solid #ccc', borderRight: 'none', padding: '4px 8px' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Fase Atual</div>
+                        <div style={{ fontSize: '9pt', marginTop: '2px', color: '#111' }}>{ordem.faseAtualNome || '—'}</div>
+                      </td>
+                    </tr>
+
+                    {/* Linha 2: Almoxarifado | Lote | Roteiro | Pedido */}
+                    <tr>
+                      <td style={{ border: '1px solid #ccc', borderLeft: 'none', borderBottom: 'none', padding: '4px 8px' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Almoxarifado</div>
+                        <div style={{ fontSize: '9pt', marginTop: '2px', color: '#111' }}>{ordem.almoxarifadoNome}</div>
+                      </td>
+                      <td style={{ border: '1px solid #ccc', borderBottom: 'none', padding: '4px 8px' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Lote</div>
+                        <div style={{ fontSize: '9pt', marginTop: '2px', color: '#111' }}>{ordem.loteNumero || '—'}</div>
+                      </td>
+                      <td style={{ border: '1px solid #ccc', borderBottom: 'none', padding: '4px 8px' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Roteiro</div>
+                        <div style={{ fontSize: '9pt', marginTop: '2px', color: '#111' }}>{ordem.roteiroCodigo || '—'}</div>
+                      </td>
+                      <td colSpan={2} style={{ border: '1px solid #ccc', borderRight: 'none', borderBottom: 'none', padding: '4px 8px' }}>
+                        <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Pedido Vinculado</div>
+                        <div style={{ fontSize: '9pt', marginTop: '2px', color: '#111' }}>
+                          {ordem.pedidoCodigo
+                            ? `${ordem.pedidoCodigo}${ordem.pedidoClienteNome ? ` — ${ordem.pedidoClienteNome}` : ''}`
+                            : '—'}
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ── Seção 2: PRODUTO ── */}
+              <div style={{ borderTop: '2px solid #2c2c2c' }}>
+                <div style={{
+                  backgroundColor: '#2c2c2c', color: 'white',
+                  fontSize: '6.5pt', fontWeight: 'bold',
+                  textTransform: 'uppercase', letterSpacing: '1.5px',
+                  padding: '3px 9px',
+                }}>
+                  Produto
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'stretch', borderBottom: '1px solid #ddd' }}>
+                  {/* Nome do produto (destaque) */}
+                  <div style={{ flex: 1, padding: '12px 14px', borderRight: '1px solid #ccc' }}>
+                    <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '4px' }}>
+                      Descrição do Produto
+                    </div>
+                    <div style={{ fontSize: '14pt', fontWeight: 'bold', color: '#000', lineHeight: 1.2 }}>
+                      {ordem.produtoNome}
+                    </div>
+                  </div>
+                  {/* Quantidade (destaque lateral) */}
+                  <div style={{ minWidth: '110px', padding: '12px 14px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '4px' }}>
+                      Quantidade
+                    </div>
+                    <div style={{ fontSize: '13pt', fontWeight: 'bold', color: '#000', lineHeight: 1 }}>
+                      {ordem.quantidade.toLocaleString('pt-BR')}
+                    </div>
+                    <div style={{ fontSize: '7pt', color: '#aaa', marginTop: '2px' }}>unidades</div>
+                  </div>
+                </div>
+
+                {/* Observações (dentro da seção Produto) */}
+                {ordem.observacoes && (
+                  <div style={{ padding: '8px 14px', borderTop: '1px dashed #ccc' }}>
+                    <div style={{ fontSize: '6pt', color: '#999', textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '4px' }}>
+                      Observações
+                    </div>
+                    <div style={{ fontSize: '9pt', color: '#333', lineHeight: 1.5 }}>
+                      {ordem.observacoes}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>{/* fim do corpo */}
+
+            {/* ══ ASSINATURAS ══ */}
+            <div style={{ marginTop: '28px' }}>
+              <div style={{
+                backgroundColor: '#2c2c2c', color: 'white',
+                fontSize: '6.5pt', fontWeight: 'bold',
+                textTransform: 'uppercase', letterSpacing: '1.5px',
+                padding: '3px 9px',
+              }}>
+                Assinaturas
+              </div>
+              <div style={{ display: 'flex' }}>
+                {['Responsável de Produção', 'Controle de Qualidade', 'Almoxarifado'].map((label, i) => (
+                  <div key={label} style={{
+                    flex: 1,
+                    borderRight: i < 2 ? '1px solid #ccc' : 'none',
+                    padding: '26px 20px 14px',
+                    textAlign: 'center',
+                  }}>
+                    <div style={{ borderTop: '1px solid #555', paddingTop: '5px', fontSize: '7.5pt', color: '#555' }}>
+                      {label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ══ RODAPÉ ══ */}
+            <div style={{
+              borderTop: '1px solid #e0e0e0', paddingTop: '4px',
+              fontSize: '7pt', color: '#bbb',
+              display: 'flex', justifyContent: 'space-between',
+            }}>
+              <span>
+                Emitido em {emissao.toLocaleString('pt-BR')}
+                {user ? ` · Usuário: ${user.nome}` : ''}
+              </span>
+              <span style={{ fontFamily: "'Courier New', monospace" }}>{ordem.codigoOrdem}</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -508,8 +803,9 @@ export function OrdensDeProducaoPage() {
   const [page, setPage]               = useState(1);
   const [pageSize, setPageSize]       = useState(10);
 
-  const [cancelTarget, setCancelTarget] = useState<OrdemItem | null>(null);
-  const [printTarget, setPrintTarget]   = useState<OrdemItem | null>(null);
+  const [cancelTarget, setCancelTarget]   = useState<OrdemItem | null>(null);
+  const [estornarTarget, setEstornarTarget] = useState<OrdemItem | null>(null);
+  const [printTarget, setPrintTarget]     = useState<OrdemItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -571,6 +867,24 @@ export function OrdensDeProducaoPage() {
       load();
     } catch (e: any) {
       showToast(e.message ?? 'Erro ao avançar fase.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEstornar = async (ordem: OrdemItem) => {
+    setActionLoading(true);
+    try {
+      const res = await fetchWithAuth(`/api/ordens-producao/${ordem.id}/estornar`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.detail ?? err?.title ?? 'Não foi possível estornar a produção.');
+      }
+      showToast(`Produção estornada: ${ordem.codigoOrdem}`);
+      setEstornarTarget(null);
+      load();
+    } catch (e: any) {
+      showToast(e.message ?? 'Erro ao estornar produção.');
     } finally {
       setActionLoading(false);
     }
@@ -803,6 +1117,7 @@ export function OrdensDeProducaoPage() {
                         onAvancar={() => handleAvancarFase(o, 'avancar')}
                         onCancelar={() => setCancelTarget(o)}
                         onImprimir={() => setPrintTarget(o)}
+                        onEstornar={() => setEstornarTarget(o)}
                       />
                     </td>
                   </tr>
@@ -846,9 +1161,20 @@ export function OrdensDeProducaoPage() {
         />
       )}
 
+      {estornarTarget && (
+        <EstornarModal
+          ordem={estornarTarget}
+          loading={actionLoading}
+          onConfirm={() => handleEstornar(estornarTarget)}
+          onCancel={() => setEstornarTarget(null)}
+        />
+      )}
+
       {printTarget && (
         <PrintModal
           ordem={printTarget}
+          filters={filters}
+          search={search}
           onClose={() => setPrintTarget(null)}
         />
       )}

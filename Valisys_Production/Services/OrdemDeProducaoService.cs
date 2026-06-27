@@ -157,7 +157,14 @@ namespace Valisys_Production.Services
             var ordem = await _repository.GetByIdAsync(ordemId);
             if (ordem == null) throw new KeyNotFoundException("Ordem não encontrada.");
 
-            var roteiro = await _roteiroRepository.GetByIdAsync(ordem.RoteiroProducaoId ?? Guid.Empty);
+            // Produto sem roteiro: fase única — avançar conclui diretamente a OP
+            if (!ordem.RoteiroProducaoId.HasValue)
+            {
+                await FinalizarOrdemAsync(ordemId, usuarioId);
+                return true;
+            }
+
+            var roteiro = await _roteiroRepository.GetByIdAsync(ordem.RoteiroProducaoId.Value);
             if (roteiro == null) throw new InvalidOperationException("Roteiro inválido.");
 
             var etapas = roteiro.Etapas.OrderBy(e => e.Ordem).ToList();
@@ -186,6 +193,52 @@ namespace Valisys_Production.Services
                 if (res) await _logService.RegistrarAsync("Movimentação", "Produção",
                     $"Avançou OP {ordem.CodigoOrdem} para próxima fase", usuarioId);
                 return res;
+            }
+        }
+
+        public async Task EstornarOrdemAsync(Guid ordemId, Guid usuarioId)
+        {
+            var ordem = await _repository.GetByIdAsync(ordemId);
+            if (ordem == null) throw new KeyNotFoundException("Ordem não encontrada.");
+            if (ordem.Status != StatusOrdemDeProducao.Finalizada)
+                throw new InvalidOperationException("Somente Ordens de Produção finalizadas podem ser estornadas.");
+
+            var almoxarifadoMP = await GetAlmoxarifadoPrincipalAsync();
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Reverte a entrada do produto acabado (saída do almoxarifado de produção para o principal)
+                var movEstorno = new Movimentacao(
+                    ordem.ProdutoId, ordem.Quantidade,
+                    $"Estorno de Produção OP: {ordem.CodigoOrdem}",
+                    ordem.AlmoxarifadoId, null,
+                    almoxarifadoMP.Id, null,
+                    usuarioId,
+                    ordemDeProducaoId: ordem.Id);
+                await _movimentacaoRepository.AddAsync(movEstorno);
+
+                if (ordem.LoteId.HasValue)
+                {
+                    var lote = await _loteRepository.GetByIdAsync(ordem.LoteId.Value);
+                    if (lote != null)
+                    {
+                        lote.RevertarParaPendente();
+                        await _loteRepository.UpdateAsync(lote);
+                    }
+                }
+
+                ordem.Estornar();
+                await _repository.UpdateAsync(ordem);
+                await transaction.CommitAsync();
+
+                await _logService.RegistrarAsync("Estorno", "Produção",
+                    $"Estornou a produção da OP {ordem.CodigoOrdem}", usuarioId);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
             }
         }
 
@@ -259,7 +312,8 @@ namespace Valisys_Production.Services
             var emUso = await _context.OrdensDeProducao.AnyAsync(o =>
                 o.LoteId == loteId && o.Id != ignoreId &&
                 o.Status != StatusOrdemDeProducao.Finalizada &&
-                o.Status != StatusOrdemDeProducao.Cancelada);
+                o.Status != StatusOrdemDeProducao.Cancelada &&
+                o.Status != StatusOrdemDeProducao.Estornada);
             if (emUso) throw new InvalidOperationException("Lote já está em uso em outra OP.");
         }
 

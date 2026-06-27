@@ -5,6 +5,7 @@
         Ativa = 1,
         Aguardando = 2,
         Finalizada = 3,
-        Cancelada = 4
+        Cancelada = 4,
+        Estornada = 5
     }
 }

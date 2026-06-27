@@ -78,6 +78,12 @@ namespace Valisys_Production.Models
             DataFim = DateTime.UtcNow;
         }
 
+        public void Estornar()
+        {
+            Status = StatusOrdemDeProducao.Estornada;
+            DataFim = DateTime.UtcNow;
+        }
+
         public void Atualizar(int quantidade, string? observacoes, Guid almoxarifadoId,
             StatusOrdemDeProducao status, Guid? loteId, Guid? produtoVariacaoId = null)
         {
