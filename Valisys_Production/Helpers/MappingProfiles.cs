@@ -187,6 +187,9 @@ namespace Valisys_Production.Helpers
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
                 .ForMember(dest => dest.FormaPagamento, opt => opt.MapFrom(src =>
                     src.FormaPagamento.HasValue ? src.FormaPagamento.ToString() : null));
+
+            // Carteira
+            CreateMap<Carteira, CarteiraReadDto>();
         }
     }
 }

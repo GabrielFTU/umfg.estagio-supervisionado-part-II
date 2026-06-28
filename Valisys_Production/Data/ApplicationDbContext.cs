@@ -60,6 +60,7 @@ namespace Valisys_Production.Data
         public DbSet<Finalidade> Finalidades { get; set; }
         public DbSet<CondicaoPagamento> CondicoesPagamento { get; set; }
         public DbSet<ParcelaCondicao> ParcelasCondicao { get; set; }
+        public DbSet<Carteira> Carteiras { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -52,6 +52,8 @@ import { LoteFormPage } from './pages/producao/LoteFormPage';
 import { RoteiroProducaoPage } from './pages/producao/RoteiroProducaoPage';
 import { RoteiroProducaoFormPage } from './pages/producao/RoteiroProducaoFormPage';
 import { RelatorioEstoquePage } from './pages/relatorios/RelatorioEstoquePage';
+import { CarteirasPage } from './pages/financeiro/CarteirasPage';
+import { CarteiraFormPage } from './pages/financeiro/CarteiraFormPage';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -220,6 +222,11 @@ const App = () => (
       <Route path="/producao/fichas-tecnicas/:id/sequencia-operacional" element={<PrivateRoute><AppLayout><SequenciaOperacionalPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/relatorios/estoque" element={<PrivateRoute><AppLayout><RelatorioEstoquePage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/financeiro/carteira" element={<PrivateRoute><AppLayout><CarteirasPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira/nova" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira/:id/editar" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira/:id" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
