@@ -51,6 +51,7 @@ import { LotesPage } from './pages/producao/LotesPage';
 import { LoteFormPage } from './pages/producao/LoteFormPage';
 import { RoteiroProducaoPage } from './pages/producao/RoteiroProducaoPage';
 import { RoteiroProducaoFormPage } from './pages/producao/RoteiroProducaoFormPage';
+import { RelatorioEstoquePage } from './pages/relatorios/RelatorioEstoquePage';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -217,6 +218,8 @@ const App = () => (
       <Route path="/producao/fichas-tecnicas/:id" element={<PrivateRoute><AppLayout><FichaTecnicaPainelPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas/:id/consumo" element={<PrivateRoute><AppLayout><FichaConsumoPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas/:id/sequencia-operacional" element={<PrivateRoute><AppLayout><SequenciaOperacionalPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/relatorios/estoque" element={<PrivateRoute><AppLayout><RelatorioEstoquePage /></AppLayout></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
