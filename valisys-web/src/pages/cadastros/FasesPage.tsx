@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type FaseItem = {
   id: string;
@@ -80,6 +81,7 @@ export function FasesPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<FaseItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -117,9 +119,14 @@ export function FasesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = async (f: FaseItem) => {
-    const acao = f.ativo ? 'Desativar' : 'Reativar';
-    if (!confirm(`${acao} a fase "${f.nome}"?`)) return;
+  const handleToggleAtivo = (f: FaseItem) => {
+    setConfirmTarget(f);
+  };
+
+  const execToggleAtivo = async () => {
+    if (!confirmTarget) return;
+    const f = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     const res = await fetch(`/api/fases-producao/${f.id}`, {
       method: 'DELETE',
@@ -288,6 +295,15 @@ export function FasesPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} fase` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a fase "${confirmTarget.nome}"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execToggleAtivo}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

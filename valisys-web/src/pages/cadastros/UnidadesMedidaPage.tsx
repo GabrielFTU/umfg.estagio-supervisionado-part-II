@@ -5,6 +5,7 @@ import {
   ChevronRight, Home, Loader2, MoreHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 const GRANDEZA_LABEL: Record<number, string> = {
   0: 'Unidade',
@@ -115,6 +116,7 @@ export function UnidadesMedidaPage() {
   const [filtroStatus, setFiltroStatus]   = useState('');
   const [filtroGrandeza, setFiltroGrandeza] = useState('');
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<UnidadeItem | null>(null);
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
@@ -156,10 +158,14 @@ export function UnidadesMedidaPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = async (u: UnidadeItem) => {
-    const acao = u.ativo ? 'Desativar' : 'Reativar';
-    if (!confirm(`${acao} a unidade de medida "${u.nome} (${u.sigla})"?`)) return;
+  const handleToggleAtivo = (u: UnidadeItem) => {
+    setConfirmTarget(u);
+  };
 
+  const execToggleAtivo = async () => {
+    if (!confirmTarget) return;
+    const u = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     const res = await fetch(`/api/UnidadesMedida/${u.id}`, {
       method: 'DELETE',
@@ -404,6 +410,15 @@ export function UnidadesMedidaPage() {
           </div>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} unidade de medida` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a unidade de medida "${confirmTarget.nome} (${confirmTarget.sigla})"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execToggleAtivo}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

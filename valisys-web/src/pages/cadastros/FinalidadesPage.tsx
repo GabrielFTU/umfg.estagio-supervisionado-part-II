@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface Finalidade {
   id: string; codigo: number; nome: string; descricao?: string; ativo: boolean;
@@ -72,6 +73,7 @@ export function FinalidadesPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<Finalidade | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -90,8 +92,14 @@ export function FinalidadesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = async (item: Finalidade) => {
-    if (!confirm(`${item.ativo ? 'Inativar' : 'Reativar'} "${item.nome}"?`)) return;
+  const handleToggle = (item: Finalidade) => {
+    setConfirmTarget(item);
+  };
+
+  const execToggle = async () => {
+    if (!confirmTarget) return;
+    const item = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     if (item.ativo) {
       await fetch(`/api/finalidades/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
@@ -261,6 +269,15 @@ export function FinalidadesPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Inativar' : 'Reativar'} finalidade` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Inativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execToggle}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -393,6 +394,8 @@ export function OrcamentoFormPage() {
   const [orcamentoId, setOrcamentoId]           = useState<string | null>(id ?? null);
   const [pedidoConvertidoId, setPedidoConvertidoId] = useState<string | null>(null);
   const [showModal, setShowModal]               = useState(false);
+  const [mudarStatusAcao, setMudarStatusAcao]   = useState<'enviar' | 'aprovar' | 'cancelar' | null>(null);
+  const [converterConfirm, setConverterConfirm] = useState(false);
   const [formasPagamento, setFormasPagamento]     = useState<SelectOption[]>([]);
   const [condicoesPagamento, setCondicoesPagamento] = useState<SelectOption[]>([]);
   const [convertendo, setConvertendo]             = useState(false);
@@ -521,20 +524,23 @@ export function OrcamentoFormPage() {
     } finally { setSaving(false); }
   };
 
-  const mudarStatus = async (acao: 'enviar' | 'aprovar' | 'cancelar') => {
-    const msgs: Record<string, string> = {
-      enviar: 'Enviar este orçamento ao cliente?',
-      aprovar: 'Marcar este orçamento como aprovado?',
-      cancelar: 'Cancelar este orçamento? Esta ação não pode ser desfeita.',
-    };
-    if (!confirm(msgs[acao])) return;
+  const mudarStatus = (acao: 'enviar' | 'aprovar' | 'cancelar') => {
+    setMudarStatusAcao(acao);
+  };
+
+  const execMudarStatus = async () => {
+    if (!mudarStatusAcao) return;
+    const acao = mudarStatusAcao;
+    setMudarStatusAcao(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/orcamentos/${orcamentoId}/${acao}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
     window.location.reload();
   };
 
-  const handleConverter = async () => {
-    if (!confirm(`Transformar Orçamento #${String(codigoOrcamento ?? '').padStart(3, '0')} em Pedido de Venda?\nTodos os dados serão transferidos automaticamente.`)) return;
+  const handleConverter = () => { setConverterConfirm(true); };
+
+  const execConverter = async () => {
+    setConverterConfirm(false);
     setConvertendo(true);
     const token = localStorage.getItem('token');
     try {
@@ -810,6 +816,35 @@ export function OrcamentoFormPage() {
       )}
 
       {showModal && <ProdutoModal onSelect={addProduto} onClose={() => setShowModal(false)} />}
+
+      <ModalMsg
+        aberto={mudarStatusAcao !== null}
+        titulo={
+          mudarStatusAcao === 'enviar'   ? 'Enviar orçamento' :
+          mudarStatusAcao === 'aprovar'  ? 'Aprovar orçamento' : 'Cancelar orçamento'
+        }
+        descricao={
+          mudarStatusAcao === 'enviar'   ? 'Enviar este orçamento ao cliente?' :
+          mudarStatusAcao === 'aprovar'  ? 'Marcar este orçamento como aprovado?' :
+          'Cancelar este orçamento? Esta ação não pode ser desfeita.'
+        }
+        variante={mudarStatusAcao === 'cancelar' ? 'perigo' : 'aviso'}
+        labelConfirmar={
+          mudarStatusAcao === 'enviar'  ? 'Enviar' :
+          mudarStatusAcao === 'aprovar' ? 'Aprovar' : 'Cancelar orçamento'
+        }
+        onConfirmar={execMudarStatus}
+        onCancelar={() => setMudarStatusAcao(null)}
+      />
+      <ModalMsg
+        aberto={converterConfirm}
+        titulo="Transformar em Pedido de Venda"
+        descricao={`Transformar Orçamento #${String(codigoOrcamento ?? '').padStart(3, '0')} em Pedido de Venda? Todos os dados serão transferidos automaticamente.`}
+        variante="aviso"
+        labelConfirmar="Transformar"
+        onConfirmar={execConverter}
+        onCancelar={() => setConverterConfirm(false)}
+      />
     </div>
   );
 }

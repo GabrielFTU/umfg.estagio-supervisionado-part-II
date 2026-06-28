@@ -152,6 +152,7 @@ export function FormaPagamentoFormPage() {
   const [prazoDias, setPrazoDias] = useState('');
   const [ativo, setAtivo]         = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [removerVendedorTarget, setRemoverVendedorTarget] = useState<VendedorVinculo | null>(null);
 
   // vendedores vinculados
   const [vendedores, setVendedores] = useState<VendedorVinculo[]>([]);
@@ -251,8 +252,15 @@ export function FormaPagamentoFormPage() {
     setVendedores(prev => [...prev, { id: crypto.randomUUID(), vendedorId: v.id, vendedorNome: v.nome }]);
   };
 
-  const handleRemoverVendedor = async (vinculo: VendedorVinculo) => {
-    if (!id || !confirm(`Remover "${vinculo.vendedorNome}" desta forma de pagamento?`)) return;
+  const handleRemoverVendedor = (vinculo: VendedorVinculo) => {
+    if (!id) return;
+    setRemoverVendedorTarget(vinculo);
+  };
+
+  const execRemoverVendedor = async () => {
+    if (!removerVendedorTarget) return;
+    const vinculo = removerVendedorTarget;
+    setRemoverVendedorTarget(null);
     setRemovingId(vinculo.vendedorId);
     const token = localStorage.getItem('token');
     await fetch(`/api/formas-pagamento/${id}/vendedores/${vinculo.vendedorId}`, {
@@ -518,6 +526,16 @@ export function FormaPagamentoFormPage() {
         labelConfirmar="Salvar"
         onConfirmar={() => { setConfirmOpen(false); execSave(); }}
         onCancelar={() => setConfirmOpen(false)}
+      />
+
+      <ModalMsg
+        aberto={removerVendedorTarget !== null}
+        titulo="Remover vendedor"
+        descricao={removerVendedorTarget ? `Remover "${removerVendedorTarget.vendedorNome}" desta forma de pagamento?` : ''}
+        variante="perigo"
+        labelConfirmar="Remover"
+        onConfirmar={execRemoverVendedor}
+        onCancelar={() => setRemoverVendedorTarget(null)}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import {
   ChevronUp, ChevronDown, AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface ParcelaRow {
   contaId: string;
@@ -155,6 +156,7 @@ export function ContasPagarPage() {
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort_]        = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'dataVencimento', dir: 'asc' });
   const filterRef = useRef<HTMLDivElement>(null);
+  const [cancelarId, setCancelarId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -217,8 +219,14 @@ export function ContasPagarPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleCancelar = async (contaId: string) => {
-    if (!confirm('Cancelar esta conta a pagar?')) return;
+  const handleCancelar = (contaId: string) => {
+    setCancelarId(contaId);
+  };
+
+  const execCancelar = async () => {
+    if (!cancelarId) return;
+    const contaId = cancelarId;
+    setCancelarId(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/contas-pagar/${contaId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     load();
@@ -449,6 +457,16 @@ export function ContasPagarPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={cancelarId !== null}
+        titulo="Cancelar conta a pagar"
+        descricao="Cancelar esta conta a pagar?"
+        variante="perigo"
+        labelConfirmar="Cancelar conta"
+        onConfirmar={execCancelar}
+        onCancelar={() => setCancelarId(null)}
+      />
     </div>
   );
 }

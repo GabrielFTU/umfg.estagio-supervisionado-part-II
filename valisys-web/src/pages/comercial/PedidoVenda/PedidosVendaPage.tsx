@@ -5,6 +5,7 @@ import {
   ShoppingBag, ChevronDown, SlidersHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,8 @@ export function PedidosVendaPage() {
   const [statusFiltro, setStatusFiltro] = useState<'' | '0' | '1' | '2' | '3'>('');
   const [filterOpen, setFilterOpen]     = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmarTarget, setConfirmarTarget] = useState<PedidoItem | null>(null);
+  const [cancelarTarget, setCancelarTarget]   = useState<PedidoItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -171,15 +174,23 @@ export function PedidosVendaPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleConfirmar = async (p: PedidoItem) => {
-    if (!confirm(`Confirmar Pedido #${p.codigo}?`)) return;
+  const handleConfirmar = (p: PedidoItem) => { setConfirmarTarget(p); };
+
+  const execConfirmar = async () => {
+    if (!confirmarTarget) return;
+    const p = confirmarTarget;
+    setConfirmarTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/pedidos-venda/${p.id}/confirmar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
     load();
   };
 
-  const handleCancelar = async (p: PedidoItem) => {
-    if (!confirm(`Cancelar Pedido #${p.codigo}? Esta ação não pode ser desfeita.`)) return;
+  const handleCancelar = (p: PedidoItem) => { setCancelarTarget(p); };
+
+  const execCancelar = async () => {
+    if (!cancelarTarget) return;
+    const p = cancelarTarget;
+    setCancelarTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/pedidos-venda/${p.id}/cancelar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
     load();
@@ -363,6 +374,25 @@ export function PedidosVendaPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmarTarget !== null}
+        titulo="Confirmar pedido"
+        descricao={confirmarTarget ? `Confirmar Pedido #${confirmarTarget.codigo}?` : ''}
+        variante="aviso"
+        labelConfirmar="Confirmar"
+        onConfirmar={execConfirmar}
+        onCancelar={() => setConfirmarTarget(null)}
+      />
+      <ModalMsg
+        aberto={cancelarTarget !== null}
+        titulo="Cancelar pedido"
+        descricao={cancelarTarget ? `Cancelar Pedido #${cancelarTarget.codigo}? Esta ação não pode ser desfeita.` : ''}
+        variante="perigo"
+        labelConfirmar="Cancelar pedido"
+        onConfirmar={execCancelar}
+        onCancelar={() => setCancelarTarget(null)}
+      />
     </div>
   );
 }

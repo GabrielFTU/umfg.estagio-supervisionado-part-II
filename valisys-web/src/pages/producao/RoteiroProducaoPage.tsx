@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface RoteiroItem {
   id: string;
@@ -88,6 +89,7 @@ export function RoteiroProducaoPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<RoteiroItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -108,8 +110,12 @@ export function RoteiroProducaoPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDelete = async (item: RoteiroItem) => {
-    if (!confirm(`Excluir roteiro "${item.codigo}"?`)) return;
+  const handleDelete = (item: RoteiroItem) => { setConfirmTarget(item); };
+
+  const execDelete = async () => {
+    if (!confirmTarget) return;
+    const item = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/roteiros-producao/${item.id}`, {
       method: 'DELETE',
@@ -306,6 +312,14 @@ export function RoteiroProducaoPage() {
           </>
         )}
       </div>
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo="Excluir roteiro"
+        descricao={confirmTarget ? `Excluir roteiro "${confirmTarget.codigo}"?` : ''}
+        variante="perigo"
+        onConfirmar={execDelete}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

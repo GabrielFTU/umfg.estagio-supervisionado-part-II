@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -214,6 +215,7 @@ export function MovimentacoesPage() {
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort_]      = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'dataMovimentacao', dir: 'desc' });
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MovimentacaoRow | null>(null);
 
   const [produtos, setProdutos]   = useState<ProdutoOpt[]>([]);
   const [depositos, setDepositos] = useState<DepositoOpt[]>([]);
@@ -280,8 +282,12 @@ export function MovimentacoesPage() {
 
   useEffect(() => { load(); }, [filters]);
 
-  const handleDelete = async (row: MovimentacaoRow) => {
-    if (!confirm(`Excluir movimentação de "${row.produtoNome}" (${fmtDate(row.dataMovimentacao)})?`)) return;
+  const handleDelete = (row: MovimentacaoRow) => { setDeleteTarget(row); };
+
+  const execDelete = async () => {
+    if (!deleteTarget) return;
+    const row = deleteTarget;
+    setDeleteTarget(null);
     setDeleting(row.id);
     const token = localStorage.getItem('token');
     await fetch(`/api/movimentacoes/${row.id}`, {
@@ -494,6 +500,15 @@ export function MovimentacoesPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={deleteTarget !== null}
+        titulo="Excluir movimentação"
+        descricao={deleteTarget ? `Excluir movimentação de "${deleteTarget.produtoNome}" (${fmtDate(deleteTarget.dataMovimentacao)})?` : ''}
+        variante="perigo"
+        onConfirmar={execDelete}
+        onCancelar={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

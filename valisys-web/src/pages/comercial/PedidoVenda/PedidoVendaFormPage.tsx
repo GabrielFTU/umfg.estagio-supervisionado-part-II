@@ -7,6 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 
 type Modo = 'criar' | 'editar' | 'visualizar';
@@ -499,6 +500,7 @@ export function PedidoVendaFormPage() {
   const [codigoPedido, setCodigoPedido]   = useState<number | null>(null);
   const [pedidoId, setPedidoId]           = useState<string | null>(id ?? null);
   const [showModal, setShowModal]         = useState(false);
+  const [mudarStatusAcao, setMudarStatusAcao] = useState<'confirmar' | 'cancelar' | 'concluir' | null>(null);
   const [formasPagamento, setFormasPagamento]     = useState<SelectOption[]>([]);
   const [condicoesPagamento, setCondicoesPagamento] = useState<SelectOption[]>([]);
   const [finalidades, setFinalidades]             = useState<SelectOption[]>([]);
@@ -643,13 +645,14 @@ export function PedidoVendaFormPage() {
     } finally { setSaving(false); }
   };
 
-  const mudarStatus = async (acao: 'confirmar' | 'cancelar' | 'concluir') => {
-    const msgs: Record<string, string> = {
-      confirmar: 'Confirmar este pedido?',
-      cancelar: 'Cancelar este pedido? Esta ação não pode ser desfeita.',
-      concluir: 'Concluir este pedido?',
-    };
-    if (!confirm(msgs[acao])) return;
+  const mudarStatus = (acao: 'confirmar' | 'cancelar' | 'concluir') => {
+    setMudarStatusAcao(acao);
+  };
+
+  const execMudarStatus = async () => {
+    if (!mudarStatusAcao) return;
+    const acao = mudarStatusAcao;
+    setMudarStatusAcao(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/pedidos-venda/${pedidoId}/${acao}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
     window.location.reload();
@@ -883,6 +886,26 @@ export function PedidoVendaFormPage() {
       )}
 
       {showModal && <ProdutoModal onAdd={addProduto} onClose={() => setShowModal(false)} />}
+
+      <ModalMsg
+        aberto={mudarStatusAcao !== null}
+        titulo={
+          mudarStatusAcao === 'confirmar' ? 'Confirmar pedido' :
+          mudarStatusAcao === 'concluir'  ? 'Concluir pedido'  : 'Cancelar pedido'
+        }
+        descricao={
+          mudarStatusAcao === 'confirmar' ? 'Confirmar este pedido?' :
+          mudarStatusAcao === 'concluir'  ? 'Concluir este pedido?' :
+          'Cancelar este pedido? Esta ação não pode ser desfeita.'
+        }
+        variante={mudarStatusAcao === 'cancelar' ? 'perigo' : 'aviso'}
+        labelConfirmar={
+          mudarStatusAcao === 'confirmar' ? 'Confirmar' :
+          mudarStatusAcao === 'concluir'  ? 'Concluir'  : 'Cancelar pedido'
+        }
+        onConfirmar={execMudarStatus}
+        onCancelar={() => setMudarStatusAcao(null)}
+      />
     </div>
   );
 }

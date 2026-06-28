@@ -5,6 +5,7 @@ import {
   ChevronRight, Home, Loader2, MoreHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type ProdutoItem = {
   id: string;
@@ -114,6 +115,7 @@ export function ProdutosPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filtroClassif, setFiltroClassif] = useState('');
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<ProdutoItem | null>(null);
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
@@ -156,8 +158,14 @@ export function ProdutosPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDesativar = async (p: ProdutoItem) => {
-    if (!confirm(`${p.ativo ? 'Desativar' : 'Reativar'} "${p.nome}"?`)) return;
+  const handleDesativar = (p: ProdutoItem) => {
+    setConfirmTarget(p);
+  };
+
+  const execDesativar = async () => {
+    if (!confirmTarget) return;
+    const p = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/produtos/${p.id}`, {
       method: 'DELETE',
@@ -337,6 +345,15 @@ export function ProdutosPage() {
           </div>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} produto` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execDesativar}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

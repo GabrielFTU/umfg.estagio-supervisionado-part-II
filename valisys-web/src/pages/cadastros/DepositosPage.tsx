@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface DepositoItem {
   id: string;
@@ -87,6 +88,7 @@ export function DepositosPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<DepositoItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -105,8 +107,14 @@ export function DepositosPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = async (item: DepositoItem) => {
-    if (!confirm(`${item.ativo ? 'Desativar' : 'Reativar'} "${item.nome}"?`)) return;
+  const handleToggle = (item: DepositoItem) => {
+    setConfirmTarget(item);
+  };
+
+  const execToggle = async () => {
+    if (!confirmTarget) return;
+    const item = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/Deposito/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     load();
@@ -259,6 +267,15 @@ export function DepositosPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} depósito` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execToggle}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

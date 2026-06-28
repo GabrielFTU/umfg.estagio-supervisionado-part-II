@@ -5,6 +5,7 @@ import {
   ChevronRight, Home, Loader2, MoreHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -154,6 +155,8 @@ export function PessoasPage() {
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [desativarTarget, setDesativarTarget] = useState<PessoaItem | null>(null);
+  const [bloquearTarget, setBloquearTarget] = useState<PessoaItem | null>(null);
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
@@ -208,8 +211,14 @@ export function PessoasPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDesativar = async (p: PessoaItem) => {
-    if (!confirm(`${p.ativo ? 'Desativar' : 'Reativar'} "${p.nome}"?`)) return;
+  const handleDesativar = (p: PessoaItem) => {
+    setDesativarTarget(p);
+  };
+
+  const execDesativar = async () => {
+    if (!desativarTarget) return;
+    const p = desativarTarget;
+    setDesativarTarget(null);
     const token = localStorage.getItem('token');
     const url = p.tipo === 'fisica'
       ? `/api/PessoasFisicas/${p.id}`
@@ -218,8 +227,14 @@ export function PessoasPage() {
     load();
   };
 
-  const handleBloquear = async (p: PessoaItem) => {
-    if (!confirm(`Bloquear crédito de "${p.nome}"?`)) return;
+  const handleBloquear = (p: PessoaItem) => {
+    setBloquearTarget(p);
+  };
+
+  const execBloquear = async () => {
+    if (!bloquearTarget) return;
+    const p = bloquearTarget;
+    setBloquearTarget(null);
     const token = localStorage.getItem('token');
     const url = p.tipo === 'fisica'
       ? `/api/PessoasFisicas/${p.id}/bloquear`
@@ -464,6 +479,25 @@ export function PessoasPage() {
           </div>
         )}
       </div>
+
+      <ModalMsg
+        aberto={desativarTarget !== null}
+        titulo={desativarTarget ? `${desativarTarget.ativo ? 'Desativar' : 'Reativar'} pessoa` : ''}
+        descricao={desativarTarget ? `${desativarTarget.ativo ? 'Desativar' : 'Reativar'} "${desativarTarget.nome}"?` : ''}
+        variante={desativarTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execDesativar}
+        onCancelar={() => setDesativarTarget(null)}
+      />
+
+      <ModalMsg
+        aberto={bloquearTarget !== null}
+        titulo="Bloquear crédito"
+        descricao={bloquearTarget ? `Bloquear crédito de "${bloquearTarget.nome}"?` : ''}
+        variante="perigo"
+        labelConfirmar="Bloquear"
+        onConfirmar={execBloquear}
+        onCancelar={() => setBloquearTarget(null)}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronRight, Home, Loader2, Plus, Trash2, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -58,6 +59,7 @@ export function InventarioFormPage() {
   const [finalizing, setFinalizing] = useState(false);
   const [error, setError]           = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [finalizarConfirm, setFinalizarConfirm] = useState(false);
 
   const [depositos, setDepositos] = useState<DepositoOpt[]>([]);
   const [produtos, setProdutos]   = useState<ProdutoOpt[]>([]);
@@ -166,9 +168,13 @@ export function InventarioFormPage() {
     }
   };
 
-  const handleFinalizar = async () => {
+  const handleFinalizar = () => {
     if (!validate()) return;
-    if (!confirm('Finalizar o inventário? Esta ação não pode ser desfeita.')) return;
+    setFinalizarConfirm(true);
+  };
+
+  const execFinalizar = async () => {
+    setFinalizarConfirm(false);
     setFinalizing(true);
     setError('');
     const token = localStorage.getItem('token');
@@ -456,6 +462,16 @@ export function InventarioFormPage() {
           </div>
         </div>
       </form>
+
+      <ModalMsg
+        aberto={finalizarConfirm}
+        titulo="Finalizar inventário"
+        descricao="Finalizar o inventário? Esta ação não pode ser desfeita."
+        variante="aviso"
+        labelConfirmar="Finalizar"
+        onConfirmar={execFinalizar}
+        onCancelar={() => setFinalizarConfirm(false)}
+      />
     </div>
   );
 }

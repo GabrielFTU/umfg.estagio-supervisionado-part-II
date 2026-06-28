@@ -56,6 +56,8 @@ export function ContaReceberFormPage() {
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [confirmSalvarOpen, setConfirmSalvarOpen]   = useState(false);
+  const [confirmCancelarOpen, setConfirmCancelarOpen] = useState(false);
 
   const [pessoas, setPessoas]       = useState<PessoaOpt[]>([]);
   const [maisOpcoes, setMaisOpcoes] = useState(false);
@@ -127,9 +129,14 @@ export function ContaReceberFormPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    setConfirmSalvarOpen(true);
+  };
+
+  const salvar = async () => {
+    setConfirmSalvarOpen(false);
     setSaving(true);
     setError('');
     const token = localStorage.getItem('token');
@@ -407,7 +414,7 @@ export function ContaReceberFormPage() {
         <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4">
           <button
             type="button"
-            onClick={() => navigate('/financeiro/contas-receber')}
+            onClick={() => modo !== 'visualizar' ? setConfirmCancelarOpen(true) : navigate('/financeiro/contas-receber')}
             className="text-sm text-gray-500 hover:text-gray-700 transition-colors shrink-0"
           >
             Cancelar
@@ -434,6 +441,26 @@ export function ContaReceberFormPage() {
           )}
         </div>
       </form>
+
+      <ModalMsg
+        aberto={confirmSalvarOpen}
+        variante="aviso"
+        titulo={modo === 'criar' ? 'Criar conta a receber?' : 'Salvar alterações?'}
+        descricao={modo === 'criar' ? 'A conta a receber será registrada. Deseja continuar?' : 'Os dados da conta a receber serão atualizados. Deseja continuar?'}
+        labelConfirmar="Salvar"
+        onConfirmar={salvar}
+        onCancelar={() => setConfirmSalvarOpen(false)}
+      />
+
+      <ModalMsg
+        aberto={confirmCancelarOpen}
+        variante="perigo"
+        titulo="Descartar alterações?"
+        descricao="As informações preenchidas serão perdidas. Deseja sair assim mesmo?"
+        labelConfirmar="Sair"
+        onConfirmar={() => navigate('/financeiro/contas-receber')}
+        onCancelar={() => setConfirmCancelarOpen(false)}
+      />
     </div>
   );
 }

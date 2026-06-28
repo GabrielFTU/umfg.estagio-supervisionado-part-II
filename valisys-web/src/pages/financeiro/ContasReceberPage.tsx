@@ -7,6 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import { PixModal } from '@/components/financeiro/PixModal';
 import { BoletoViewer } from '@/components/financeiro/BoletoViewer';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface ParcelaRow {
   contaId: string;
@@ -195,6 +196,7 @@ export function ContasReceberPage() {
   type ModalTarget = { contaId: string; descricao: string; valor: number; pagadorNome: string; pagadorDoc: string; dataVencimento: string; dataEmissao: string } | null;
   const [pixTarget,    setPixTarget]    = useState<ModalTarget>(null);
   const [boletoTarget, setBoletoTarget] = useState<ModalTarget>(null);
+  const [cancelTarget, setCancelTarget] = useState<{ contaId: string; ativo: boolean } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -263,10 +265,11 @@ export function ContasReceberPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleCancelar = async (contaId: string) => {
-    if (!confirm('Cancelar esta conta a receber?')) return;
+  const execCancelar = async () => {
+    if (!cancelTarget) return;
     const token = localStorage.getItem('token');
-    await fetch(`/api/contas-receber/${contaId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    await fetch(`/api/contas-receber/${cancelTarget.contaId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    setCancelTarget(null);
     load();
   };
 
@@ -473,7 +476,7 @@ export function ContasReceberPage() {
                           onView={() => navigate(`/financeiro/contas-receber/${row.contaId}`)}
                           onEdit={() => navigate(`/financeiro/contas-receber/${row.contaId}/editar`)}
                           onBaixar={() => navigate(`/financeiro/contas-receber/${row.contaId}/baixar`)}
-                          onCancelar={() => handleCancelar(row.contaId)}
+                          onCancelar={() => setCancelTarget({ contaId: row.contaId, ativo: row.contaAtivo })}
                           onPix={() => setPixTarget({
                             contaId: row.contaId,
                             descricao: row.descricao,
@@ -525,6 +528,18 @@ export function ContasReceberPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={!!cancelTarget}
+        variante="perigo"
+        titulo={cancelTarget?.ativo ? 'Cancelar conta a receber?' : 'Reativar conta a receber?'}
+        descricao={cancelTarget?.ativo
+          ? 'A conta será cancelada. Esta ação pode ser desfeita reativando o registro.'
+          : 'A conta voltará a ficar ativa e visível nos lançamentos.'}
+        labelConfirmar={cancelTarget?.ativo ? 'Cancelar conta' : 'Reativar'}
+        onConfirmar={execCancelar}
+        onCancelar={() => setCancelTarget(null)}
+      />
 
       {/* PIX Modal */}
       {pixTarget && (

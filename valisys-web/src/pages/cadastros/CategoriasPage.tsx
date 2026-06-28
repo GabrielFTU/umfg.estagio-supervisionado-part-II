@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type CategoriaItem = {
   id: string;
@@ -79,6 +80,7 @@ export function CategoriasPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<CategoriaItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -111,9 +113,14 @@ export function CategoriasPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = async (c: CategoriaItem) => {
-    const acao = c.ativo ? 'Desativar' : 'Reativar';
-    if (!confirm(`${acao} a categoria "${c.nome}"?`)) return;
+  const handleToggleAtivo = (c: CategoriaItem) => {
+    setConfirmTarget(c);
+  };
+
+  const execToggleAtivo = async () => {
+    if (!confirmTarget) return;
+    const c = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     if (c.ativo) {
       const res = await fetch(`/api/CategoriasProduto/${c.id}`, {
@@ -284,6 +291,15 @@ export function CategoriasPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} categoria` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a categoria "${confirmTarget.nome}"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execToggleAtivo}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

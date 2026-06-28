@@ -5,6 +5,7 @@ import {
   ChevronUp, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface InventarioRow {
   id: string;
@@ -141,6 +142,8 @@ export function InventariosPage() {
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort_]      = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'dataAbertura', dir: 'desc' });
   const filterRef = useRef<HTMLDivElement>(null);
+  const [finalizarId, setFinalizarId] = useState<string | null>(null);
+  const [cancelarId, setCancelarId]   = useState<string | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -176,15 +179,23 @@ export function InventariosPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleFinalizar = async (id: string) => {
-    if (!confirm('Finalizar este inventário? Esta ação não pode ser desfeita.')) return;
+  const handleFinalizar = (id: string) => { setFinalizarId(id); };
+
+  const execFinalizar = async () => {
+    if (!finalizarId) return;
+    const id = finalizarId;
+    setFinalizarId(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/inventarios/${id}/finalizar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
     load();
   };
 
-  const handleCancelar = async (id: string) => {
-    if (!confirm('Cancelar este inventário?')) return;
+  const handleCancelar = (id: string) => { setCancelarId(id); };
+
+  const execCancelar = async () => {
+    if (!cancelarId) return;
+    const id = cancelarId;
+    setCancelarId(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/inventarios/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     load();
@@ -364,6 +375,25 @@ export function InventariosPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={finalizarId !== null}
+        titulo="Finalizar inventário"
+        descricao="Finalizar este inventário? Esta ação não pode ser desfeita."
+        variante="aviso"
+        labelConfirmar="Finalizar"
+        onConfirmar={execFinalizar}
+        onCancelar={() => setFinalizarId(null)}
+      />
+      <ModalMsg
+        aberto={cancelarId !== null}
+        titulo="Cancelar inventário"
+        descricao="Cancelar este inventário?"
+        variante="perigo"
+        labelConfirmar="Cancelar inventário"
+        onConfirmar={execCancelar}
+        onCancelar={() => setCancelarId(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface CondicaoPagamento {
   id: string; codigo: number; nome: string; numeroParcelas: number;
@@ -73,6 +74,7 @@ export function CondicoesPagamentoPage() {
   const [page, setPage]       = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<CondicaoPagamento | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -91,8 +93,14 @@ export function CondicoesPagamentoPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = async (item: CondicaoPagamento) => {
-    if (!confirm(`${item.ativo ? 'Inativar' : 'Reativar'} "${item.nome}"?`)) return;
+  const handleToggle = (item: CondicaoPagamento) => {
+    setConfirmTarget(item);
+  };
+
+  const execToggle = async () => {
+    if (!confirmTarget) return;
+    const item = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     if (item.ativo) {
       await fetch(`/api/condicoes-pagamento/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
@@ -246,6 +254,15 @@ export function CondicoesPagamentoPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Inativar' : 'Reativar'} condição de pagamento` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Inativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execToggle}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

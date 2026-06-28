@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,6 +91,7 @@ export function FichaTecnicasPage() {
   const [filtroAtiva, setFiltroAtiva] = useState<boolean | null>(true);
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<FichaTecnicaItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -121,8 +123,12 @@ export function FichaTecnicasPage() {
     return true;
   }), [fichas, search, filtroAtiva]);
 
-  const handleInativar = async (f: FichaTecnicaItem) => {
-    if (!confirm(`Inativar a ficha técnica do produto "${f.produtoNome}"?`)) return;
+  const handleInativar = (f: FichaTecnicaItem) => { setConfirmTarget(f); };
+
+  const execInativar = async () => {
+    if (!confirmTarget) return;
+    const f = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/fichas-tecnicas/${f.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     showToast('Ficha técnica inativada');
@@ -274,6 +280,15 @@ export function FichaTecnicasPage() {
           </span>
         </div>
       )}
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo="Inativar ficha técnica"
+        descricao={confirmTarget ? `Inativar a ficha técnica do produto "${confirmTarget.produtoNome}"?` : ''}
+        variante="perigo"
+        onConfirmar={execInativar}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

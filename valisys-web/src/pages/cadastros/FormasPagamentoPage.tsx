@@ -5,6 +5,7 @@ import {
   ChevronRight, Home, Loader2, MoreHorizontal, Users, Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -112,6 +113,7 @@ export function FormasPagamentoPage() {
   const [filtroRestrita, setFiltroRestrita] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<FormaItem | null>(null);
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
@@ -151,9 +153,14 @@ export function FormasPagamentoPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = async (f: FormaItem) => {
-    const acao = f.ativo ? 'Desativar' : 'Reativar';
-    if (!confirm(`${acao} a forma de pagamento "${f.nome}"?`)) return;
+  const handleToggle = (f: FormaItem) => {
+    setConfirmTarget(f);
+  };
+
+  const execToggle = async () => {
+    if (!confirmTarget) return;
+    const f = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/formas-pagamento/${f.id}`, {
       method: 'DELETE',
@@ -415,6 +422,15 @@ export function FormasPagamentoPage() {
           </div>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} forma de pagamento` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a forma de pagamento "${confirmTarget.nome}"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execToggle}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface AlmoxarifadoItem {
   id: string;
@@ -79,6 +80,7 @@ export function AlmoxarifadosPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<AlmoxarifadoItem | null>(null);
   useEffect(() => {
     if (!filterOpen) return;
     const h = (e: MouseEvent) => { if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false); };
@@ -96,9 +98,14 @@ export function AlmoxarifadosPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = async (item: AlmoxarifadoItem) => {
-    const acao = item.ativo ? 'Desativar' : 'Reativar';
-    if (!confirm(`${acao} "${item.nome}"?`)) return;
+  const handleToggle = (item: AlmoxarifadoItem) => {
+    setConfirmTarget(item);
+  };
+
+  const execToggle = async () => {
+    if (!confirmTarget) return;
+    const item = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     if (item.ativo) {
       await fetch(`/api/Almoxarifado/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
@@ -261,6 +268,15 @@ export function AlmoxarifadosPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} almoxarifado` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
+        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execToggle}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

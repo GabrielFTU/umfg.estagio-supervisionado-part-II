@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 interface LoteItem {
   id: string;
@@ -110,6 +111,7 @@ export function LotesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [confirmTarget, setConfirmTarget] = useState<LoteItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -130,8 +132,12 @@ export function LotesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleCancel = async (item: LoteItem) => {
-    if (!confirm(`Cancelar lote "${item.codigoLote}"?`)) return;
+  const handleCancel = (item: LoteItem) => { setConfirmTarget(item); };
+
+  const execCancel = async () => {
+    if (!confirmTarget) return;
+    const item = confirmTarget;
+    setConfirmTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/lotes/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     load();
@@ -280,6 +286,16 @@ export function LotesPage() {
           </>
         )}
       </div>
+
+      <ModalMsg
+        aberto={confirmTarget !== null}
+        titulo="Cancelar lote"
+        descricao={confirmTarget ? `Cancelar lote "${confirmTarget.codigoLote}"?` : ''}
+        variante="perigo"
+        labelConfirmar="Cancelar lote"
+        onConfirmar={execCancel}
+        onCancelar={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

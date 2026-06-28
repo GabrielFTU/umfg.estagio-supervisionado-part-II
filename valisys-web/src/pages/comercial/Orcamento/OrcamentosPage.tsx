@@ -8,6 +8,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -472,6 +473,10 @@ export function OrcamentosPage() {
   const [page, setPage]             = useState(1);
   const [converting, setConverting] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const [enviarTarget, setEnviarTarget]     = useState<OrcamentoItem | null>(null);
+  const [cancelarTarget, setCancelarTarget] = useState<OrcamentoItem | null>(null);
+  const [converterTarget, setConverterTarget] = useState<OrcamentoItem | null>(null);
+  const [converterLoteConfirm, setConverterLoteConfirm] = useState(false);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -534,22 +539,34 @@ export function OrcamentosPage() {
     return next;
   });
 
-  const handleEnviar = async (o: OrcamentoItem) => {
-    if (!confirm(`Enviar Orçamento #${o.codigo}?`)) return;
+  const handleEnviar = (o: OrcamentoItem) => { setEnviarTarget(o); };
+
+  const execEnviar = async () => {
+    if (!enviarTarget) return;
+    const o = enviarTarget;
+    setEnviarTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/orcamentos/${o.id}/enviar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
     load();
   };
 
-  const handleCancelar = async (o: OrcamentoItem) => {
-    if (!confirm(`Cancelar Orçamento #${o.codigo}? Esta ação não pode ser desfeita.`)) return;
+  const handleCancelar = (o: OrcamentoItem) => { setCancelarTarget(o); };
+
+  const execCancelar = async () => {
+    if (!cancelarTarget) return;
+    const o = cancelarTarget;
+    setCancelarTarget(null);
     const token = localStorage.getItem('token');
     await fetch(`/api/orcamentos/${o.id}/cancelar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
     load();
   };
 
-  const handleConverter = async (o: OrcamentoItem) => {
-    if (!confirm(`Transformar Orçamento #${String(o.codigo).padStart(3, '0')} em Pedido de Venda?\nTodos os dados serão transferidos automaticamente.`)) return;
+  const handleConverter = (o: OrcamentoItem) => { setConverterTarget(o); };
+
+  const execConverter = async () => {
+    if (!converterTarget) return;
+    const o = converterTarget;
+    setConverterTarget(null);
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`/api/orcamentos/${o.id}/converter-em-pedido`, {
@@ -562,10 +579,15 @@ export function OrcamentosPage() {
     } catch { alert('Erro inesperado ao converter o orçamento.'); }
   };
 
-  const handleConverterEmLote = async () => {
+  const handleConverterEmLote = () => {
     const convertible = orcamentos.filter(o => selected.has(o.id) && o.status !== 4 && o.status !== 5);
     if (convertible.length === 0) { alert('Nenhum orçamento selecionado pode ser convertido.'); return; }
-    if (!confirm(`Transformar ${convertible.length} orçamento(s) em Pedido de Venda?\nIsso criará ${convertible.length} pedido(s) automaticamente.`)) return;
+    setConverterLoteConfirm(true);
+  };
+
+  const execConverterEmLote = async () => {
+    setConverterLoteConfirm(false);
+    const convertible = orcamentos.filter(o => selected.has(o.id) && o.status !== 4 && o.status !== 5);
     setConverting(true);
     const token = localStorage.getItem('token');
     let success = 0;
@@ -814,6 +836,43 @@ export function OrcamentosPage() {
           )}
         </div>
       )}
+
+      <ModalMsg
+        aberto={enviarTarget !== null}
+        titulo="Enviar orçamento"
+        descricao={enviarTarget ? `Enviar Orçamento #${enviarTarget.codigo}?` : ''}
+        variante="aviso"
+        labelConfirmar="Enviar"
+        onConfirmar={execEnviar}
+        onCancelar={() => setEnviarTarget(null)}
+      />
+      <ModalMsg
+        aberto={cancelarTarget !== null}
+        titulo="Cancelar orçamento"
+        descricao={cancelarTarget ? `Cancelar Orçamento #${cancelarTarget.codigo}? Esta ação não pode ser desfeita.` : ''}
+        variante="perigo"
+        labelConfirmar="Cancelar orçamento"
+        onConfirmar={execCancelar}
+        onCancelar={() => setCancelarTarget(null)}
+      />
+      <ModalMsg
+        aberto={converterTarget !== null}
+        titulo="Transformar em Pedido de Venda"
+        descricao={converterTarget ? `Transformar Orçamento #${String(converterTarget.codigo).padStart(3, '0')} em Pedido de Venda? Todos os dados serão transferidos automaticamente.` : ''}
+        variante="aviso"
+        labelConfirmar="Transformar"
+        onConfirmar={execConverter}
+        onCancelar={() => setConverterTarget(null)}
+      />
+      <ModalMsg
+        aberto={converterLoteConfirm}
+        titulo="Transformar em Pedido de Venda"
+        descricao={`Transformar ${orcamentos.filter(o => selected.has(o.id) && o.status !== 4 && o.status !== 5).length} orçamento(s) em Pedido de Venda? Isso criará pedidos automaticamente.`}
+        variante="aviso"
+        labelConfirmar="Transformar"
+        onConfirmar={execConverterEmLote}
+        onCancelar={() => setConverterLoteConfirm(false)}
+      />
     </div>
   );
 }
