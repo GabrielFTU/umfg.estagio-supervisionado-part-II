@@ -21,6 +21,13 @@ namespace Valisys_Production.Repositories
                 .Include(p => p.UnidadeMedida)
                 .ToListAsync();
 
+        public override async Task<Produto> AddAsync(Produto entity)
+        {
+            _dbSet.Add(entity);
+            await _context.SaveChangesAsync();
+            return await GetByIdAsync(entity.Id) ?? entity;
+        }
+
         public async Task<int?> GetUltimoCodigoAsync()
             => await _dbSet.AsNoTracking()
                 .OrderByDescending(p => p.CodigoInternoProduto)

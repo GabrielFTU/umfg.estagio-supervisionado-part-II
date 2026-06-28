@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -27,14 +28,6 @@ type Filtros = {
 
 const FILTROS_VAZIOS: Filtros = { tipo: '', status: '' };
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
-
-// ─── Status badge ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ ativo, bloqueado }: { ativo: boolean; bloqueado: boolean }) {
-  if (!ativo)    return <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-black">Inativo</span>;
-  if (bloqueado) return <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">Bloqueado</span>;
-  return              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">Ativo</span>;
-}
 
 // ─── Máscaras ─────────────────────────────────────────────────────────────────
 
@@ -68,7 +61,11 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
   const toggle = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+      const MENU_H = 148;
+      const top = window.innerHeight - r.bottom < MENU_H + 4
+        ? r.top - MENU_H - 4
+        : r.bottom + 4;
+      setPos({ top, right: window.innerWidth - r.right });
     }
     setOpen(v => !v);
   };
@@ -91,7 +88,7 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
         className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
         <MoreHorizontal size={15} />
       </button>
-      {open && (
+      {open && createPortal(
         <div ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
           className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
@@ -105,10 +102,11 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
             {p.bloqueado ? 'Desbloquear' : 'Bloquear'}
           </button>
           <button onClick={() => { setOpen(false); onDesativar(); }}
-            className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', p.ativo ? 'text-red-500' : 'text-emerald-600')}>
+            className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', p.ativo ? 'text-red-500' : 'text-red-600')}>
             {p.ativo ? 'Desativar' : 'Reativar'}
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
@@ -193,11 +191,14 @@ export function ClientesPage() {
       const method = p.ativo ? 'DELETE' : 'PATCH';
       const url = p.ativo ? `${base}/${p.id}` : `${base}/${p.id}/reativar`;
       await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
+      load();
     } else {
       const endpoint = p.bloqueado ? 'desbloquear' : 'bloquear';
-      await fetch(`${base}/${p.id}/${endpoint}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${base}/${p.id}/${endpoint}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        setPessoas(prev => prev.map(item => item.id === p.id ? { ...item, bloqueado: !p.bloqueado } : item));
+      }
     }
-    load();
   };
 
   const filtered = pessoas.filter(p => {
@@ -316,37 +317,41 @@ export function ClientesPage() {
                   <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome / Razão Social</th>
                   <th className="text-left font-semibold text-gray-700 px-4 py-3 w-44">Contato</th>
                   <th className="text-left font-semibold text-gray-700 px-4 py-3 w-36">Município</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-24">Status</th>
                   <th className="w-10 pr-4" />
                 </tr>
               </thead>
               <tbody>
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
                       Nenhum registro encontrado.
                     </td>
                   </tr>
                 ) : paginated.map(p => (
                   <tr key={p.id}
                     onClick={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
-                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                    className={cn(
+                      'border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors',
+                      !p.ativo && 'opacity-50',
+                    )}>
                     <td className="px-6 py-3 text-gray-500 tabular-nums truncate">
                       {maskDoc(p.tipo, p.doc)}
                     </td>
                     <td className="px-4 py-3 truncate">
-                      <span className={cn(p.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
-                        {p.nome.toUpperCase()}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700 font-medium">{p.nome.toUpperCase()}</span>
+                        {p.bloqueado && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600 leading-none shrink-0">
+                            Bloqueado
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-500 truncate">
                       {p.email ?? maskPhone(p.telefone) ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-500 truncate">
                       {p.cidade !== '—' ? `${p.cidade}${p.uf ? ` – ${p.uf}` : ''}` : '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge ativo={p.ativo} bloqueado={p.bloqueado} />
                     </td>
                     <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
                       <RowMenu

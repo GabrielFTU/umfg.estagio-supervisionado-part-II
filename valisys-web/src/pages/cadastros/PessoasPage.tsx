@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Search, SlidersHorizontal, User,
@@ -79,7 +80,11 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
   const handleToggle = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+      const MENU_H = 148;
+      const top = window.innerHeight - r.bottom < MENU_H + 4
+        ? r.top - MENU_H - 4
+        : r.bottom + 4;
+      setPos({ top, right: window.innerWidth - r.right });
     }
     setOpen(v => !v);
   };
@@ -116,7 +121,7 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
         <MoreHorizontal size={15} />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
           ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
@@ -139,7 +144,8 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
             className="w-full text-left px-3 py-1.5 text-red-500 hover:bg-red-50 transition-colors">
             {p.ativo ? 'Desativar' : 'Reativar'}
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

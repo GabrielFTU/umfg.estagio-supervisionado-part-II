@@ -106,8 +106,10 @@ namespace Valisys_Production.Helpers
                 .ForMember(dest => dest.Classificacao, opt => opt.MapFrom(src => src.Classificacao.ToString()))
                 .ForMember(dest => dest.ClassificacaoId, opt => opt.MapFrom(src => (int)src.Classificacao))
                 .ForMember(dest => dest.EstoqueMinimo, opt => opt.Ignore())
-                .ForMember(dest => dest.CategoriaProdutoNome, opt => opt.MapFrom(src => src.CategoriaProduto.Nome))
-                .ForMember(dest => dest.UnidadeMedidaSigla, opt => opt.MapFrom(src => src.UnidadeMedida.Sigla))
+                .ForMember(dest => dest.CategoriaProdutoNome, opt => opt.MapFrom(src => src.CategoriaProduto != null ? src.CategoriaProduto.Nome : string.Empty))
+                .ForMember(dest => dest.UnidadeMedidaSigla, opt => opt.MapFrom(src => src.UnidadeMedida != null ? src.UnidadeMedida.Sigla : string.Empty))
+                .ForMember(dest => dest.TipoItemId, opt => opt.MapFrom(src => src.TipoItem.HasValue ? (int?)src.TipoItem.Value : null))
+                .ForMember(dest => dest.TipoItemNome, opt => opt.MapFrom(src => src.TipoItem.HasValue ? src.TipoItem.Value.ToString() : null))
                 .ForMember(dest => dest.AlmoxarifadoEstoqueId, opt => opt.Ignore())
                 .ForMember(dest => dest.AlmoxarifadoEstoqueNome, opt => opt.Ignore())
                 .ForMember(dest => dest.ImagemUrl, opt => opt.MapFrom(src => src.ImagemUrl));

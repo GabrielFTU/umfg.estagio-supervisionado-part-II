@@ -83,6 +83,15 @@ function floatToMaskedCurrency(value: number | null | undefined): string {
   return maskCurrency(String(Math.round(value * 100)));
 }
 
+async function readApiError(res: Response, fallback: string) {
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) {
+    const body = await res.json().catch(() => null);
+    return body?.detail ?? body?.message ?? body?.title ?? fallback;
+  }
+  return await res.text().catch(() => '') || fallback;
+}
+
 // ─── Tipos locais ─────────────────────────────────────────────────────────────
 
 interface FornecedorLocal {
@@ -579,11 +588,11 @@ export function ProdutoFormPage() {
       let produtoId = id;
       if (!id) {
         const res = await fetch('/api/produtos', { method: 'POST', headers: h, body: JSON.stringify(body) });
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error(await readApiError(res, 'Não foi possível salvar o produto.'));
         produtoId = (await res.json()).id;
       } else {
         const res = await fetch(`/api/produtos/${id}`, { method: 'PUT', headers: h, body: JSON.stringify(body) });
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error(await readApiError(res, 'Não foi possível salvar o produto.'));
       }
 
       for (const fId of deletedFornecedorIds)
@@ -607,8 +616,11 @@ export function ProdutoFormPage() {
       }
       showToast();
       navigate('/cadastros/produtos');
-    } catch {
-      setErrors(prev => ({ ...prev, _global: 'Não foi possível salvar. Tente novamente.' }));
+    } catch (err) {
+      setErrors(prev => ({
+        ...prev,
+        _global: err instanceof Error ? err.message : 'Não foi possível salvar. Tente novamente.',
+      }));
     } finally { setSaving(false); }
   };
 

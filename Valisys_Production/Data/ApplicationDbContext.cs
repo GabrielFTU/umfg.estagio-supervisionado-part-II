@@ -134,12 +134,14 @@ namespace Valisys_Production.Data
                 .HasOne(m => m.AlmoxarifadoOrigem)
                 .WithMany()
                 .HasForeignKey(m => m.AlmoxarifadoOrigemId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Movimentacao>()
                 .HasOne(m => m.AlmoxarifadoDestino)
                 .WithMany()
                 .HasForeignKey(m => m.AlmoxarifadoDestinoId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Movimentacao>()
