@@ -22,8 +22,9 @@ function trintaDias() {
   return d.toISOString().slice(0, 10);
 }
 
-const ul = (err?: string) => cn(
+const ul = (err?: boolean, ro?: boolean) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
+  ro  ? 'bg-gray-50 cursor-default border-gray-200' :
   err ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
 );
 
@@ -51,6 +52,7 @@ export function ContaReceberFormPage() {
     ? 'criar'
     : location.pathname.endsWith('/editar') ? 'editar' : 'visualizar';
   const readonly = modo === 'visualizar';
+  const roId = readonly || modo === 'editar'; 
 
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving]   = useState(false);
@@ -231,27 +233,28 @@ export function ContaReceberFormPage() {
 
           {/* Linha 1: Valor | Emissão | Vencimento */}
           <div className="grid grid-cols-3 gap-8 mb-6">
-            <UField label="Valor" required={!readonly} error={fieldErrors.valor}>
+            <UField label="Valor" required={!roId} error={fieldErrors.valor}>
               <input
-                disabled={readonly}
+                disabled={roId}
                 value={valor}
                 onChange={e => { setValor(e.target.value); clearErr('valor'); }}
                 placeholder="R$ 0,00"
-                className={ul(fieldErrors.valor)}
+                readOnly={roId}
+                className={ul(!!fieldErrors.valor, roId)}
               />
             </UField>
-            <UField label="Emissão" required={!readonly}>
+            <UField label="Emissão" required={!roId}>
               <DatePicker
                 value={emissao}
                 onChange={setEmissao}
-                disabled={readonly}
+                disabled={roId}
               />
             </UField>
-            <UField label="Vencimento" required={!readonly} error={fieldErrors.vencimento}>
+            <UField label="Vencimento" required={!roId} error={fieldErrors.vencimento}>
               <DatePicker
                 value={vencimento}
                 onChange={v => { setVencimento(v); clearErr('vencimento'); }}
-                disabled={readonly}
+                disabled={roId}
                 error={!!fieldErrors.vencimento}
               />
             </UField>
@@ -266,7 +269,7 @@ export function ContaReceberFormPage() {
                 onChange={e => { setDescricao(e.target.value); clearErr('descricao'); }}
                 placeholder="Descreva a conta"
                 maxLength={200}
-                className={ul(fieldErrors.descricao)}
+                className={ul(!!fieldErrors.descricao)}
               />
             </UField>
           </div>
@@ -292,7 +295,7 @@ export function ContaReceberFormPage() {
                   type="number" min={1} max={60}
                   value={numeroParcelas}
                   onChange={e => { setNumParcelas(e.target.value); clearErr('numeroParcelas'); }}
-                  className={ul(fieldErrors.numeroParcelas)}
+                  className={ul(!!fieldErrors.numeroParcelas)}
                 />
               </UField>
             </div>

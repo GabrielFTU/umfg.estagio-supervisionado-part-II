@@ -122,14 +122,14 @@ function SortHeader({ col, label, sort, setSort, align = 'left' }: {
   label: string;
   sort: { key: SortKey; dir: 'asc' | 'desc' };
   setSort: (k: SortKey) => void;
-  align?: 'left' | 'right';
+  align?: 'left' | 'right' | 'center';
 }) {
   const active = sort.key === col;
   return (
     <th
       className={cn(
         'py-3 px-3 text-xs font-semibold text-gray-600 cursor-pointer select-none whitespace-nowrap',
-        align === 'right' ? 'text-right' : 'text-left',
+        align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left',
       )}
       onClick={() => setSort(col)}
     >
@@ -363,8 +363,8 @@ export function ContasPagarPage() {
                   <SortHeader col="descricao"       label="Descrição"    sort={sort} setSort={handleSort} />
                   <SortHeader col="numeroDocumento" label="Documento"    sort={sort} setSort={handleSort} />
                   <SortHeader col="parcela"         label="Parcela"      sort={sort} setSort={handleSort} />
-                  <SortHeader col="dataEmissao"     label="Emissão"      sort={sort} setSort={handleSort} />
-                  <SortHeader col="dataVencimento"  label="Vencimento"   sort={sort} setSort={handleSort} />
+                  <SortHeader col="dataEmissao"     label="Emissão"      sort={sort} setSort={handleSort} align="center" />
+                  <SortHeader col="dataVencimento"  label="Vencimento"   sort={sort} setSort={handleSort} align="center" />
                   <SortHeader col="valor"           label="Valor"        sort={sort} setSort={handleSort} align="right" />
                   <SortHeader col="valorAberto"     label="Valor aberto" sort={sort} setSort={handleSort} align="right" />
                   <SortHeader col="statusDisplay"   label="Status"       sort={sort} setSort={handleSort} />
@@ -408,8 +408,8 @@ export function ContasPagarPage() {
                       </td>
                       <td className="px-3 py-3 text-sm text-gray-500">{row.numeroDocumento ?? '—'}</td>
                       <td className="px-3 py-3 text-sm text-gray-500">{row.parcela}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{fmtDate(row.dataEmissao)}</td>
-                      <td className={cn('px-3 py-3 text-sm font-medium', row.vencida ? 'text-red-500' : 'text-gray-700')}>
+                      <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataEmissao)}</td>
+                      <td className={cn('px-3 py-3 text-sm font-medium text-center', row.vencida ? 'text-red-500' : 'text-gray-700')}>
                         {fmtDate(row.dataVencimento)}
                       </td>
                       <td className="px-3 py-3 text-sm text-gray-700 text-right">{fmtBRL(row.valor)}</td>

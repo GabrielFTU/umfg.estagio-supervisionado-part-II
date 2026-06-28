@@ -740,8 +740,8 @@ export function OrcamentosPage() {
                 <th className="text-left text-xs font-semibold text-gray-600 py-3 pr-4">Cliente</th>
                 <th className="text-left text-xs font-semibold text-gray-600 py-3 pr-4">Produtos</th>
                 <th className="text-left text-xs font-semibold text-gray-600 py-3 pr-4 w-32">Status</th>
-                <th className="text-left text-xs font-semibold text-gray-600 py-3 pr-4 w-24">Emissão</th>
-                <th className="text-left text-xs font-semibold text-gray-600 py-3 pr-4 w-24">Validade</th>
+                <th className="text-center text-xs font-semibold text-gray-600 py-3 pr-4 w-24">Emissão</th>
+                <th className="text-center text-xs font-semibold text-gray-600 py-3 pr-4 w-24">Validade</th>
                 <th className="text-right text-xs font-semibold text-gray-600 py-3 pr-4 w-28">Total</th>
                 <th className="w-10 pr-4" />
               </tr>
@@ -782,8 +782,8 @@ export function OrcamentosPage() {
                         {sc.label}
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-sm text-gray-600 tabular-nums">{formatDate(o.dataEmissao)}</td>
-                    <td className="py-3 pr-4 text-sm text-gray-600 tabular-nums">{formatDate(o.dataValidade)}</td>
+                    <td className="py-3 pr-4 text-sm text-gray-600 tabular-nums text-center">{formatDate(o.dataEmissao)}</td>
+                    <td className="py-3 pr-4 text-sm text-gray-600 tabular-nums text-center">{formatDate(o.dataValidade)}</td>
                     <td className="py-3 pr-4 text-right text-sm font-semibold text-gray-800 tabular-nums">
                       {formatCurrency(o.total)}
                     </td>

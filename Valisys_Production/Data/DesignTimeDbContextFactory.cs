@@ -30,7 +30,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Applicatio
 
     private static void EnsureInitialMigrationRegistered(string connectionString)
     {
-        const string migrationId = "20260623223725_AddRefreshTokens";
+        const string migrationId = "20260628204025_InitialCreate";
         try
         {
             using var conn = new Npgsql.NpgsqlConnection(connectionString);

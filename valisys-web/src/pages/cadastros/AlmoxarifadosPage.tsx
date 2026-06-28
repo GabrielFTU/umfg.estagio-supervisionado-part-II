@@ -91,7 +91,7 @@ export function AlmoxarifadosPage() {
   const load = async () => {
     setLoading(true);
     const token = localStorage.getItem('token');
-    const res = await fetch('/api/Almoxarifado', { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch('/api/almoxarifados', { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) setItems(await res.json());
     setLoading(false);
   };
@@ -108,12 +108,12 @@ export function AlmoxarifadosPage() {
     setConfirmTarget(null);
     const token = localStorage.getItem('token');
     if (item.ativo) {
-      await fetch(`/api/Almoxarifado/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      await fetch(`/api/almoxarifados/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     } else {
-      const res = await fetch(`/api/Almoxarifado/${item.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/almoxarifados/${item.id}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
-        await fetch(`/api/Almoxarifado/${item.id}`, {
+        await fetch(`/api/almoxarifados/${item.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ ...data, ativo: true }),

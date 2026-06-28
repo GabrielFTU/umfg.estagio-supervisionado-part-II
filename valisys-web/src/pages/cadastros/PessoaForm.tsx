@@ -573,8 +573,8 @@ export function PessoaFormPage() {
                     <Field label="RG" span={3}>
                       <IMaskInput mask="00.000.000-[*]" value={f.rg}
                         onAccept={(v: string) => set('rg', v)}
-                        placeholder="00.000.000-0" readOnly={roId}
-                        className={inputCls(false, roId)} />
+                        placeholder="00.000.000-0" readOnly={ro}
+                        className={inputCls(false, ro)} />
                     </Field>
 
                     <Field label="Órgão Expedidor" span={2}>

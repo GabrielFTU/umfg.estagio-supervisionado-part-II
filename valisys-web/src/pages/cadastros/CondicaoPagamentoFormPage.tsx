@@ -292,12 +292,12 @@ export function CondicaoPagamentoFormPage() {
                   {parcelas.map((p, i) => (
                     <tr key={p.numero} className="border-b border-gray-100">
                       <td className="py-2 text-sm text-gray-700">{p.numero}</td>
-                      <td className="py-2">
+                      <td className="py-2 text-right">
                         {readOnly
                           ? <span className="text-sm text-gray-500">{p.numeroDias}</span>
                           : (
                             <input type="number" min={0}
-                              className="w-28 bg-transparent text-sm text-gray-500 border-b border-gray-200 outline-none focus:border-[#3B82F6] py-0.5 px-1"
+                              className="w-28 bg-transparent text-sm text-gray-500 border-b border-gray-200 outline-none focus:border-[#3B82F6] py-0.5 px-1 text-right"
                               value={p.numeroDias}
                               onChange={e => setParcelaDias(i, parseInt(e.target.value) || 0)} />
                           )

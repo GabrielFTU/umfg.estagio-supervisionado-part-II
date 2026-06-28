@@ -67,14 +67,14 @@ function SortHeader({ col, label, sort, onSort, align = 'left' }: {
   col: SortKey; label: string;
   sort: { key: SortKey; dir: 'asc' | 'desc' };
   onSort: (k: SortKey) => void;
-  align?: 'left' | 'right';
+  align?: 'left' | 'right' | 'center';
 }) {
   const active = sort.key === col;
   return (
     <th
       className={cn(
         'py-3 px-3 text-xs font-semibold text-gray-600 cursor-pointer select-none whitespace-nowrap',
-        align === 'right' ? 'text-right' : 'text-left',
+        align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left',
       )}
       onClick={() => onSort(col)}
     >
@@ -397,7 +397,7 @@ export function MovimentacoesPage() {
             <table className="w-full text-sm min-w-[900px]">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <SortHeader col="dataMovimentacao" label="Data"      sort={sort} onSort={handleSort} />
+                  <SortHeader col="dataMovimentacao" label="Data"      sort={sort} onSort={handleSort} align="center" />
                   <SortHeader col="tipo"             label="Tipo"      sort={sort} onSort={handleSort} />
                   <SortHeader col="produtoNome"      label="Produto"   sort={sort} onSort={handleSort} />
                   <SortHeader col="quantidade"       label="Qtd"       sort={sort} onSort={handleSort} align="right" />
@@ -421,7 +421,7 @@ export function MovimentacoesPage() {
                   const cfg = TIPO_CFG[row.tipo] ?? { label: row.tipo, badge: 'bg-gray-100 text-gray-600', icon: null };
                   return (
                     <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="px-3 py-3 text-sm text-gray-600 tabular-nums whitespace-nowrap">
+                      <td className="px-3 py-3 text-sm text-gray-600 tabular-nums whitespace-nowrap text-center">
                         {fmtDate(row.dataMovimentacao)}
                       </td>
                       <td className="px-3 py-3">

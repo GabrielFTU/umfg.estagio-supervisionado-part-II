@@ -1104,7 +1104,7 @@ export function OrdensDeProducaoPage() {
                         : '—'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell">{o.faseAtualNome || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell tabular-nums">{fmtDate(o.dataInicio)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell tabular-nums text-center">{fmtDate(o.dataInicio)}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={o.status} />
                     </td>

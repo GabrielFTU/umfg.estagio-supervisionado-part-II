@@ -80,7 +80,7 @@ export function AlmoxarifadoFormPage() {
       setLoading(true);
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`/api/Almoxarifado/${id}`, {
+        const res = await fetch(`/api/almoxarifados/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error();
@@ -133,12 +133,12 @@ export function AlmoxarifadoFormPage() {
         email:       email.trim() || undefined,
       };
       const res = modo === 'criar'
-        ? await fetch('/api/Almoxarifado', {
+        ? await fetch('/api/almoxarifados', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify(body),
           })
-        : await fetch(`/api/Almoxarifado/${id}`, {
+        : await fetch(`/api/almoxarifados/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ id, ...body, ativo }),

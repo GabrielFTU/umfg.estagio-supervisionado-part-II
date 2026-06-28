@@ -311,8 +311,8 @@ export function PedidosVendaPage() {
                   <th className="text-left text-xs font-semibold text-gray-400 py-3 pr-6 w-32">Status</th>
                   <th className="text-left text-xs font-semibold text-gray-400 py-3 pr-6 w-28">Pedido</th>
                   <th className="text-left text-xs font-semibold text-gray-400 py-3 pr-6">Cliente</th>
-                  <th className="text-left text-xs font-semibold text-gray-400 py-3 pr-6 w-28">Emissão</th>
-                  <th className="text-left text-xs font-semibold text-gray-400 py-3 pr-6 w-32">Prev. Entrega</th>
+                  <th className="text-center text-xs font-semibold text-gray-400 py-3 pr-6 w-28">Emissão</th>
+                  <th className="text-center text-xs font-semibold text-gray-400 py-3 pr-6 w-32">Prev. Entrega</th>
                   <th className="text-right text-xs font-semibold text-gray-400 py-3 pr-6 w-28">Itens</th>
                   <th className="text-right text-xs font-semibold text-gray-400 py-3 pr-6 w-32">Total</th>
                   <th className="w-10 pr-4" />
@@ -342,8 +342,8 @@ export function PedidosVendaPage() {
                         </span>
                       </td>
                       <td className="py-3 pr-6 text-sm text-gray-700">{p.clienteNome}</td>
-                      <td className="py-3 pr-6 text-sm text-gray-500 tabular-nums">{formatDate(p.dataEmissao)}</td>
-                      <td className="py-3 pr-6 text-sm text-gray-500 tabular-nums">{formatDate(p.dataPrevisaoEntrega)}</td>
+                      <td className="py-3 pr-6 text-sm text-gray-500 tabular-nums text-center">{formatDate(p.dataEmissao)}</td>
+                      <td className="py-3 pr-6 text-sm text-gray-500 tabular-nums text-center">{formatDate(p.dataPrevisaoEntrega)}</td>
                       <td className="py-3 pr-6 text-right text-sm text-gray-500">{p.totalItens}</td>
                       <td className="py-3 pr-6 text-right text-sm font-medium text-gray-700 tabular-nums">
                         {formatCurrency(p.total)}

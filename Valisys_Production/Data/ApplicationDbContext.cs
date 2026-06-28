@@ -470,7 +470,7 @@ namespace Valisys_Production.Data
             modelBuilder.Entity<Perfil>().HasData(adminPerfil);
 
             var adminUsuario = new Usuario("Administrador Master", "admin@valisys.com",
-                "$2a$12$ceV2TtMQV.UXqYGXoyMt.eV9s2YcTh0SVykcjMPxxDxjci9hoYzeG", AdminProfileId);
+                "$2a$12$ANrNWbumb63JFxo..Ar6A.3iQJhEqJUqR5kqjklRZoZHs3uM7C4k2", AdminProfileId);
             adminUsuario.InicializarParaSeed(AdminUserId, seedDate);
             modelBuilder.Entity<Usuario>().HasData(adminUsuario);
 

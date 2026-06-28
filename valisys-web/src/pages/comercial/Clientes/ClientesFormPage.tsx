@@ -144,7 +144,7 @@ export function ClientesFormPage() {
     : 'visualizar';
 
   const ro   = modo === 'visualizar';
-  const roId = ro || modo === 'editar'; // CPF / RG / CNPJ não podem ser alterados após criação
+  const roId = ro || modo === 'editar'; // CPF / CNPJ não podem ser alterados após criação
 
   const [tipo, setTipo]         = useState<Tipo>(tipoParam === 'juridica' ? 'juridica' : 'fisica');
   const [papelPessoa, setPapelPessoa] = useState(1); // bit 1 = Cliente
@@ -450,8 +450,8 @@ export function ClientesFormPage() {
                     <Field label="RG" span={3}>
                       <IMaskInput mask="00.000.000-[*]" value={f.rg}
                         onAccept={(v: string) => set('rg', v)}
-                        placeholder="00.000.000-0" readOnly={roId}
-                        className={inputCls(false, roId)} />
+                        placeholder="00.000.000-0" readOnly={ro}
+                        className={inputCls(false, ro)} />
                     </Field>
 
                     <Field label="Órgão Expedidor" span={2}>

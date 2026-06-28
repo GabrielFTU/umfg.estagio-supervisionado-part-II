@@ -44,14 +44,14 @@ function SortHeader({ col, label, sort, setSort, align = 'left' }: {
   label: string;
   sort: { key: SortKey; dir: 'asc' | 'desc' };
   setSort: (k: SortKey) => void;
-  align?: 'left' | 'right';
+  align?: 'left' | 'right' | 'center';
 }) {
   const active = sort.key === col;
   return (
     <th
       className={cn(
         'py-3 px-3 text-xs font-semibold text-gray-600 cursor-pointer select-none whitespace-nowrap',
-        align === 'right' ? 'text-right' : 'text-left',
+        align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left',
       )}
       onClick={() => setSort(col)}
     >
@@ -304,8 +304,8 @@ export function InventariosPage() {
                   <SortHeader col="depositoNome" label="Depósito"    sort={sort} setSort={handleSort} />
                   <SortHeader col="tipoContagem" label="Tipo"        sort={sort} setSort={handleSort} />
                   <SortHeader col="qtdProdutos"  label="Produtos"    sort={sort} setSort={handleSort} align="right" />
-                  <SortHeader col="dataAbertura" label="Abertura"    sort={sort} setSort={handleSort} />
-                  <th className="py-3 px-3 text-xs font-semibold text-gray-600 text-left whitespace-nowrap">Finalização</th>
+                  <SortHeader col="dataAbertura" label="Abertura"    sort={sort} setSort={handleSort} align="center" />
+                  <th className="py-3 px-3 text-xs font-semibold text-gray-600 text-center whitespace-nowrap">Finalização</th>
                   <th className="py-3 px-3 text-xs font-semibold text-gray-600 text-left whitespace-nowrap">Usuário</th>
                   <SortHeader col="status"       label="Status"      sort={sort} setSort={handleSort} />
                   <th className="w-10 pr-4" />
@@ -329,8 +329,8 @@ export function InventariosPage() {
                       <td className="px-3 py-3 text-sm text-gray-700">{row.depositoNome}</td>
                       <td className="px-3 py-3 text-sm text-gray-500">{row.tipoContagem}</td>
                       <td className="px-3 py-3 text-sm text-gray-700 text-right font-medium">{row.qtdProdutos}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{fmtDate(row.dataAbertura)}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{fmtDate(row.dataFinalizacao)}</td>
+                      <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataAbertura)}</td>
+                      <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataFinalizacao)}</td>
                       <td className="px-3 py-3 text-sm text-gray-500">{row.usuarioNome ?? '—'}</td>
                       <td className="px-3 py-3">
                         <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', info.cls)}>

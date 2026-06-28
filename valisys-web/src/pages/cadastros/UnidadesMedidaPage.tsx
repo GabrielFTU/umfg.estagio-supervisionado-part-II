@@ -378,7 +378,7 @@ export function UnidadesMedidaPage() {
                       <td className="py-3 pr-6">
                         <span className="text-xs text-gray-500">{GRANDEZA_LABEL[u.grandeza] ?? u.grandeza}</span>
                       </td>
-                      <td className="py-3 pr-6">
+                      <td className="py-3 pr-6 text-right">
                         <span className="text-xs font-mono text-gray-500">{u.fatorConversao}</span>
                       </td>
                       <td className="py-3 pr-6">

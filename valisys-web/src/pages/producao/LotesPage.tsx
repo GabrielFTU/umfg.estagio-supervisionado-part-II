@@ -230,8 +230,8 @@ export function LotesPage() {
                   <th className="text-left font-semibold text-gray-700 px-4 py-3">Produto</th>
                   <th className="text-left font-semibold text-gray-700 px-4 py-3">Almoxarifado</th>
                   <th className="text-center font-semibold text-gray-700 px-4 py-3 w-36">Status</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-32">Abertura</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-32">Conclusão</th>
+                  <th className="text-center font-semibold text-gray-700 px-4 py-3 w-32">Abertura</th>
+                  <th className="text-center font-semibold text-gray-700 px-4 py-3 w-32">Conclusão</th>
                   <th className="w-10 pr-4" />
                 </tr>
               </thead>
@@ -250,8 +250,8 @@ export function LotesPage() {
                     <td className="px-4 py-3 text-gray-600">{item.produtoNome}</td>
                     <td className="px-4 py-3 text-gray-500">{item.almoxarifadoNome}</td>
                     <td className="px-4 py-3 text-center"><StatusBadge status={item.status} /></td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(item.dataAbertura)}</td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(item.dataConclusao)}</td>
+                    <td className="px-4 py-3 text-gray-500 text-center">{formatDate(item.dataAbertura)}</td>
+                    <td className="px-4 py-3 text-gray-500 text-center">{formatDate(item.dataConclusao)}</td>
                     <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
                       <RowMenu status={item.status}
                         onView={() => navigate(`/lotes/${item.id}`)}

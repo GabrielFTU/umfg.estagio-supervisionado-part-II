@@ -106,7 +106,7 @@ export function DepositoFormPage() {
     const fetchAlmox = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch('/api/Almoxarifado', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch('/api/almoxarifados', { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
           setAlmoxarifados(data.filter((a: any) => a.ativo).map((a: any) => ({ id: a.id, nome: a.nome })));
@@ -135,7 +135,7 @@ export function DepositoFormPage() {
         setControlaMultiplosLocais(data.controlaMultiplosLocais ?? false);
 
         if (readonly) {
-          const r2 = await fetch('/api/Almoxarifado', { headers: { Authorization: `Bearer ${token}` } });
+          const r2 = await fetch('/api/almoxarifados', { headers: { Authorization: `Bearer ${token}` } });
           if (r2.ok) setAlmoxarifados((await r2.json()).map((a: any) => ({ id: a.id, nome: a.nome })));
         }
       } catch {
