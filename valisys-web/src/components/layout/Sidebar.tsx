@@ -107,7 +107,7 @@ const NAV_ITEMS: NavItemDef[] = [
       { label: 'Kanban',             href: '/producao/kanban' },
       { label: 'Lotes',              href: '/lotes' },
       { label: 'Ordens de Produção', href: '/producao/ordens' },
-      { label: 'Roteiros de Produção', href: '/roteirosProducao' },
+      { label: 'Roteiros de Produção', href: '/producao/roteiros' },
     ],
   },
   {

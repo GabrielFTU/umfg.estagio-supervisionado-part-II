@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Valisys_Production.Models;
 using Valisys_Production.Models.Enums;
 
@@ -147,6 +148,27 @@ namespace Valisys_Production.Data
                 .HasForeignKey(m => m.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Movimentacao>()
+                .HasOne(m => m.DepositoOrigem)
+                .WithMany()
+                .HasForeignKey(m => m.DepositoOrigemId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Movimentacao>()
+                .HasOne(m => m.DepositoDestino)
+                .WithMany()
+                .HasForeignKey(m => m.DepositoDestinoId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Movimentacao>()
+                .HasOne(m => m.PedidoVenda)
+                .WithMany()
+                .HasForeignKey(m => m.PedidoVendaId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<SolicitacaoProducao>()
                 .HasOne(s => s.Encarregado)
                 .WithMany()
@@ -226,7 +248,12 @@ namespace Valisys_Production.Data
                 .HasConversion(
                     v => string.Join(',', v),
                     v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
-                );
+                )
+                .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                    (c1, c2) => c1.SequenceEqual(c2),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    c => c.ToList()
+                ));
 
             modelBuilder.Entity<ParcelaReceber>()
                 .HasOne(p => p.ContaReceber)

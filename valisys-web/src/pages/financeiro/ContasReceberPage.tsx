@@ -119,11 +119,11 @@ function RowMenu({ ativo, onEdit, onView, onBaixar, onCancelar, onPix, onBoleto,
           <div className="my-0.5 mx-2 border-t border-gray-100" />
           <button onClick={() => { setOpen(false); onBoleto(); }}
             className="w-full text-left px-3 py-1.5 text-gray-700 hover:bg-gray-50 font-medium">
-            📄 Gerar boleto
+            Gerar boleto
           </button>
           <button onClick={() => { setOpen(false); onPix(); }}
             className="w-full text-left px-3 py-1.5 hover:bg-gray-50 font-medium" style={{ color: '#32BCAD' }}>
-            🔲 Cobrar via PIX
+            Cobrar via PIX
           </button>
           <button
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 opacity-50 cursor-not-allowed">

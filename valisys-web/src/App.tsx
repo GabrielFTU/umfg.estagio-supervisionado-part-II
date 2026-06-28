@@ -49,6 +49,8 @@ import { SequenciaOperacionalPage } from './pages/producao/SequenciaOperacionalP
 import { KanbanPage } from './pages/producao/KanbanPage';
 import { LotesPage } from './pages/producao/LotesPage';
 import { LoteFormPage } from './pages/producao/LoteFormPage';
+import { RoteiroProducaoPage } from './pages/producao/RoteiroProducaoPage';
+import { RoteiroProducaoFormPage } from './pages/producao/RoteiroProducaoFormPage';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -206,6 +208,10 @@ const App = () => (
       <Route path="/lotes/novo" element={<PrivateRoute><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/lotes/:id/editar" element={<PrivateRoute><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/lotes/:id" element={<PrivateRoute><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/roteiros" element={<PrivateRoute><AppLayout><RoteiroProducaoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/roteiros/novo" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/roteiros/:id/editar" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/roteiros/:id" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas" element={<PrivateRoute><AppLayout><FichaTecnicasPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas/novo" element={<PrivateRoute><AppLayout><ProdutosSemFichaPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/fichas-tecnicas/:id" element={<PrivateRoute><AppLayout><FichaTecnicaPainelPage /></AppLayout></PrivateRoute>} />
