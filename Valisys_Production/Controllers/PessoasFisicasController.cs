@@ -70,12 +70,32 @@ namespace Valisys_Production.Controllers
             catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         }
 
+        [HttpPatch("{id:guid}/reativar")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> Reativar(Guid id)
+        {
+            var result = await _service.ReativarAsync(id);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+
         [HttpPatch("{id:guid}/bloquear")]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> Bloquear(Guid id)
         {
             var result = await _service.BloquearCreditoAsync(id);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+
+        [HttpPatch("{id:guid}/desbloquear")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> Desbloquear(Guid id)
+        {
+            var result = await _service.DesbloquearCreditoAsync(id);
             if (!result) return NotFound();
             return NoContent();
         }

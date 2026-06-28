@@ -332,6 +332,30 @@ export function PessoaFormPage() {
     finally { setLoadingCep(false); }
   };
 
+  // ── CPF em tempo real ────────────────────────────────────────────────────────
+  const handleCpfAccept = (v: string) => {
+    set('cpf', v);
+    const digits = v.replace(/\D/g, '');
+    if (digits.length === 0) {
+      setErrors(prev => { const e = { ...prev }; delete e.cpf; return e; });
+    } else if (digits.length === 11) {
+      if (!validarCpf(v)) {
+        setErrors(prev => ({ ...prev, cpf: 'CPF inválido' }));
+      } else {
+        setErrors(prev => { const e = { ...prev }; delete e.cpf; return e; });
+      }
+    }
+  };
+
+  const handleCpfBlur = () => {
+    const digits = f.cpf.replace(/\D/g, '');
+    if (digits.length > 0 && digits.length < 11) {
+      setErrors(prev => ({ ...prev, cpf: 'CPF incompleto' }));
+    } else if (digits.length === 11 && !validarCpf(f.cpf)) {
+      setErrors(prev => ({ ...prev, cpf: 'CPF inválido' }));
+    }
+  };
+
   // ── BrasilAPI — CNPJ ──────────────────────────────────────────────────────────
   const handleCnpjBlur = async () => {
     const digits = f.cnpj.replace(/\D/g, '');
@@ -540,7 +564,8 @@ export function PessoaFormPage() {
                   <Section title="Identificação · Pessoa Física">
                     <Field label="CPF" required={!roId} error={errors.cpf} span={3}>
                       <IMaskInput mask="000.000.000-00" value={f.cpf}
-                        onAccept={(v: string) => set('cpf', v)}
+                        onAccept={!roId ? handleCpfAccept : (v: string) => set('cpf', v)}
+                        onBlur={!roId ? handleCpfBlur : undefined}
                         placeholder="000.000.000-00" readOnly={roId}
                         className={inputCls(!!errors.cpf, roId)} />
                     </Field>

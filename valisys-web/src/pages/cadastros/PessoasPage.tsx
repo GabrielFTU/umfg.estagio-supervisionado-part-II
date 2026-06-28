@@ -21,6 +21,7 @@ type PessoaItem = {
   papeis: string[];
   papelEnum: number;
   ativo: boolean;
+  bloqueado: boolean;
 };
 
 type Filtros = {
@@ -132,7 +133,7 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
           <div className="my-0.5 mx-2 border-t border-gray-100" />
           <button onClick={() => { setOpen(false); onBloquear(); }}
             className="w-full text-left px-3 py-1.5 text-amber-600 hover:bg-amber-50 transition-colors">
-            Bloquear
+            {p.bloqueado ? 'Desbloquear' : 'Bloquear'}
           </button>
           <button onClick={() => { setOpen(false); onDesativar(); }}
             className="w-full text-left px-3 py-1.5 text-red-500 hover:bg-red-50 transition-colors">
@@ -188,7 +189,7 @@ export function PessoasPage() {
           telefone: p.celular ?? p.telefone ?? null,
           cidade: p.endereco?.cidade ?? '—', uf: p.endereco?.uf ?? '',
           papeis: decodePapeis(p.papelPessoa),
-          papelEnum: p.papelPessoa, ativo: p.ativo,
+          papelEnum: p.papelPessoa, ativo: p.ativo, bloqueado: p.bloqueado ?? false,
         })),
         ...juridicas.map(p => ({
           id: p.id, tipo: 'juridica' as const,
@@ -197,7 +198,7 @@ export function PessoasPage() {
           telefone: p.celular ?? p.telefone ?? null,
           cidade: p.endereco?.cidade ?? '—', uf: p.endereco?.uf ?? '',
           papeis: decodePapeis(p.papelPessoa),
-          papelEnum: p.papelPessoa, ativo: p.ativo,
+          papelEnum: p.papelPessoa, ativo: p.ativo, bloqueado: p.bloqueado ?? false,
         })),
       ];
       lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -220,10 +221,10 @@ export function PessoasPage() {
     const p = desativarTarget;
     setDesativarTarget(null);
     const token = localStorage.getItem('token');
-    const url = p.tipo === 'fisica'
-      ? `/api/PessoasFisicas/${p.id}`
-      : `/api/PessoasJuridicas/${p.id}`;
-    await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    const base = p.tipo === 'fisica' ? '/api/PessoasFisicas' : '/api/PessoasJuridicas';
+    const method = p.ativo ? 'DELETE' : 'PATCH';
+    const url    = p.ativo ? `${base}/${p.id}` : `${base}/${p.id}/reativar`;
+    await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
     load();
   };
 
@@ -236,11 +237,12 @@ export function PessoasPage() {
     const p = bloquearTarget;
     setBloquearTarget(null);
     const token = localStorage.getItem('token');
-    const url = p.tipo === 'fisica'
-      ? `/api/PessoasFisicas/${p.id}/bloquear`
-      : `/api/PessoasJuridicas/${p.id}/bloquear`;
-    await fetch(url, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
-    load();
+    const acao = p.bloqueado ? 'desbloquear' : 'bloquear';
+    const base = p.tipo === 'fisica' ? '/api/PessoasFisicas' : '/api/PessoasJuridicas';
+    const res = await fetch(`${base}/${p.id}/${acao}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      setPessoas(prev => prev.map(item => item.id === p.id ? { ...item, bloqueado: !p.bloqueado } : item));
+    }
   };
 
   const filtrosAtivos = Object.values(filtros).some(v => v !== '');
@@ -442,7 +444,16 @@ export function PessoasPage() {
                       <td className="py-3 pl-4 pr-6 text-xs text-gray-500 tabular-nums">
                         {maskDoc(p.tipo, p.doc)}
                       </td>
-                      <td className="py-3 pr-6 text-gray-700 font-medium">{p.nome}</td>
+                      <td className="py-3 pr-6">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700 font-medium">{p.nome}</span>
+                          {p.bloqueado && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600 leading-none">
+                              Bloqueado
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 pr-6">
                         <div className="flex flex-wrap gap-1">
                           {p.papeis.length > 0
@@ -491,10 +502,14 @@ export function PessoasPage() {
 
       <ModalMsg
         aberto={bloquearTarget !== null}
-        titulo="Bloquear crédito"
-        descricao={bloquearTarget ? `Bloquear crédito de "${bloquearTarget.nome}"?` : ''}
-        variante="perigo"
-        labelConfirmar="Bloquear"
+        titulo={bloquearTarget?.bloqueado ? 'Desbloquear crédito' : 'Bloquear crédito'}
+        descricao={bloquearTarget
+          ? bloquearTarget.bloqueado
+            ? `Realmente deseja desbloquear "${bloquearTarget.nome}"?`
+            : `Realmente deseja bloquear "${bloquearTarget.nome}"?`
+          : ''}
+        variante={bloquearTarget?.bloqueado ? 'aviso' : 'perigo'}
+        labelConfirmar={bloquearTarget?.bloqueado ? 'Sim' : 'Bloquear'}
         onConfirmar={execBloquear}
         onCancelar={() => setBloquearTarget(null)}
       />

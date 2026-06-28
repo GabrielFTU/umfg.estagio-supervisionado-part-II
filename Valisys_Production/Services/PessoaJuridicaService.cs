@@ -80,6 +80,21 @@ namespace Valisys_Production.Services
             return result;
         }
 
+        public async Task<bool> ReativarAsync(Guid id)
+        {
+            var existing = await _repository.GetByIdAsync(id);
+            if (existing == null) return false;
+
+            existing.Ativar();
+            var result = await _repository.UpdateAsync(existing);
+
+            if (result)
+                await _logService.RegistrarAsync("Reativação", "PessoasJuridicas",
+                    $"Reativou a pessoa jurídica '{existing.Nome}'");
+
+            return result;
+        }
+
         public async Task<bool> BloquearCreditoAsync(Guid id)
         {
             var existing = await _repository.GetByIdAsync(id);
@@ -91,6 +106,21 @@ namespace Valisys_Production.Services
             if (result)
                 await _logService.RegistrarAsync("Bloqueio", "PessoasJuridicas",
                     $"Bloqueou crédito da pessoa jurídica '{existing.Nome}'");
+
+            return result;
+        }
+
+        public async Task<bool> DesbloquearCreditoAsync(Guid id)
+        {
+            var existing = await _repository.GetByIdAsync(id);
+            if (existing == null) return false;
+
+            existing.DesbloquearCredito();
+            var result = await _repository.UpdateAsync(existing);
+
+            if (result)
+                await _logService.RegistrarAsync("Desbloqueio", "PessoasJuridicas",
+                    $"Desbloqueou crédito da pessoa jurídica '{existing.Nome}'");
 
             return result;
         }

@@ -10,6 +10,8 @@ namespace Valisys_Production.Services.Interfaces
         Task<IEnumerable<PessoaFisica>> GetAllAsync();
         Task<bool> UpdateAsync(Guid id, PessoaFisicaUpdateDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<bool> ReativarAsync(Guid id);
         Task<bool> BloquearCreditoAsync(Guid id);
+        Task<bool> DesbloquearCreditoAsync(Guid id);
     }
 }
