@@ -23,7 +23,6 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Dashboard',
     href: '/dashboard',
   },
-  // restante em ordem alfabética
   {
     icon: LayersPlus,
     label: 'Cadastros',

@@ -770,8 +770,18 @@ export function OrcamentoFormPage() {
               <tbody>
                 {itens.length === 0 ? (
                   <tr>
-                    <td colSpan={readOnly ? 6 : 7} className="py-8 text-center text-sm text-gray-400">
-                      Nenhum registro encontrado.
+                    <td colSpan={readOnly ? 6 : 7} className="py-12">
+                      <div className="flex flex-col items-center gap-3 text-center">
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                          <Package size={22} className="text-[#3B82F6]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Nenhum produto adicionado</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {readOnly ? 'Este orçamento não possui produtos.' : 'Adicione ao menos um produto para compor o orçamento.'}
+                          </p>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ) : itens.map((item, idx) => (

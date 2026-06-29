@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,13 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('sessionExpired')) {
+      setError('Sua sessão expirou. Faça login novamente.');
+      sessionStorage.removeItem('sessionExpired');
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -55,6 +55,7 @@ import { RelatorioEstoquePage } from './pages/relatorios/RelatorioEstoquePage';
 import { CarteirasPage } from './pages/financeiro/CarteirasPage';
 import { CarteiraFormPage } from './pages/financeiro/CarteiraFormPage';
 import { BaixaContaPagarPage } from './pages/financeiro/BaixaContaPagarPage';
+import { BaixaContaReceberPage } from './pages/financeiro/BaixaContaReceberPage';
 import { ContaPagarComprovantePage } from './pages/financeiro/ContaPagarComprovantePage';
 import { AppLayout } from './components/layout/AppLayout';
 
@@ -95,6 +96,7 @@ const App = () => (
       <Route path="/financeiro/contas-receber" element={<PrivateRoute><AppLayout><ContasReceberPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/contas-receber/novo" element={<PrivateRoute><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/contas-receber/:id/editar" element={<PrivateRoute><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-receber/:id/baixar" element={<PrivateRoute><AppLayout><BaixaContaReceberPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/contas-receber/:id" element={<PrivateRoute><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
 
       <Route

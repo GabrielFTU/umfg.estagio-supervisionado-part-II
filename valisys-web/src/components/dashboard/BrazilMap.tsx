@@ -9,11 +9,11 @@ const GEO_URL =
   'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson';
 
 function stateColor(value: number, max: number): string {
-  if (!value) return '#fef2f2';
+  if (!value) return '#DBEAFE';
   const t = Math.min(value / max, 1);
-  const r = Math.round(254 - t * 101);
-  const g = Math.round(202 - t * 175);
-  const b = Math.round(202 - t * 175);
+  const r = Math.round(219 - t * 189);
+  const g = Math.round(234 - t * 170);
+  const b = Math.round(254 - t * 79);
   return `rgb(${r},${g},${b})`;
 }
 
@@ -36,7 +36,7 @@ const MemoPath = ({ d, fill, feature, value, onEnter, onLeave, onClick }: MemoPa
     <path
       d={d}
       fill={fill}
-      stroke="#fff"
+      stroke="#93c5fd"
       strokeWidth={0.6}
       onMouseEnter={handleEnter}
       onMouseLeave={onLeave}
@@ -55,7 +55,7 @@ export interface BrazilMapProps {
 interface Hovered { name: string; sigla: string; value: number }
 
 const W = 380;
-const H = 320;
+const H = 220;
 
 export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
   const [features, setFeatures] = useState<StateFeature[]>([]);
@@ -75,7 +75,7 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
   const maxVal = useMemo(() => Math.max(...Object.values(data), 1), [data]);
 
   const projection = useMemo(
-    () => geoMercator().scale(430).center([-52, -13]).translate([W / 2, H / 2]),
+    () => geoMercator().scale(300).center([-52, -16]).translate([W / 2, H / 2]),
     [],
   );
   const pathGen = useMemo(() => geoPath().projection(projection), [projection]);
@@ -167,7 +167,7 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
         <span className="text-[10px] text-gray-400 whitespace-nowrap">Menos</span>
         <div
           className="flex-1 h-1.5 rounded-full"
-          style={{ background: 'linear-gradient(to right, #fef2f2, #991b1b)' }}
+          style={{ background: 'linear-gradient(to right, #DBEAFE, #1e40af)' }}
         />
         <span className="text-[10px] text-gray-400 whitespace-nowrap">Mais pedidos</span>
       </div>

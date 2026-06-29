@@ -248,7 +248,11 @@ export function FormaPagamentoFormPage() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ vendedorId: v.id }),
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.message ?? 'Erro ao vincular vendedor.');
+      return;
+    }
     setVendedores(prev => [...prev, { id: crypto.randomUUID(), vendedorId: v.id, vendedorNome: v.nome }]);
   };
 
@@ -263,10 +267,16 @@ export function FormaPagamentoFormPage() {
     setRemoverVendedorTarget(null);
     setRemovingId(vinculo.vendedorId);
     const token = localStorage.getItem('token');
-    await fetch(`/api/formas-pagamento/${id}/vendedores/${vinculo.vendedorId}`, {
+    const res = await fetch(`/api/formas-pagamento/${id}/vendedores/${vinculo.vendedorId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.message ?? 'Erro ao remover vendedor.');
+      setRemovingId(null);
+      return;
+    }
     setVendedores(prev => prev.filter(v => v.vendedorId !== vinculo.vendedorId));
     setRemovingId(null);
   };

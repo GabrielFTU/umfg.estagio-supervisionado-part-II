@@ -290,7 +290,7 @@ export function CatalogoProdutosPage() {
   const filtered = produtos.filter(p => {
     if (search) {
       const s = search.toLowerCase();
-      if (!p.nome.toLowerCase().includes(s) && !p.codigo.includes(s) && !p.categoriaNome.toLowerCase().includes(s))
+      if (!p.nome.toLowerCase().includes(s) && !(p.codigo ?? '').includes(s) && !p.categoriaNome.toLowerCase().includes(s))
         return false;
     }
     if (filtroClassif && p.classificacao !== filtroClassif) return false;

@@ -38,6 +38,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
 
   drainQueue(null);
   clearSession();
+  sessionStorage.setItem('sessionExpired', '1');
   window.location.replace('/');
   return res;
 }

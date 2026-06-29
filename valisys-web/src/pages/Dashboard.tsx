@@ -97,7 +97,7 @@ const gridProps = { stroke: '#f3f4f6', strokeDasharray: '3 3' };
 const tooltipStyle = {
   contentStyle: {
     fontSize: 11,
-    borderRadius: 8,
+    borderRadius: 0,
     border: '1px solid #e5e7eb',
     boxShadow: '0 4px 6px -1px rgba(0,0,0,0.08)',
   },
@@ -139,9 +139,9 @@ function VendasPanel({ data }: { data?: VendasResumo }) {
     <div className="p-5">
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {cards.map(({ icon: Icon, label, value, change, up }) => (
-          <div key={label} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+          <div key={label} className="bg-white p-4 border border-blue-100">
             <div className="flex items-center justify-between mb-2">
-              <div className="w-9 h-9 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
+              <div className="w-9 h-9 bg-[#3B82F6]/10 flex items-center justify-center">
                 <Icon size={17} className="text-[#3B82F6]" />
               </div>
             </div>
@@ -317,12 +317,12 @@ function EstadoModal({ sigla, onClose }: { sigla: string; onClose: () => void })
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden"
+        className="bg-white shadow-2xl w-full max-w-sm mx-4 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#3B82F6]/10 flex items-center justify-center">
               <MapPin size={15} className="text-[#3B82F6]" />
             </div>
             <div>
@@ -332,7 +332,7 @@ function EstadoModal({ sigla, onClose }: { sigla: string; onClose: () => void })
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
           >
             <X size={14} />
           </button>
@@ -351,11 +351,11 @@ function EstadoModal({ sigla, onClose }: { sigla: string; onClose: () => void })
           {data && !loading && (
             <>
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <div className="bg-[#EFF6FF] p-3 border border-blue-100">
                   <p className="text-[11px] text-gray-400">Total de pedidos</p>
                   <p className="text-lg font-bold text-gray-800">{data.totalPedidos.toLocaleString('pt-BR')}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <div className="bg-[#EFF6FF] p-3 border border-blue-100">
                   <p className="text-[11px] text-gray-400">Total em vendas</p>
                   <p className="text-lg font-bold text-gray-800">{formatBRL(data.totalVendas)}</p>
                 </div>
@@ -459,12 +459,12 @@ function PanelWrapper({
       onDragLeave={onDragLeave}
       onDrop={(e) => { e.preventDefault(); onDrop(e); }}
       className={cn(
-        'bg-white rounded-xl border transition-all duration-150 min-w-0',
-        editMode ? 'border-dashed border-gray-300 shadow-sm' : 'border-gray-100 shadow-sm',
+        'bg-[#EFF6FF] border transition-all duration-150 min-w-0',
+        editMode ? 'border-dashed border-blue-200 shadow-sm' : 'border-blue-100 shadow-sm',
         isDragging && 'opacity-30',
         isDragOver && editMode && 'border-[#3B82F6] border-solid ring-2 ring-[#3B82F6]/20',
         editMode && !isDragging && 'cursor-grab active:cursor-grabbing',
-        panel.cols === 1 ? 'col-span-1' : 'col-span-1 lg:col-span-2',
+        panel.cols === 1 ? 'col-span-1' : 'col-span-1 md:col-span-2 lg:col-span-2',
       )}
     >
       <div className={cn(
@@ -488,7 +488,7 @@ function PanelWrapper({
                 key={n}
                 onClick={() => onResize(n)}
                 className={cn(
-                  'w-6 h-6 rounded text-[10px] font-bold transition-colors border',
+                  'w-6 h-6 text-[10px] font-bold transition-colors border',
                   panel.cols === n
                     ? 'bg-[#3B82F6] text-white border-[#3B82F6]'
                     : 'text-gray-400 border-gray-200 hover:border-[#3B82F6] hover:text-[#3B82F6]',
@@ -499,7 +499,7 @@ function PanelWrapper({
             ))}
             <button
               onClick={onHide}
-              className="w-6 h-6 rounded border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-300 transition-colors ml-1"
+              className="w-6 h-6 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-300 transition-colors ml-1"
             >
               <EyeOff size={11} />
             </button>
@@ -516,7 +516,7 @@ function PanelWrapper({
 
 function loadPanels(): PanelConfig[] {
   try {
-    const saved = localStorage.getItem('valisys-dashboard-panels-v2');
+    const saved = localStorage.getItem('valisys-dashboard-panels-v3');
     if (!saved) return DEFAULT_PANELS;
     const parsed: PanelConfig[] = JSON.parse(saved);
     const missing = DEFAULT_PANELS.filter(d => !parsed.find(p => p.id === d.id));
@@ -538,7 +538,7 @@ export function DashboardPage() {
   const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('valisys-dashboard-panels-v2', JSON.stringify(panels));
+    localStorage.setItem('valisys-dashboard-panels-v3', JSON.stringify(panels));
   }, [panels]);
 
   useEffect(() => {
@@ -589,7 +589,7 @@ export function DashboardPage() {
   const hidden  = panels.filter(p => !p.visible);
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 bg-white min-h-screen">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
@@ -616,7 +616,7 @@ export function DashboardPage() {
           <button
             onClick={() => setEditMode(v => !v)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all',
               editMode
                 ? 'bg-[#3B82F6] text-white shadow-md hover:bg-[#2563eb]'
                 : 'bg-white border border-gray-200 text-gray-600 hover:border-[#3B82F6] hover:text-[#3B82F6] shadow-sm',
@@ -629,7 +629,7 @@ export function DashboardPage() {
       </div>
 
       {editMode && (
-        <div className="mb-4 px-4 py-3 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl text-xs text-[#1d4ed8] flex items-center gap-2">
+        <div className="mb-4 px-4 py-3 bg-[#eff6ff] border border-[#bfdbfe] text-xs text-[#1d4ed8] flex items-center gap-2">
           <GripVertical size={13} />
           <span>
             Arraste os painéis para reorganizá-los. Use os botões <strong>1</strong> e <strong>2</strong> para ajustar a largura.
@@ -638,7 +638,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
         {visible.map(panel => {
           const Content = PANEL_CONTENT[panel.id];
           return (
@@ -671,7 +671,7 @@ export function DashboardPage() {
               <button
                 key={panel.id}
                 onClick={() => toggleVisible(panel.id)}
-                className="flex items-center gap-2 px-3 py-2 bg-white border border-dashed border-gray-300 rounded-lg text-xs text-gray-500 hover:border-[#3B82F6] hover:text-[#3B82F6] hover:bg-[#eff6ff] transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-dashed border-gray-300 text-xs text-gray-500 hover:border-[#3B82F6] hover:text-[#3B82F6] hover:bg-[#eff6ff] transition-colors"
               >
                 <Eye size={12} />
                 {PANEL_META[panel.id]?.title}

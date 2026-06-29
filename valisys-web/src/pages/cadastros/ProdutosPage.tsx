@@ -176,7 +176,7 @@ export function ProdutosPage() {
 
   const filtrosAtivos = !!filtroClassif;
   const filtered = produtos.filter(p => {
-    if (search && !p.nome.toLowerCase().includes(search.toLowerCase()) && !p.codigo.includes(search)) return false;
+    if (search && !p.nome.toLowerCase().includes(search.toLowerCase()) && !(p.codigo ?? '').includes(search)) return false;
     if (filtroClassif && p.classificacao !== filtroClassif) return false;
     return true;
   });
