@@ -12,6 +12,7 @@ namespace Valisys_Production.Services.Interfaces
         Task<bool> UpdateAsync(ContaPagarUpdateDto dto);
         Task<bool> DeleteAsync(Guid id);
         Task<bool> BaixarParcelaAsync(ParcelaBaixaDto dto);
+        Task<bool> EstornarParcelaAsync(ParcelaEstornoDto dto);
         Task VerificarVencimentosAsync();
     }
 }

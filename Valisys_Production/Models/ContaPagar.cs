@@ -64,6 +64,19 @@ namespace Valisys_Production.Models
             RegistrarAtualizacao();
         }
 
+        public void EstornarParcela(Guid parcelaId)
+        {
+            if (Status == StatusConta.Cancelado)
+                throw new InvalidOperationException("Não é possível estornar parcela de uma conta cancelada.");
+
+            var parcela = _parcelas.FirstOrDefault(p => p.Id == parcelaId)
+                ?? throw new KeyNotFoundException("Parcela não encontrada.");
+
+            parcela.EstornarBaixa();
+            RecalcularStatus();
+            RegistrarAtualizacao();
+        }
+
         public void Atualizar(string descricao, DateTime dataVencimento, string? observacoes, string? numeroDocumento)
         {
             if (Status == StatusConta.Pago || Status == StatusConta.Cancelado)

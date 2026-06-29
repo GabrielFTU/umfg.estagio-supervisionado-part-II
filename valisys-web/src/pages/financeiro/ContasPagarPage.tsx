@@ -56,12 +56,15 @@ function fmtBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-function RowMenu({ ativo, onEdit, onView, onToggle, onBaixar }: {
+function RowMenu({ ativo, pago, onEdit, onView, onToggle, onBaixar, onEstornar, onComprovante }: {
   ativo: boolean;
+  pago: boolean;
   onEdit: () => void;
   onView: () => void;
   onToggle: () => void;
   onBaixar: () => void;
+  onEstornar: () => void;
+  onComprovante: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos]   = useState({ top: 0, right: 0 });
@@ -97,18 +100,33 @@ function RowMenu({ ativo, onEdit, onView, onToggle, onBaixar }: {
       {open && (
         <div ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
+          className="w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
           <button onClick={() => { setOpen(false); onView(); }}
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Visualizar</button>
-          <button onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
-          <button onClick={() => { setOpen(false); onBaixar(); }}
-            className="w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-gray-50">Baixar parcela</button>
-          <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button onClick={() => { setOpen(false); onToggle(); }}
-            className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', ativo ? 'text-red-500' : 'text-emerald-600')}>
-            {ativo ? 'Cancelar' : 'Reativar'}
-          </button>
+          {!pago && (
+            <button onClick={() => { setOpen(false); onEdit(); }}
+              className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
+          )}
+          {pago ? (
+            <>
+              <button onClick={() => { setOpen(false); onComprovante(); }}
+                className="w-full text-left px-3 py-1.5 text-[#3B82F6] hover:bg-gray-50">Comprovante de pagamento</button>
+              <button onClick={() => { setOpen(false); onEstornar(); }}
+                className="w-full text-left px-3 py-1.5 text-amber-600 hover:bg-gray-50">Estornar baixa</button>
+            </>
+          ) : (
+            <button onClick={() => { setOpen(false); onBaixar(); }}
+              className="w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-gray-50">Baixar parcela</button>
+          )}
+          {!pago && (
+            <>
+              <div className="my-0.5 mx-2 border-t border-gray-100" />
+              <button onClick={() => { setOpen(false); onToggle(); }}
+                className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', ativo ? 'text-red-500' : 'text-emerald-600')}>
+                {ativo ? 'Cancelar' : 'Reativar'}
+              </button>
+            </>
+          )}
         </div>
       )}
     </>
@@ -157,6 +175,7 @@ export function ContasPagarPage() {
   const [sort, setSort_]        = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'dataVencimento', dir: 'asc' });
   const filterRef = useRef<HTMLDivElement>(null);
   const [cancelarId, setCancelarId] = useState<string | null>(null);
+  const [estornarIds, setEstornarIds] = useState<{ contaId: string; parcelaId: string } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -221,6 +240,19 @@ export function ContasPagarPage() {
 
   const handleCancelar = (contaId: string) => {
     setCancelarId(contaId);
+  };
+
+  const execEstornar = async () => {
+    if (!estornarIds) return;
+    const { contaId, parcelaId } = estornarIds;
+    setEstornarIds(null);
+    const token = localStorage.getItem('token');
+    await fetch('/api/contas-pagar/estornar-parcela', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ contaId, parcelaId }),
+    });
+    load();
   };
 
   const execCancelar = async () => {
@@ -422,10 +454,13 @@ export function ContasPagarPage() {
                       <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
                         <RowMenu
                           ativo={row.contaAtivo}
+                          pago={row.statusDisplay === 'PAGA'}
                           onView={() => navigate(`/financeiro/contas-pagar/${row.contaId}`)}
                           onEdit={() => navigate(`/financeiro/contas-pagar/${row.contaId}/editar`)}
                           onBaixar={() => navigate(`/financeiro/contas-pagar/${row.contaId}/baixar`)}
                           onToggle={() => handleCancelar(row.contaId)}
+                          onEstornar={() => setEstornarIds({ contaId: row.contaId, parcelaId: row.parcelaId })}
+                          onComprovante={() => navigate(`/financeiro/contas-pagar/${row.contaId}/comprovante/${row.parcelaId}`)}
                         />
                       </td>
                     </tr>
@@ -466,6 +501,16 @@ export function ContasPagarPage() {
         labelConfirmar="Cancelar conta"
         onConfirmar={execCancelar}
         onCancelar={() => setCancelarId(null)}
+      />
+
+      <ModalMsg
+        aberto={estornarIds !== null}
+        titulo="Estornar baixa"
+        descricao="Deseja estornar a baixa desta parcela? O pagamento será desfeito e a parcela voltará ao status anterior."
+        variante="perigo"
+        labelConfirmar="Estornar"
+        onConfirmar={execEstornar}
+        onCancelar={() => setEstornarIds(null)}
       />
     </div>
   );

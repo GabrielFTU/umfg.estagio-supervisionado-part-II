@@ -112,6 +112,14 @@ namespace Valisys_Production.DTOs
         public string? Observacoes { get; set; }
     }
 
+    // --- Estorno de Parcela ---
+
+    public class ParcelaEstornoDto
+    {
+        public Guid ContaId { get; set; }
+        public Guid ParcelaId { get; set; }
+    }
+
     // --- Baixa de Parcela (shared) ---
 
     public class ParcelaBaixaDto

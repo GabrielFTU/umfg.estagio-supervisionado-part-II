@@ -49,6 +49,20 @@ namespace Valisys_Production.Repositories
             catch { return false; }
         }
 
+        public async Task<bool> EstornarParcelaAsync(Guid contaId, Guid parcelaId)
+        {
+            var conta = await _context.ContasPagar
+                .Include(c => c.Parcelas)
+                .FirstOrDefaultAsync(c => c.Id == contaId);
+
+            if (conta is null) return false;
+
+            conta.EstornarParcela(parcelaId);
+
+            try { return await _context.SaveChangesAsync() > 0; }
+            catch { return false; }
+        }
+
         public async Task VerificarVencimentosAsync()
         {
             var contas = await _context.ContasPagar

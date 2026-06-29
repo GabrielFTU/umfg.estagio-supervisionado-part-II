@@ -54,6 +54,8 @@ import { RoteiroProducaoFormPage } from './pages/producao/RoteiroProducaoFormPag
 import { RelatorioEstoquePage } from './pages/relatorios/RelatorioEstoquePage';
 import { CarteirasPage } from './pages/financeiro/CarteirasPage';
 import { CarteiraFormPage } from './pages/financeiro/CarteiraFormPage';
+import { BaixaContaPagarPage } from './pages/financeiro/BaixaContaPagarPage';
+import { ContaPagarComprovantePage } from './pages/financeiro/ContaPagarComprovantePage';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -86,6 +88,8 @@ const App = () => (
       <Route path="/financeiro/contas-pagar" element={<PrivateRoute><AppLayout><ContasPagarPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/contas-pagar/novo" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/contas-pagar/:id/editar" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/:id/baixar" element={<PrivateRoute><AppLayout><BaixaContaPagarPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/:contaId/comprovante/:parcelaId" element={<PrivateRoute><AppLayout><ContaPagarComprovantePage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/contas-pagar/:id" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/financeiro/contas-receber" element={<PrivateRoute><AppLayout><ContasReceberPage /></AppLayout></PrivateRoute>} />

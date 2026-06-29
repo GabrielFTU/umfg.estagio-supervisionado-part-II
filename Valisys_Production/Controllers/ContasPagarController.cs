@@ -116,6 +116,24 @@ namespace Valisys_Production.Controllers
             catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
         }
 
+        [HttpPost("estornar-parcela")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> EstornarParcela([FromBody] ParcelaEstornoDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _service.EstornarParcelaAsync(dto);
+                return result ? NoContent() : NotFound();
+            }
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        }
+
         [HttpPost("verificar-vencimentos")]
         [ProducesResponseType(204)]
         public async Task<IActionResult> VerificarVencimentos()

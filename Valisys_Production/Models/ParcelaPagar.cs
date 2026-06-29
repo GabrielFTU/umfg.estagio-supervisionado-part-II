@@ -55,6 +55,23 @@ namespace Valisys_Production.Models
             RegistrarAtualizacao();
         }
 
+        public void EstornarBaixa()
+        {
+            if (Status != StatusParcela.Pago)
+                throw new InvalidOperationException("Parcela não está paga.");
+
+            ValorPago = null;
+            DataPagamento = null;
+            FormaPagamento = null;
+            Juros = null;
+            Multa = null;
+            Observacoes = null;
+            Status = DataVencimento.Date < DateTime.UtcNow.Date
+                ? StatusParcela.Vencido
+                : StatusParcela.Pendente;
+            RegistrarAtualizacao();
+        }
+
         public void VerificarVencimento()
         {
             if (Status == StatusParcela.Pendente && DataVencimento.Date < DateTime.UtcNow.Date)

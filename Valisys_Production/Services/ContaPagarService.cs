@@ -113,6 +113,17 @@ namespace Valisys_Production.Services
             return result;
         }
 
+        public async Task<bool> EstornarParcelaAsync(ParcelaEstornoDto dto)
+        {
+            var result = await _repository.EstornarParcelaAsync(dto.ContaId, dto.ParcelaId);
+
+            if (result)
+                await _logService.RegistrarAsync("Estorno", "ContasPagar",
+                    $"Estornou parcela da conta {dto.ContaId}");
+
+            return result;
+        }
+
         public async Task VerificarVencimentosAsync()
         {
             await _repository.VerificarVencimentosAsync();

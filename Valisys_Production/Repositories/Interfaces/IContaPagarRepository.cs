@@ -9,6 +9,7 @@ namespace Valisys_Production.Repositories.Interfaces
         Task<bool> BaixarParcelaAsync(Guid contaId, Guid parcelaId, decimal valorPago,
             DateTime dataPagamento, FormaPagamentoEnum formaPagamento,
             decimal? juros, decimal? multa, string? observacoes);
+        Task<bool> EstornarParcelaAsync(Guid contaId, Guid parcelaId);
         Task VerificarVencimentosAsync();
         Task<int> ContarAsync();
     }
