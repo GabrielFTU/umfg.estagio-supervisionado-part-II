@@ -4,15 +4,6 @@ import { Home, ChevronRight, ChevronDown, Loader2, Printer, X } from 'lucide-rea
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 
-interface ParcelaData {
-  id: string;
-  numeroParcela: number;
-  valor: number;
-  dataVencimento: string;
-  status: string;
-  valorPago: number | null;
-}
-
 interface CarteiraItem {
   id: string;
   codigoBanco: string;
@@ -372,7 +363,7 @@ export function BaixaContaPagarPage() {
         }
       }
 
-      showToast('Baixa realizada com sucesso!', 'success');
+      showToast('Baixa realizada com sucesso!');
 
       if (emitirRecibo) {
         const selectedCart = carteiras.find(c => c.id === carteiraId);
@@ -397,7 +388,7 @@ export function BaixaContaPagarPage() {
         navigate('/financeiro/contas-pagar');
       }
     } catch (e: any) {
-      showToast(e.message ?? 'Erro ao realizar baixa', 'error');
+      showToast(e.message ?? 'Erro ao realizar baixa');
     } finally {
       setSaving(false);
     }
