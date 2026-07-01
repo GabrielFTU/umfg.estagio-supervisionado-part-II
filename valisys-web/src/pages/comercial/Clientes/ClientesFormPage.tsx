@@ -39,7 +39,7 @@ const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
 
 const inputCls = (err?: boolean, ro?: boolean) => cn(
   'w-full h-8 px-3 text-sm text-gray-800 rounded-md border bg-white transition-colors',
-  'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6]',
+  'focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89]',
   'placeholder:text-gray-300',
   ro  ? 'bg-gray-50 cursor-default border-gray-100' :
   err ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 hover:border-gray-300',
@@ -104,7 +104,7 @@ function Section({ title, open: defaultOpen = true, children }: {
       <button type="button" onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between py-2 text-left">
         <span className="flex items-center gap-2.5">
-          <span className="w-[3px] h-4 rounded-full bg-[#3B82F6]" />
+          <span className="w-[3px] h-4 rounded-full bg-[#1D4E89]" />
           <span className="text-sm font-semibold text-gray-700">{title}</span>
         </span>
         {open ? <ChevronUp size={14} className="text-gray-400" />
@@ -341,7 +341,7 @@ export function ClientesFormPage() {
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <Home size={11} /><ChevronRight size={11} />
           <span>Cadastros</span><ChevronRight size={11} />
-          <a href="/comercial/clientes" className="hover:text-[#3B82F6] transition-colors">Clientes</a>
+          <a href="/comercial/clientes" className="hover:text-[#1D4E89] transition-colors">Clientes</a>
           <ChevronRight size={11} />
           <span className="text-gray-600 font-medium">{tituloModo}</span>
         </div>
@@ -363,7 +363,7 @@ export function ClientesFormPage() {
                 onClick={() => { setTipo(v); setErrors({}); }}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all',
-                  tipo === v ? 'bg-white text-[#3B82F6] shadow-sm' : 'text-gray-500',
+                  tipo === v ? 'bg-white text-[#1D4E89] shadow-sm' : 'text-gray-500',
                   modo === 'criar' && tipo !== v && 'hover:text-gray-700',
                 )}
               >
@@ -385,7 +385,7 @@ export function ClientesFormPage() {
               <button
                 type="button"
                 onClick={() => navigate(`/comercial/clientes/${tipoParam}/${id}/editar`)}
-                className="flex items-center gap-1.5 h-9 px-5 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] shadow-sm transition-colors"
+                className="flex items-center gap-1.5 h-9 px-5 rounded-md bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] shadow-sm transition-colors"
               >
                 <Pencil size={14} /> Editar
               </button>
@@ -394,7 +394,7 @@ export function ClientesFormPage() {
                 form="cliente-form"
                 type="submit"
                 disabled={loading}
-                className="flex items-center gap-1.5 h-9 px-5 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] disabled:opacity-60 shadow-sm transition-colors"
+                className="flex items-center gap-1.5 h-9 px-5 rounded-md bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] disabled:opacity-60 shadow-sm transition-colors"
               >
                 <Save size={14} />
                 {loading ? 'Salvando…' : 'Salvar'}
@@ -590,7 +590,7 @@ export function ClientesFormPage() {
                     <textarea rows={4} readOnly={ro}
                       className={cn(
                         'w-full px-3 py-2.5 text-sm text-gray-800 rounded-md border transition-colors',
-                        'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6]',
+                        'focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89]',
                         'resize-none placeholder:text-gray-300',
                         ro ? 'bg-gray-50 border-gray-100 cursor-default'
                            : 'border-gray-200 hover:border-gray-300',

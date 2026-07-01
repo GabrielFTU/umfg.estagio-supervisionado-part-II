@@ -91,7 +91,7 @@ function CardProduto({ p, onToggle, toggling, onClick }: {
     <div
       onClick={onClick}
       className={cn(
-        'bg-white border border-gray-200 hover:border-[#3B82F6]/40 hover:bg-blue-50/20 transition-colors cursor-pointer group flex flex-col',
+        'bg-white border border-gray-200 hover:border-[#1D4E89]/40 hover:bg-blue-50/20 transition-colors cursor-pointer group flex flex-col',
         !p.disponivelParaVenda && 'opacity-60',
       )}
     >
@@ -335,7 +335,7 @@ export function CatalogoProdutosPage() {
               className={cn(
                 'whitespace-nowrap shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors border',
                 filtroClassif === tab.key
-                  ? 'bg-[#3B82F6] border-[#3B82F6] text-white shadow-sm shadow-blue-200'
+                  ? 'bg-[#1D4E89] border-[#1D4E89] text-white shadow-sm shadow-blue-200'
                   : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700',
               )}
             >
@@ -349,7 +349,7 @@ export function CatalogoProdutosPage() {
           <div className="relative flex-1 min-w-0 sm:max-w-md">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6] transition-all placeholder:text-gray-400"
+              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89] transition-all placeholder:text-gray-400"
               placeholder="Buscar por nome, código ou categoria…"
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -363,13 +363,13 @@ export function CatalogoProdutosPage() {
               className={cn(
                 'flex items-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors',
                 filtrosAtivos
-                  ? 'bg-blue-50 border-[#3B82F6] text-[#3B82F6]'
+                  ? 'bg-blue-50 border-[#1D4E89] text-[#1D4E89]'
                   : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400',
               )}
             >
               <SlidersHorizontal size={13} /> Filtros
               {filtrosCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-[#1D4E89] text-white text-[10px] font-bold flex items-center justify-center">
                   {filtrosCount}
                 </span>
               )}
@@ -386,7 +386,7 @@ export function CatalogoProdutosPage() {
                     type="checkbox"
                     checked={apenasDisp}
                     onChange={() => setApenasDisp(v => !v)}
-                    className="rounded border-gray-300 text-[#3B82F6] focus:ring-[#3B82F6]"
+                    className="rounded border-gray-300 text-[#1D4E89] focus:ring-[#1D4E89]"
                   />
                   <span className="text-xs text-gray-600">Apenas disponíveis para venda</span>
                 </label>
@@ -406,14 +406,14 @@ export function CatalogoProdutosPage() {
           <div className="flex items-center border border-gray-200 rounded-md overflow-hidden shrink-0 ml-auto">
             <button
               onClick={() => setView('grid')}
-              className={cn('p-2 transition-colors', view === 'grid' ? 'bg-[#3B82F6] text-white' : 'text-gray-400 hover:text-gray-600 bg-white')}
+              className={cn('p-2 transition-colors', view === 'grid' ? 'bg-[#1D4E89] text-white' : 'text-gray-400 hover:text-gray-600 bg-white')}
               title="Visualização em cards"
             >
               <LayoutGrid size={15} />
             </button>
             <button
               onClick={() => setView('list')}
-              className={cn('p-2 transition-colors', view === 'list' ? 'bg-[#3B82F6] text-white' : 'text-gray-400 hover:text-gray-600 bg-white')}
+              className={cn('p-2 transition-colors', view === 'list' ? 'bg-[#1D4E89] text-white' : 'text-gray-400 hover:text-gray-600 bg-white')}
               title="Visualização em lista"
             >
               <List size={15} />
@@ -434,14 +434,14 @@ export function CatalogoProdutosPage() {
         {!loading && error && (
           <div className="flex flex-col items-center justify-center h-full gap-3 pb-16">
             <p className="text-sm font-semibold text-red-500">{error}</p>
-            <button onClick={load} className="text-xs text-[#3B82F6] hover:underline">Tentar novamente</button>
+            <button onClick={load} className="text-xs text-[#1D4E89] hover:underline">Tentar novamente</button>
           </div>
         )}
 
         {!loading && !error && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
             <div className="w-16 h-16 bg-blue-50 flex items-center justify-center">
-              <Package size={28} className="text-[#3B82F6]" />
+              <Package size={28} className="text-[#1D4E89]" />
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-700">

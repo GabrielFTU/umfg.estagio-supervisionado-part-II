@@ -126,7 +126,7 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
         className={cn(
           'flex items-center h-9 border-b transition-colors',
           error  ? 'border-red-400'
-          : open  ? 'border-[#3B82F6]'
+          : open  ? 'border-[#1D4E89]'
           : 'border-gray-300 hover:border-gray-400',
           disabled && 'opacity-50',
         )}
@@ -146,7 +146,7 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
           tabIndex={-1}
           className={cn(
             'shrink-0 p-1 transition-colors',
-            open ? 'text-[#3B82F6]' : 'text-gray-300 hover:text-gray-500',
+            open ? 'text-[#1D4E89]' : 'text-gray-300 hover:text-gray-500',
           )}
         >
           <Calendar size={13} />
@@ -169,7 +169,7 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
 
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-semibold text-gray-800">{MONTHS_PT[viewMonth]}</span>
-              <span className="text-sm font-semibold text-[#3B82F6]">{viewYear}</span>
+              <span className="text-sm font-semibold text-[#1D4E89]">{viewYear}</span>
             </div>
 
             <button type="button" onClick={nextMonth}
@@ -201,13 +201,13 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
                     'h-8 w-full flex items-center justify-center rounded-full text-[13px] transition-colors relative',
                     cell.month !== 'curr'      && 'text-gray-300 hover:bg-gray-50',
                     cell.month === 'curr' && !isSelected && !isToday && 'text-gray-700 hover:bg-gray-100',
-                    isToday  && !isSelected    && 'text-[#3B82F6] font-bold',
-                    isSelected                 && 'bg-[#3B82F6] text-white font-semibold shadow-sm',
+                    isToday  && !isSelected    && 'text-[#1D4E89] font-bold',
+                    isSelected                 && 'bg-[#1D4E89] text-white font-semibold shadow-sm',
                   )}
                 >
                   {cell.day}
                   {isToday && !isSelected && (
-                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#3B82F6]" />
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#1D4E89]" />
                   )}
                 </button>
               );
@@ -226,7 +226,7 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
             <button
               type="button"
               onClick={() => { onChange(todayIso); setViewYear(today.getFullYear()); setViewMonth(today.getMonth()); setOpen(false); }}
-              className="text-[11px] text-[#3B82F6] hover:text-[#2563eb] font-medium transition-colors"
+              className="text-[11px] text-[#1D4E89] hover:text-[#163D6D] font-medium transition-colors"
             >
               Hoje
             </button>

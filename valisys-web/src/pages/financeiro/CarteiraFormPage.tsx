@@ -33,7 +33,7 @@ function parseBRL(masked: string): number {
 
 const ul = (err?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  err ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  err ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 function UField({ label, required, error, children }: {
@@ -289,7 +289,7 @@ export function CarteiraFormPage() {
                             key={b.ispb}
                             type="button"
                             onMouseDown={() => handleBancoSelect(b)}
-                            className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#3B82F6] transition-colors text-left"
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#1D4E89] transition-colors text-left"
                           >
                             <span className="w-9 shrink-0 text-xs font-mono text-gray-400">{b.code}</span>
                             <span className="flex-1 truncate">{b.name}</span>
@@ -359,7 +359,7 @@ export function CarteiraFormPage() {
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2 rounded-lg bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] disabled:opacity-60 transition-colors"
+              className="flex items-center gap-2 px-6 py-2 rounded-lg bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] disabled:opacity-60 transition-colors"
             >
               {saving && <Loader2 size={14} className="animate-spin" />}
               Salvar
@@ -379,7 +379,7 @@ export function CarteiraFormPage() {
             <button
               type="button"
               onClick={() => navigate(`/financeiro/carteira/${id}/editar`)}
-              className="px-6 py-2 rounded-lg bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+              className="px-6 py-2 rounded-lg bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
             >
               Editar
             </button>

@@ -160,7 +160,7 @@ export function FasesPage() {
         <div className="relative flex-1">
           <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
             placeholder="Informe o nome"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -168,7 +168,7 @@ export function FasesPage() {
         </div>
 
         <button onClick={() => navigate('/cadastros/fases/novo')}
-          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors shrink-0">
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors shrink-0">
           <Plus size={14} /> Novo
         </button>
 
@@ -177,7 +177,7 @@ export function FasesPage() {
             className={cn(
               'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
               statusFiltro !== 'todos'
-                ? 'border-[#3B82F6] bg-blue-50 text-[#3B82F6]'
+                ? 'border-[#1D4E89] bg-blue-50 text-[#1D4E89]'
                 : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
             )}>
             <SlidersHorizontal size={15} />
@@ -190,7 +190,7 @@ export function FasesPage() {
               {(['todos', 'ativo', 'inativo'] as const).map(v => (
                 <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
                   className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
-                    statusFiltro === v ? 'bg-[#3B82F6] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                    statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
                   {v === 'todos' ? 'Todos' : v === 'ativo' ? 'Ativo' : 'Inativo'}
                 </button>
               ))}
@@ -202,7 +202,7 @@ export function FasesPage() {
       {/* Chip filtro ativo */}
       {statusLabel && (
         <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2">
-          <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+          <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
             Status : {statusLabel}
             <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
           </span>
@@ -280,14 +280,14 @@ export function FasesPage() {
                 <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                   <button key={p} onClick={() => goPage(p)}
-                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
                     {p}
                   </button>
                 ))}
                 <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
                 <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
                 <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
                   {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>

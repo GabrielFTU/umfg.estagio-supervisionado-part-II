@@ -29,7 +29,7 @@ function hoje() {
 
 const ul = (err?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  err ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  err ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 function UField({ label, required, error, children }: {
@@ -299,7 +299,7 @@ export function ContaPagarFormPage() {
               onClick={() => !readonly && setPrevisao(v => !v)}
               className={cn(
                 'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
-                previsao ? 'bg-[#3B82F6]' : 'bg-gray-200',
+                previsao ? 'bg-[#1D4E89]' : 'bg-gray-200',
                 readonly && 'opacity-60 cursor-default',
               )}
             >
@@ -315,7 +315,7 @@ export function ContaPagarFormPage() {
             <button
               type="button"
               onClick={() => setMaisOpcoes(v => !v)}
-              className="flex items-center gap-1.5 text-sm text-[#3B82F6] hover:text-[#2563eb] transition-colors py-2"
+              className="flex items-center gap-1.5 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors py-2"
             >
               <ChevronDown size={14} className={cn('transition-transform duration-150', maisOpcoes && 'rotate-180')} />
               Mais opções
@@ -345,7 +345,7 @@ export function ContaPagarFormPage() {
                     <button
                       type="button"
                       disabled={readonly}
-                      className="flex items-center gap-1.5 text-sm text-[#3B82F6] hover:text-[#2563eb] transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors disabled:opacity-50"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M1 4v6h6M23 20v-6h-6" />
@@ -397,7 +397,7 @@ export function ContaPagarFormPage() {
                     placeholder={readonly ? '—' : 'Observações sobre esta conta…'}
                     className={cn(
                       'w-full text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none py-2 bg-transparent',
-                      'border-gray-300 focus:border-[#3B82F6]',
+                      'border-gray-300 focus:border-[#1D4E89]',
                       readonly && 'cursor-default',
                     )}
                   />
@@ -414,7 +414,7 @@ export function ContaPagarFormPage() {
             {!readonly && (
               <button
                 type="button"
-                className="flex items-center gap-1 text-sm text-[#3B82F6] hover:text-[#2563eb] transition-colors mb-3"
+                className="flex items-center gap-1 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors mb-3"
               >
                 <Plus size={13} /> Adicionar apropriação
               </button>
@@ -458,7 +458,7 @@ export function ContaPagarFormPage() {
             <button
               type="button"
               onClick={() => navigate(`/financeiro/contas-pagar/${id}/editar`)}
-              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
             >
               <Pencil size={13} /> Editar
             </button>
@@ -485,7 +485,7 @@ export function ContaPagarFormPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed shrink-0"
+                className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed shrink-0"
               >
                 {saving
                   ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>

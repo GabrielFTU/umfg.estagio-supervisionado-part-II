@@ -80,7 +80,7 @@ export function PermissionMatrix({ selected, onChange, disabled }: PermissionMat
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar permissão…"
-              className="w-full h-8 pl-8 pr-3 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#3B82F6] placeholder:text-gray-400"
+              className="w-full h-8 pl-8 pr-3 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#1D4E89] placeholder:text-gray-400"
             />
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -90,7 +90,7 @@ export function PermissionMatrix({ selected, onChange, disabled }: PermissionMat
             {!disabled && (
               <>
                 <button type="button" onClick={selectAll}
-                  className="text-xs font-medium text-[#3B82F6] hover:underline whitespace-nowrap">
+                  className="text-xs font-medium text-[#1D4E89] hover:underline whitespace-nowrap">
                   Marcar todos
                 </button>
                 <span className="text-gray-300">|</span>
@@ -107,7 +107,7 @@ export function PermissionMatrix({ selected, onChange, disabled }: PermissionMat
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
             <motion.div
-              className={cn('h-full rounded-full', totalPct === 100 ? 'bg-emerald-500' : 'bg-[#3B82F6]')}
+              className={cn('h-full rounded-full', totalPct === 100 ? 'bg-emerald-500' : 'bg-[#1D4E89]')}
               initial={false}
               animate={{ width: `${totalPct}%` }}
               transition={{ duration: 0.35, ease: 'easeOut' }}
@@ -137,7 +137,7 @@ export function PermissionMatrix({ selected, onChange, disabled }: PermissionMat
               >
                 <span className={cn(
                   'flex items-center justify-center w-6 h-6 rounded-md shrink-0 transition-colors',
-                  sectionSelectedCount > 0 ? 'bg-blue-50 text-[#3B82F6]' : 'bg-gray-100 text-gray-400',
+                  sectionSelectedCount > 0 ? 'bg-blue-50 text-[#1D4E89]' : 'bg-gray-100 text-gray-400',
                 )}>
                   <SectionIcon size={13} />
                 </span>
@@ -190,7 +190,7 @@ export function PermissionMatrix({ selected, onChange, disabled }: PermissionMat
                                 ref={el => { if (el) el.indeterminate = someChecked; }}
                                 disabled={disabled}
                                 onChange={e => toggleGroup(group, e.target.checked)}
-                                className="w-3.5 h-3.5 rounded border-gray-300 text-[#3B82F6] focus:ring-[#3B82F6] shrink-0"
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-[#1D4E89] focus:ring-[#1D4E89] shrink-0"
                               />
                               <span className="text-[13px] font-medium text-gray-700 flex-1 truncate">{group.label}</span>
                               <span className="text-[10px] text-gray-400 shrink-0 tabular-nums">{groupSelectedCount}/{groupValues.length}</span>
@@ -203,7 +203,7 @@ export function PermissionMatrix({ selected, onChange, disabled }: PermissionMat
                                     checked={selectedSet.has(action.value)}
                                     disabled={disabled}
                                     onChange={() => toggleValue(action.value)}
-                                    className="w-3.5 h-3.5 rounded border-gray-300 text-[#3B82F6] focus:ring-[#3B82F6]"
+                                    className="w-3.5 h-3.5 rounded border-gray-300 text-[#1D4E89] focus:ring-[#1D4E89]"
                                   />
                                   <span className="text-xs text-gray-600">{action.label}</span>
                                 </label>

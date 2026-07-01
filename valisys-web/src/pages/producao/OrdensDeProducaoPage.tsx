@@ -8,6 +8,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { fetchWithAuth } from '@/services/api';
+import { Barcode } from '@/components/producao/Barcode';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ function PedidoIndicator({ pedidoId, pedidoCodigo, clienteNome }: {
     <div className="relative group/pedido inline-flex items-center">
       <button
         onClick={e => { e.stopPropagation(); navigate(`/comercial/pedidos/${pedidoId}`); }}
-        className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 border border-blue-200 text-[#3B82F6] hover:bg-blue-100 transition-colors"
+        className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 border border-blue-200 text-[#1D4E89] hover:bg-blue-100 transition-colors"
         aria-label={`Pedido ${pedidoCodigo ?? pedidoId}`}
       >
         <ShoppingBag size={9} />
@@ -445,7 +446,7 @@ function PrintModal({
               Fechar
             </button>
             <button onClick={handlePrint}
-              className="flex items-center gap-1.5 h-8 px-4 rounded-lg bg-[#3B82F6] hover:bg-[#2563eb] text-white text-sm font-medium transition-colors">
+              className="flex items-center gap-1.5 h-8 px-4 rounded-lg bg-[#1D4E89] hover:bg-[#163D6D] text-white text-sm font-medium transition-colors">
               <Printer size={13} /> Imprimir
             </button>
           </div>
@@ -467,6 +468,8 @@ function PrintModal({
               fontFamily: 'Arial, Helvetica, sans-serif',
               color: '#111',
               flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {/* ══ CABEÇALHO ══ */}
@@ -663,15 +666,18 @@ function PrintModal({
 
             {/* ══ RODAPÉ ══ */}
             <div style={{
-              borderTop: '1px solid #e0e0e0', paddingTop: '4px',
+              marginTop: 'auto', borderTop: '1px solid #e0e0e0', paddingTop: '6px',
               fontSize: '7pt', color: '#bbb',
-              display: 'flex', justifyContent: 'space-between',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
             }}>
               <span>
                 Emitido em {emissao.toLocaleString('pt-BR')}
                 {user ? ` · Usuário: ${user.nome}` : ''}
               </span>
-              <span style={{ fontFamily: "'Courier New', monospace" }}>{ordem.codigoOrdem}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+                <Barcode value={ordem.codigoOrdem} height={48} width={1.8} />
+                <span style={{ fontFamily: "'Courier New', monospace" }}>{ordem.codigoOrdem}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -722,7 +728,7 @@ function FilterPanel({
               className={cn(
                 'text-xs py-1 px-2.5 rounded-full border transition-colors',
                 local.status.includes(s)
-                  ? 'bg-[#3B82F6] border-[#3B82F6] text-white'
+                  ? 'bg-[#1D4E89] border-[#1D4E89] text-white'
                   : 'border-gray-200 text-gray-500 hover:border-gray-300',
               )}
             >
@@ -738,7 +744,7 @@ function FilterPanel({
           <select
             value={local.fase}
             onChange={e => setLocal(prev => ({ ...prev, fase: e.target.value }))}
-            className="w-full h-8 px-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#3B82F6] bg-white text-gray-700"
+            className="w-full h-8 px-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#1D4E89] bg-white text-gray-700"
           >
             <option value="">Todas as fases</option>
             {fases.map(f => <option key={f} value={f}>{f}</option>)}
@@ -755,7 +761,7 @@ function FilterPanel({
               type="date"
               value={local.dateFrom}
               onChange={e => setLocal(prev => ({ ...prev, dateFrom: e.target.value }))}
-              className="w-full h-8 px-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#3B82F6]"
+              className="w-full h-8 px-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#1D4E89]"
             />
           </div>
           <div>
@@ -764,7 +770,7 @@ function FilterPanel({
               type="date"
               value={local.dateTo}
               onChange={e => setLocal(prev => ({ ...prev, dateTo: e.target.value }))}
-              className="w-full h-8 px-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#3B82F6]"
+              className="w-full h-8 px-2 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-[#1D4E89]"
             />
           </div>
         </div>
@@ -776,7 +782,7 @@ function FilterPanel({
           Fechar
         </button>
         <button onClick={() => { onApply(local); onClose(); }}
-          className="flex-1 h-8 text-xs text-white bg-[#3B82F6] hover:bg-[#2563eb] rounded-lg transition-colors font-medium">
+          className="flex-1 h-8 text-xs text-white bg-[#1D4E89] hover:bg-[#163D6D] rounded-lg transition-colors font-medium">
           Aplicar
         </button>
       </div>
@@ -944,7 +950,7 @@ export function OrdensDeProducaoPage() {
         <div className="relative flex-1">
           <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
             placeholder="Buscar por ordem, produto ou lote…"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -953,7 +959,7 @@ export function OrdensDeProducaoPage() {
 
         <button
           onClick={() => navigate('/producao/ordens/novo')}
-          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors shrink-0"
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors shrink-0"
         >
           <Plus size={14} /> Nova Ordem
         </button>
@@ -964,14 +970,14 @@ export function OrdensDeProducaoPage() {
             className={cn(
               'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
               filtrosAtivos
-                ? 'border-[#3B82F6] bg-blue-50 text-[#3B82F6]'
+                ? 'border-[#1D4E89] bg-blue-50 text-[#1D4E89]'
                 : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
             )}
           >
             <SlidersHorizontal size={15} />
           </button>
           {filtrosAtivos > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[9px] font-bold flex items-center justify-center pointer-events-none">
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#1D4E89] text-white text-[9px] font-bold flex items-center justify-center pointer-events-none">
               {filtrosAtivos}
             </span>
           )}
@@ -993,25 +999,25 @@ export function OrdensDeProducaoPage() {
       {filtrosAtivos > 0 && (
         <div className="shrink-0 px-6 py-2 border-b border-gray-100 flex flex-wrap items-center gap-2">
           {filters.status.map(s => (
-            <span key={s} className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+            <span key={s} className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Status: {STATUS_LABEL[s]}
               <button onClick={() => setFilters(p => ({ ...p, status: p.status.filter(x => x !== s) }))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           ))}
           {filters.fase && (
-            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Fase: {filters.fase}
               <button onClick={() => setFilters(p => ({ ...p, fase: '' }))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {filters.dateFrom && (
-            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               A partir de: {new Date(filters.dateFrom).toLocaleDateString('pt-BR')}
               <button onClick={() => setFilters(p => ({ ...p, dateFrom: '' }))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {filters.dateTo && (
-            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Até: {new Date(filters.dateTo).toLocaleDateString('pt-BR')}
               <button onClick={() => setFilters(p => ({ ...p, dateTo: '' }))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
@@ -1034,7 +1040,7 @@ export function OrdensDeProducaoPage() {
           <div className="flex flex-col items-center justify-center h-full gap-3 pb-16">
             <AlertCircle size={24} className="text-red-400" />
             <p className="text-sm font-semibold text-red-500">{error}</p>
-            <button onClick={load} className="text-xs text-[#3B82F6] hover:underline">Tentar novamente</button>
+            <button onClick={load} className="text-xs text-[#1D4E89] hover:underline">Tentar novamente</button>
           </div>
         )}
 
@@ -1058,7 +1064,7 @@ export function OrdensDeProducaoPage() {
                     <td colSpan={7} className="px-6 py-16 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
-                          <Factory size={24} className="text-[#3B82F6]" />
+                          <Factory size={24} className="text-[#1D4E89]" />
                         </div>
                         <p className="text-sm font-semibold text-gray-700">
                           {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhuma ordem de produção cadastrada'}
@@ -1069,7 +1075,7 @@ export function OrdensDeProducaoPage() {
                         {!search && !filtrosAtivos && (
                           <button
                             onClick={() => navigate('/producao/ordens/novo')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#3B82F6] text-white text-sm hover:bg-[#2563eb] transition-colors mt-1"
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1D4E89] text-white text-sm hover:bg-[#163D6D] transition-colors mt-1"
                           >
                             <Plus size={14} /> Nova Ordem
                           </button>
@@ -1135,14 +1141,14 @@ export function OrdensDeProducaoPage() {
                 <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                   <button key={p} onClick={() => goPage(p)}
-                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
                     {p}
                   </button>
                 ))}
                 <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
                 <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
                 <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
                   {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>

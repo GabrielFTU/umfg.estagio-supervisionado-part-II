@@ -39,7 +39,7 @@ function Toggle({ checked, onChange, disabled }: {
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
         'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
-        checked ? 'bg-[#3B82F6]' : 'bg-gray-200',
+        checked ? 'bg-[#1D4E89]' : 'bg-gray-200',
         disabled && 'opacity-60 cursor-default',
       )}
     >
@@ -67,7 +67,7 @@ function ToggleRow({ label, checked, onChange, disabled }: {
 
 const underline = (error?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  error ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 export function DepositoFormPage() {
@@ -355,12 +355,12 @@ export function DepositoFormPage() {
           {/* Formato do local */}
           <div className="mt-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-[#3B82F6]">Formato do local</h2>
+              <h2 className="text-sm font-semibold text-[#1D4E89]">Formato do local</h2>
               {!readonly && (
                 <button
                   type="button"
                   onClick={() => setAdicionando(true)}
-                  className="flex items-center gap-1 text-sm text-[#3B82F6] hover:text-[#2563eb] transition-colors"
+                  className="flex items-center gap-1 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors"
                 >
                   <Plus size={13} /> Adicionar
                 </button>
@@ -389,7 +389,7 @@ export function DepositoFormPage() {
                           if (e.key === 'Escape') cancelarFormato();
                         }}
                         placeholder="Ex: AAA"
-                        className="w-full border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none text-sm py-1 bg-transparent"
+                        className="w-full border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none text-sm py-1 bg-transparent"
                       />
                     </td>
                     <td className="py-2 pr-6">
@@ -401,14 +401,14 @@ export function DepositoFormPage() {
                           if (e.key === 'Escape') cancelarFormato();
                         }}
                         placeholder="Ex: A"
-                        className="w-full border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none text-sm py-1 bg-transparent"
+                        className="w-full border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none text-sm py-1 bg-transparent"
                       />
                     </td>
                     <td className="py-2 text-[11px] text-emerald-600">Ativo</td>
                     <td className="py-2">
                       <div className="flex items-center gap-2">
                         <button type="button" onClick={confirmarFormato}
-                          className="text-xs text-[#3B82F6] hover:underline">OK</button>
+                          className="text-xs text-[#1D4E89] hover:underline">OK</button>
                         <button type="button" onClick={cancelarFormato}
                           className="text-xs text-gray-400 hover:text-gray-600">✕</button>
                       </div>
@@ -468,7 +468,7 @@ export function DepositoFormPage() {
             <button
               type="button"
               onClick={() => navigate(`/cadastros/depositos/${id}/editar`)}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
             >
               Editar
             </button>
@@ -476,7 +476,7 @@ export function DepositoFormPage() {
             <button
               type="submit"
               disabled={saving}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving
                 ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>

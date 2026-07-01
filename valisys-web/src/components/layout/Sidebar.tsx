@@ -206,8 +206,8 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
     window.innerHeight - (allItems.length * 34 + 80),
   );
 
-  const linkClass = 'flex items-center justify-between pl-6 pr-4 py-2 text-sm text-gray-500 hover:bg-[#eff6ff] hover:text-[#3B82F6] transition-colors group';
-  const chevron = <ChevronRight size={12} className="text-gray-300 group-hover:text-[#3B82F6] shrink-0 ml-6" />;
+  const linkClass = 'flex items-center justify-between pl-6 pr-4 py-2 text-sm text-gray-500 hover:bg-[#EAF1FB] hover:text-[#1D4E89] transition-colors group';
+  const chevron = <ChevronRight size={12} className="text-gray-300 group-hover:text-[#1D4E89] shrink-0 ml-6" />;
 
   return (
     <motion.div
@@ -222,7 +222,7 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
         top: topPx,
         borderRadius: '0 6px 6px 0',
         boxShadow: '4px 4px 16px rgba(0,0,0,0.10)',
-        borderLeft: '3px solid #3B82F6',
+        borderLeft: '3px solid #1D4E89',
       }}
     >
       {item.children && (
@@ -341,8 +341,8 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
                   className={cn(
                     'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
                     active
-                      ? 'bg-[#3B82F6] text-white'
-                      : 'text-gray-500 hover:bg-blue-50 hover:text-[#3B82F6]',
+                      ? 'bg-[#1D4E89] text-white'
+                      : 'text-gray-500 hover:bg-blue-50 hover:text-[#1D4E89]',
                   )}
                 >
                   <Icon size={17} className="shrink-0" />
@@ -359,8 +359,8 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
                   className={cn(
                     'flex items-center justify-center w-10 h-10 rounded-md mx-auto transition-all duration-100',
                     active || isOpen
-                      ? 'bg-[#3B82F6] text-white shadow-sm shadow-blue-200'
-                      : 'text-gray-400 hover:bg-blue-50 hover:text-[#3B82F6]',
+                      ? 'bg-[#1D4E89] text-white shadow-sm shadow-blue-200'
+                      : 'text-gray-400 hover:bg-blue-50 hover:text-[#1D4E89]',
                   )}
                 >
                   <Icon size={20} />
@@ -396,7 +396,7 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
                   onClick={(e) => handleClick(item, e)}
                   className={cn(
                     'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
-                    active ? 'bg-[#3B82F6] text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-[#3B82F6]',
+                    active ? 'bg-[#1D4E89] text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-[#1D4E89]',
                   )}
                 >
                   <Icon size={17} className="shrink-0" />
@@ -412,8 +412,8 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
                   className={cn(
                     'flex items-center justify-center w-10 h-10 rounded-md mx-auto transition-all duration-100',
                     active || isOpen
-                      ? 'bg-[#3B82F6] text-white shadow-sm shadow-blue-200'
-                      : 'text-gray-400 hover:bg-blue-50 hover:text-[#3B82F6]',
+                      ? 'bg-[#1D4E89] text-white shadow-sm shadow-blue-200'
+                      : 'text-gray-400 hover:bg-blue-50 hover:text-[#1D4E89]',
                   )}
                 >
                   <Icon size={20} />

@@ -47,7 +47,7 @@ function UField({ label, required, error, children }: {
 }) {
   return (
     <div className={cn(
-      'border-b py-3 transition-colors focus-within:border-[#3B82F6]',
+      'border-b py-3 transition-colors focus-within:border-[#1D4E89]',
       error ? 'border-red-400' : 'border-gray-200',
     )}>
       <label className="block text-xs text-gray-400 mb-0.5">
@@ -93,7 +93,7 @@ function SelectField({ label, required, value, onChange, options, placeholder, r
   return (
     <div ref={wrapRef} className={cn(
       'border-b py-3 transition-colors',
-      open ? 'border-[#3B82F6]' : error ? 'border-red-400' : 'border-gray-200',
+      open ? 'border-[#1D4E89]' : error ? 'border-red-400' : 'border-gray-200',
     )}>
       <label className="block text-xs text-gray-400 mb-0.5">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
@@ -129,7 +129,7 @@ function SelectField({ label, required, value, onChange, options, placeholder, r
                     onClick={() => { onChange(o.value); setOpen(false); setQuery(''); }}
                     className={cn(
                       'w-full text-left px-3 py-2 text-sm transition-colors border-b border-gray-50 last:border-0',
-                      o.value === value ? 'bg-blue-50 text-[#3B82F6] font-medium' : 'text-gray-700 hover:bg-gray-50',
+                      o.value === value ? 'bg-blue-50 text-[#1D4E89] font-medium' : 'text-gray-700 hover:bg-gray-50',
                     )}>
                     {o.label}
                   </button>
@@ -390,7 +390,7 @@ function ProdutoModal({ onAdd, onClose }: {
               onClick={() => setAplicarDesconto(v => !v)}
               className={cn(
                 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none',
-                aplicarDesconto ? 'bg-[#3B82F6]' : 'bg-gray-200',
+                aplicarDesconto ? 'bg-[#1D4E89]' : 'bg-gray-200',
               )}
             >
               <span className={cn(
@@ -429,13 +429,13 @@ function ProdutoModal({ onAdd, onClose }: {
                     </td>
                     <td className="py-3 pr-4 w-32">
                       <input value={valorUnitario} onChange={e => setValorUnitario(maskCurrency(e.target.value))}
-                        className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#3B82F6] transition-colors pb-0.5 placeholder:text-gray-300"
+                        className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#1D4E89] transition-colors pb-0.5 placeholder:text-gray-300"
                         placeholder="0,00" />
                     </td>
                     {aplicarDesconto && (
                       <td className="py-3 pr-4 w-32">
                         <input value={descontoUnitario} onChange={e => setDescontoUnitario(maskCurrency(e.target.value))}
-                          className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#3B82F6] transition-colors pb-0.5 placeholder:text-gray-300"
+                          className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#1D4E89] transition-colors pb-0.5 placeholder:text-gray-300"
                           placeholder="0,00" />
                       </td>
                     )}
@@ -444,7 +444,7 @@ function ProdutoModal({ onAdd, onClose }: {
                     </td>
                     <td className="py-3 w-28">
                       <input type="number" min={1} value={quantidade} onChange={e => setQuantidade(e.target.value)}
-                        className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#3B82F6] transition-colors pb-0.5" />
+                        className="w-full bg-transparent text-sm text-right outline-none border-b border-gray-300 focus:border-[#1D4E89] transition-colors pb-0.5" />
                     </td>
                   </tr>
                 )}
@@ -463,11 +463,11 @@ function ProdutoModal({ onAdd, onClose }: {
         <div className="flex items-center gap-5">
           <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
             <input type="checkbox" checked={continuar} onChange={e => setContinuar(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 accent-[#3B82F6]" />
+              className="h-4 w-4 rounded border-gray-300 accent-[#1D4E89]" />
             Continuar adicionando
           </label>
           <button type="button" onClick={handleAdicionar}
-            className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors">
+            className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors">
             Adicionar
           </button>
         </div>
@@ -701,7 +701,7 @@ export function PedidoVendaFormPage() {
           )}
           {readOnly && statusPedido === 0 && (
             <button onClick={() => mudarStatus('confirmar')}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[#3B82F6] text-white text-xs font-medium hover:bg-[#2563eb] transition-colors">
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[#1D4E89] text-white text-xs font-medium hover:bg-[#163D6D] transition-colors">
               <TrendingUp size={12} /> Confirmar
             </button>
           )}
@@ -816,8 +816,8 @@ export function PedidoVendaFormPage() {
             {!readOnly && (
               <div className="flex items-center gap-6 mb-4">
                 <button type="button" onClick={() => setShowModal(true)}
-                  className="flex items-center gap-1.5 text-sm text-[#3B82F6] hover:text-[#2563eb] transition-colors font-medium">
-                  <span className="flex items-center justify-center w-4 h-4 bg-[#3B82F6] text-white rounded-full shrink-0">
+                  className="flex items-center gap-1.5 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors font-medium">
+                  <span className="flex items-center justify-center w-4 h-4 bg-[#1D4E89] text-white rounded-full shrink-0">
                     <Plus size={10} />
                   </span>
                   Adicionar produto
@@ -878,7 +878,7 @@ export function PedidoVendaFormPage() {
             Cancelar
           </button>
           <button type="button" onClick={handleSalvar} disabled={saving}
-            className="flex items-center gap-2 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-60">
+            className="flex items-center gap-2 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-60">
             {saving && <Loader2 size={14} className="animate-spin" />}
             {saving ? 'Salvando…' : 'Salvar'}
           </button>

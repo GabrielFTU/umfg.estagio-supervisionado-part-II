@@ -54,7 +54,7 @@ function UField({ label, required, error, children }: {
 }) {
   return (
     <div className={cn(
-      'border-b py-3 transition-colors focus-within:border-[#3B82F6]',
+      'border-b py-3 transition-colors focus-within:border-[#1D4E89]',
       error ? 'border-red-400' : 'border-gray-200',
     )}>
       <label className="block text-xs text-gray-400 mb-0.5">
@@ -101,7 +101,7 @@ function SelectField({ label, required, value, onChange, options, placeholder, r
   return (
     <div ref={wrapRef} className={cn(
       'border-b py-3 transition-colors',
-      open ? 'border-[#3B82F6]' : error ? 'border-red-400' : 'border-gray-200',
+      open ? 'border-[#1D4E89]' : error ? 'border-red-400' : 'border-gray-200',
     )}>
       <label className="block text-xs text-gray-400 mb-0.5">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
@@ -135,7 +135,7 @@ function SelectField({ label, required, value, onChange, options, placeholder, r
                     onClick={() => { onChange(o.value); setOpen(false); setQuery(''); }}
                     className={cn(
                       'w-full text-left px-3 py-2 text-sm transition-colors border-b border-gray-50 last:border-0',
-                      o.value === value ? 'bg-blue-50 text-[#3B82F6] font-medium' : 'text-gray-700 hover:bg-gray-50',
+                      o.value === value ? 'bg-blue-50 text-[#1D4E89] font-medium' : 'text-gray-700 hover:bg-gray-50',
                     )}>
                     {o.label}
                   </button>
@@ -335,7 +335,7 @@ function ProdutoModal({ onSelect, onClose }: { onSelect: (p: ProdutoOption) => v
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
         </div>
         <div className="p-3 border-b border-gray-100 shrink-0">
-          <div className="flex items-center gap-2 border-b border-gray-300 focus-within:border-[#3B82F6] pb-1 transition-colors">
+          <div className="flex items-center gap-2 border-b border-gray-300 focus-within:border-[#1D4E89] pb-1 transition-colors">
             <Search size={14} className="text-gray-400 shrink-0" />
             <input autoFocus className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-300"
               placeholder="Buscar por nome ou código…" value={search} onChange={e => setSearch(e.target.value)} />
@@ -587,7 +587,7 @@ export function OrcamentoFormPage() {
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <Home size={11} /><ChevronRight size={11} />
           <span>Comercial</span><ChevronRight size={11} />
-          <a href="/comercial/orcamentos" className="hover:text-[#3B82F6] transition-colors">Orçamentos</a>
+          <a href="/comercial/orcamentos" className="hover:text-[#1D4E89] transition-colors">Orçamentos</a>
           <ChevronRight size={11} />
           <span className="text-gray-600 font-medium">{titulo}</span>
         </div>
@@ -623,7 +623,7 @@ export function OrcamentoFormPage() {
           )}
           {canEnviar && (
             <button onClick={() => mudarStatus('enviar')}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[#3B82F6] text-white text-xs font-medium hover:bg-[#2563eb] transition-colors">
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[#1D4E89] text-white text-xs font-medium hover:bg-[#163D6D] transition-colors">
               <Send size={12} /> Enviar
             </button>
           )}
@@ -746,8 +746,8 @@ export function OrcamentoFormPage() {
             {!readOnly && (
               <div className="flex items-center gap-6 mb-4">
                 <button type="button" onClick={() => setShowModal(true)}
-                  className="flex items-center gap-1.5 text-sm text-[#3B82F6] hover:text-[#2563eb] transition-colors font-medium">
-                  <span className="flex items-center justify-center w-4 h-4 bg-[#3B82F6] text-white rounded-full shrink-0">
+                  className="flex items-center gap-1.5 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors font-medium">
+                  <span className="flex items-center justify-center w-4 h-4 bg-[#1D4E89] text-white rounded-full shrink-0">
                     <Plus size={10} />
                   </span>
                   Adicionar produto
@@ -773,7 +773,7 @@ export function OrcamentoFormPage() {
                     <td colSpan={readOnly ? 6 : 7} className="py-12">
                       <div className="flex flex-col items-center gap-3 text-center">
                         <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-                          <Package size={22} className="text-[#3B82F6]" />
+                          <Package size={22} className="text-[#1D4E89]" />
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-gray-700">Nenhum produto adicionado</p>
@@ -818,7 +818,7 @@ export function OrcamentoFormPage() {
             Cancelar
           </button>
           <button type="button" onClick={handleSalvar} disabled={saving}
-            className="flex items-center gap-2 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-60">
+            className="flex items-center gap-2 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-60">
             {saving && <Loader2 size={14} className="animate-spin" />}
             {saving ? 'Salvando…' : 'Salvar'}
           </button>

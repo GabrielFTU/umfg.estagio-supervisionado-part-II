@@ -50,7 +50,7 @@ function Toggle({ checked, onChange, disabled }: {
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
         'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
-        checked ? 'bg-[#3B82F6]' : 'bg-gray-200',
+        checked ? 'bg-[#1D4E89]' : 'bg-gray-200',
         disabled && 'opacity-60 cursor-default',
       )}
     >
@@ -64,7 +64,7 @@ function Toggle({ checked, onChange, disabled }: {
 
 const underline = (error?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  error ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 const toDateValue = (iso?: string) =>
@@ -356,7 +356,7 @@ export function LoteFormPage() {
                   placeholder="Descrição do lote (opcional)"
                   maxLength={500}
                   rows={2}
-                  className="w-full bg-transparent text-sm border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
+                  className="w-full bg-transparent text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
                 />
               </div>
               <div className="mb-6">
@@ -367,7 +367,7 @@ export function LoteFormPage() {
                   placeholder="Observações (opcional)"
                   maxLength={500}
                   rows={2}
-                  className="w-full bg-transparent text-sm border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
+                  className="w-full bg-transparent text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
                 />
               </div>
             </>
@@ -437,7 +437,7 @@ export function LoteFormPage() {
             <button
               type="button"
               onClick={() => navigate(`/lotes/${id}/editar`)}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
             >
               Editar
             </button>
@@ -445,7 +445,7 @@ export function LoteFormPage() {
             <button
               type="submit"
               disabled={saving}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving
                 ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>

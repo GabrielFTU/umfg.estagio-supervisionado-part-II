@@ -385,7 +385,7 @@ export function ProdutoFormPage() {
 
   // Variações
   const handleAddVariacao = useCallback(() =>
-    setVariacoes(prev => [...prev, { localId: crypto.randomUUID(), nome: '', codigoHex: '#3b82f6', valor: '', estoqueAtual: 0 }]), []);
+    setVariacoes(prev => [...prev, { localId: crypto.randomUUID(), nome: '', codigoHex: '#1D4E89', valor: '', estoqueAtual: 0 }]), []);
 
   const handleRemoveVariacao = useCallback((localId: string) => {
     setVariacoes(prev => {
@@ -460,7 +460,7 @@ export function ProdutoFormPage() {
           fatorConversao: fn.fatorConversao ? String(fn.fatorConversao) : '1',
         })));
         setVariacoes((d.variacoes ?? []).map((v: { id: string; nome: string; codigoHex: string | null; valor: number; estoqueAtual: number }) => ({
-          localId: v.id, id: v.id, nome: v.nome, codigoHex: v.codigoHex ?? '#3b82f6',
+          localId: v.id, id: v.id, nome: v.nome, codigoHex: v.codigoHex ?? '#1D4E89',
           valor: floatToMaskedCurrency(v.valor), estoqueAtual: v.estoqueAtual ?? 0,
         })));
       } catch {

@@ -24,7 +24,7 @@ function UField({ label, required, error, small, children }: {
   label: string; required?: boolean; error?: string; small?: boolean; children: React.ReactNode;
 }) {
   return (
-    <div className={cn('border-b py-3 transition-colors focus-within:border-[#3B82F6]',
+    <div className={cn('border-b py-3 transition-colors focus-within:border-[#1D4E89]',
       error ? 'border-red-400' : 'border-gray-200', small && 'py-2')}>
       <label className="block text-xs text-gray-400 mb-0.5">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
@@ -242,7 +242,7 @@ export function CondicaoPagamentoFormPage() {
                 onClick={() => !readOnly && setF('vencimentoDiaFixo')(!form.vencimentoDiaFixo)}
                 className={cn(
                   'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
-                  form.vencimentoDiaFixo ? 'bg-[#3B82F6]' : 'bg-gray-200',
+                  form.vencimentoDiaFixo ? 'bg-[#1D4E89]' : 'bg-gray-200',
                   readOnly && 'cursor-default opacity-70',
                 )}>
                 <span className={cn(
@@ -261,7 +261,7 @@ export function CondicaoPagamentoFormPage() {
                 </div>
                 <button type="button" onClick={() => setF('ativo')(!form.ativo)}
                   className={cn('relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
-                    form.ativo ? 'bg-[#3B82F6]' : 'bg-gray-200')}>
+                    form.ativo ? 'bg-[#1D4E89]' : 'bg-gray-200')}>
                   <span className={cn('absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
                     form.ativo ? 'translate-x-[17px]' : 'translate-x-0')} />
                 </button>
@@ -272,7 +272,7 @@ export function CondicaoPagamentoFormPage() {
           {/* Tabela de parcelas */}
           {parcelas.length > 0 && (
             <div className="mt-6">
-              <p className="text-sm font-medium text-[#3B82F6] text-center mb-4">
+              <p className="text-sm font-medium text-[#1D4E89] text-center mb-4">
                 Distribuição percentual da(s) parcela(s)
               </p>
 
@@ -297,7 +297,7 @@ export function CondicaoPagamentoFormPage() {
                           ? <span className="text-sm text-gray-500">{p.numeroDias}</span>
                           : (
                             <input type="number" min={0}
-                              className="w-28 bg-transparent text-sm text-gray-500 border-b border-gray-200 outline-none focus:border-[#3B82F6] py-0.5 px-1 text-right"
+                              className="w-28 bg-transparent text-sm text-gray-500 border-b border-gray-200 outline-none focus:border-[#1D4E89] py-0.5 px-1 text-right"
                               value={p.numeroDias}
                               onChange={e => setParcelaDias(i, parseInt(e.target.value) || 0)} />
                           )
@@ -309,7 +309,7 @@ export function CondicaoPagamentoFormPage() {
                           : (
                             <div className="flex items-center justify-end gap-1">
                               <input type="number" min={0} max={100} step={0.01}
-                                className="w-24 bg-transparent text-sm text-gray-500 border-b border-gray-200 outline-none focus:border-[#3B82F6] py-0.5 px-1 text-right"
+                                className="w-24 bg-transparent text-sm text-gray-500 border-b border-gray-200 outline-none focus:border-[#1D4E89] py-0.5 px-1 text-right"
                                 value={p.percentual}
                                 onChange={e => setParcelaPercentual(i, parseFloat(e.target.value) || 0)} />
                               <span className="text-sm text-gray-400">%</span>
@@ -344,7 +344,7 @@ export function CondicaoPagamentoFormPage() {
             <button onClick={() => navigate('/cadastros/condicoes-pagamento')}
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors">Voltar</button>
             <button onClick={() => navigate(`/cadastros/condicoes-pagamento/${id}/editar`)}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors">
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors">
               Editar
             </button>
           </>
@@ -353,7 +353,7 @@ export function CondicaoPagamentoFormPage() {
             <button onClick={() => navigate('/cadastros/condicoes-pagamento')}
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors">Cancelar</button>
             <button onClick={handleSalvar} disabled={saving}
-              className="flex items-center gap-2 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-60">
+              className="flex items-center gap-2 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-60">
               {saving && <Loader2 size={14} className="animate-spin" />}
               {saving ? 'Salvando…' : 'Salvar'}
             </button>

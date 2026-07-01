@@ -5,6 +5,19 @@ export default {
   theme: {
     extend: {
       colors: {
+        blue: {
+          50: "#EAF1FB",
+          100: "#D3E3F5",
+          200: "#A8C7EA",
+          300: "#7DAAE0",
+          400: "#4A86C9",
+          500: "#2E67A8",
+          600: "#1D4E89",
+          700: "#163D6D",
+          800: "#123056",
+          900: "#0D2440",
+          950: "#081A2E",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

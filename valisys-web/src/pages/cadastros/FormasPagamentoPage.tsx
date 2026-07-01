@@ -204,7 +204,7 @@ export function FormasPagamentoPage() {
           <div className="relative flex-1 min-w-0 sm:max-w-md">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6] transition-all placeholder:text-gray-400"
+              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89] transition-all placeholder:text-gray-400"
               placeholder="Buscar por código ou nome…"
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -218,13 +218,13 @@ export function FormasPagamentoPage() {
               className={cn(
                 'flex items-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors',
                 filtrosAtivos
-                  ? 'bg-blue-50 border-[#3B82F6] text-[#3B82F6]'
+                  ? 'bg-blue-50 border-[#1D4E89] text-[#1D4E89]'
                   : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50',
               )}
             >
               <SlidersHorizontal size={13} /> Filtros
               {filtrosAtivos && (
-                <span className="w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-[#1D4E89] text-white text-[10px] font-bold flex items-center justify-center">
                   {filtrosCount}
                 </span>
               )}
@@ -255,7 +255,7 @@ export function FormasPagamentoPage() {
                         onClick={() => setFiltroStatus(v === filtroStatus ? '' : v)}
                         className={cn('flex-1 text-xs py-1.5 rounded-md border transition-colors',
                           filtroStatus === v
-                            ? 'bg-[#3B82F6] border-[#3B82F6] text-white'
+                            ? 'bg-[#1D4E89] border-[#1D4E89] text-white'
                             : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
                         {v === '' ? 'Todos' : v === 'ativo' ? 'Ativo' : 'Inativo'}
                       </button>
@@ -271,7 +271,7 @@ export function FormasPagamentoPage() {
                         onClick={() => setFiltroRestrita(v === filtroRestrita ? '' : v)}
                         className={cn('flex-1 text-xs py-1.5 rounded-md border transition-colors',
                           filtroRestrita === v
-                            ? 'bg-[#3B82F6] border-[#3B82F6] text-white'
+                            ? 'bg-[#1D4E89] border-[#1D4E89] text-white'
                             : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
                         {v === '' ? 'Todos' : v === 'livre' ? 'Livre' : 'Restrita'}
                       </button>
@@ -284,7 +284,7 @@ export function FormasPagamentoPage() {
 
           <button
             onClick={() => navigate('/cadastros/formas-pagamento/novo')}
-            className="flex items-center gap-2 h-9 px-4 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] shadow-sm shadow-blue-200 transition-colors sm:ml-auto shrink-0"
+            className="flex items-center gap-2 h-9 px-4 rounded-md bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] shadow-sm shadow-blue-200 transition-colors sm:ml-auto shrink-0"
           >
             <Plus size={15} /> Nova Forma
           </button>
@@ -303,7 +303,7 @@ export function FormasPagamentoPage() {
         {!loading && error && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center pb-16">
             <p className="text-sm font-semibold text-red-500">{error}</p>
-            <button onClick={load} className="text-xs text-[#3B82F6] hover:underline">
+            <button onClick={load} className="text-xs text-[#1D4E89] hover:underline">
               Tentar novamente
             </button>
           </div>
@@ -312,7 +312,7 @@ export function FormasPagamentoPage() {
         {!loading && !error && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
             <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-              <CreditCard size={28} className="text-[#3B82F6]" />
+              <CreditCard size={28} className="text-[#1D4E89]" />
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-700">
@@ -327,7 +327,7 @@ export function FormasPagamentoPage() {
             {!search && !filtrosAtivos && (
               <button
                 onClick={() => navigate('/cadastros/formas-pagamento/novo')}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#3B82F6] text-white text-sm hover:bg-[#2563eb] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#1D4E89] text-white text-sm hover:bg-[#163D6D] transition-colors"
               >
                 <Plus size={14} /> Nova forma de pagamento
               </button>

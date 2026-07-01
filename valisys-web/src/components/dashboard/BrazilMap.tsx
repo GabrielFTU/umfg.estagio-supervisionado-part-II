@@ -9,11 +9,11 @@ const GEO_URL =
   'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson';
 
 function stateColor(value: number, max: number): string {
-  if (!value) return '#DBEAFE';
+  if (!value) return '#D3E3F5';
   const t = Math.min(value / max, 1);
-  const r = Math.round(219 - t * 189);
-  const g = Math.round(234 - t * 170);
-  const b = Math.round(254 - t * 79);
+  const r = Math.round(211 - t * 193);
+  const g = Math.round(227 - t * 179);
+  const b = Math.round(245 - t * 159);
   return `rgb(${r},${g},${b})`;
 }
 
@@ -36,7 +36,7 @@ const MemoPath = ({ d, fill, feature, value, onEnter, onLeave, onClick }: MemoPa
     <path
       d={d}
       fill={fill}
-      stroke="#93c5fd"
+      stroke="#7DAAE0"
       strokeWidth={0.6}
       onMouseEnter={handleEnter}
       onMouseLeave={onLeave}
@@ -167,7 +167,7 @@ export function BrazilMap({ data, onStateClick }: BrazilMapProps) {
         <span className="text-[10px] text-gray-400 whitespace-nowrap">Menos</span>
         <div
           className="flex-1 h-1.5 rounded-full"
-          style={{ background: 'linear-gradient(to right, #DBEAFE, #1e40af)' }}
+          style={{ background: 'linear-gradient(to right, #D3E3F5, #123056)' }}
         />
         <span className="text-[10px] text-gray-400 whitespace-nowrap">Mais pedidos</span>
       </div>

@@ -103,8 +103,8 @@ function SortHeader({ label, sk, sort, onSort, align = 'left' }: {
       <span className="inline-flex items-center gap-1">
         {label}
         <span className="flex flex-col leading-none">
-          <ChevronUp   size={9} className={cn(active && sort.dir === 'asc'  ? 'text-[#3B82F6]' : 'text-gray-300')} />
-          <ChevronDown size={9} className={cn(active && sort.dir === 'desc' ? 'text-[#3B82F6]' : 'text-gray-300')} />
+          <ChevronUp   size={9} className={cn(active && sort.dir === 'asc'  ? 'text-[#1D4E89]' : 'text-gray-300')} />
+          <ChevronDown size={9} className={cn(active && sort.dir === 'desc' ? 'text-[#1D4E89]' : 'text-gray-300')} />
         </span>
       </span>
     </th>
@@ -286,13 +286,13 @@ export function RelatorioEstoquePage() {
                   className={cn(
                     'flex flex-col items-start gap-2 w-48 p-4 border transition-all text-left rounded-xl',
                     isActive
-                      ? 'border-2 border-[#3B82F6] bg-blue-50/60'
+                      ? 'border-2 border-[#1D4E89] bg-blue-50/60'
                       : 'border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
                   )}
                 >
-                  <Icon size={18} className={isActive ? 'text-[#3B82F6]' : 'text-gray-400'} />
+                  <Icon size={18} className={isActive ? 'text-[#1D4E89]' : 'text-gray-400'} />
                   <div>
-                    <p className={cn('text-sm font-semibold leading-tight', isActive ? 'text-[#3B82F6]' : 'text-gray-700')}>
+                    <p className={cn('text-sm font-semibold leading-tight', isActive ? 'text-[#1D4E89]' : 'text-gray-700')}>
                       {r.label}
                     </p>
                     <p className="text-[11px] text-gray-400 mt-0.5">{r.desc}</p>
@@ -362,7 +362,7 @@ export function RelatorioEstoquePage() {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="flex items-center gap-2 h-9 px-5 rounded-lg bg-[#3B82F6] text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
+              className="flex items-center gap-2 h-9 px-5 rounded-lg bg-[#1D4E89] text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <FileSearch size={14} />}
               Gerar relatório
@@ -446,7 +446,7 @@ export function RelatorioEstoquePage() {
                   }).filter(p => p <= totalPages).map(p => (
                     <button key={p} onClick={() => goPage(p)}
                       className={cn('w-7 h-7 rounded-full text-sm transition-colors',
-                        p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                        p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
                       {p}
                     </button>
                   ))}
@@ -454,7 +454,7 @@ export function RelatorioEstoquePage() {
                   <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
                 </div>
                 <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+                  className="border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
                   {PAGE_SIZE_OPTS.map(s => <option key={s} value={s}>{s} por página</option>)}
                 </select>
               </div>

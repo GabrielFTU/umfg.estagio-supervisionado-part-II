@@ -27,7 +27,7 @@ function Toggle({ checked, onChange, disabled }: {
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
         'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
-        checked ? 'bg-[#3B82F6]' : 'bg-gray-200',
+        checked ? 'bg-[#1D4E89]' : 'bg-gray-200',
         disabled && 'opacity-60 cursor-default',
       )}>
       <span className={cn('absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
@@ -39,7 +39,7 @@ function Toggle({ checked, onChange, disabled }: {
 
 const underline = (error?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  error ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 export function CategoriaFormPage() {
@@ -208,7 +208,7 @@ export function CategoriaFormPage() {
               maxLength={500}
               className={cn(
                 'w-full bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none pt-1',
-                fieldErrors.descricao ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+                fieldErrors.descricao ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
                 readonly && 'opacity-60 cursor-default',
               )}
             />
@@ -251,7 +251,7 @@ export function CategoriaFormPage() {
             <button
               type="button"
               onClick={() => navigate(`/cadastros/categorias/${id}/editar`)}
-              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
             >
               <Pencil size={13} /> Editar
             </button>
@@ -259,7 +259,7 @@ export function CategoriaFormPage() {
             <button
               type="submit"
               disabled={saving}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving
                 ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>

@@ -193,7 +193,7 @@ export function PerfisPage() {
         <div className="relative flex-1 min-w-0">
           <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
             placeholder="Informe o nome do perfil"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
@@ -202,7 +202,7 @@ export function PerfisPage() {
 
         <div className="flex items-center gap-3 shrink-0">
           <button onClick={() => navigate('/configuracoes/perfis/novo')}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] active:scale-95 transition-all">
+            className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] active:scale-95 transition-all">
             <Plus size={14} /> Novo Perfil
           </button>
 
@@ -211,7 +211,7 @@ export function PerfisPage() {
               className={cn(
                 'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
                 statusFiltro !== 'todos'
-                  ? 'border-[#3B82F6] bg-blue-50 text-[#3B82F6]'
+                  ? 'border-[#1D4E89] bg-blue-50 text-[#1D4E89]'
                   : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
               )}>
               <SlidersHorizontal size={15} />
@@ -230,7 +230,7 @@ export function PerfisPage() {
                   {(['todos', 'ativo', 'inativo'] as const).map(v => (
                     <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
                       className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
-                        statusFiltro === v ? 'bg-[#3B82F6] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                        statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
                       {v === 'todos' ? 'Todos' : v === 'ativo' ? 'Ativo' : 'Inativo'}
                     </button>
                   ))}
@@ -243,7 +243,7 @@ export function PerfisPage() {
 
       {statusLabel && (
         <div className="px-4 sm:px-6 py-2 border-b border-gray-100 flex items-center gap-2">
-          <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#3B82F6] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+          <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
             Status : {statusLabel}
             <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
           </span>
@@ -286,14 +286,14 @@ export function PerfisPage() {
                     className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
                     <td className="px-4 sm:px-6 py-3">
                       <span className={cn('text-sm flex items-center gap-1.5', p.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
-                        {isProtegido(p) && <ShieldCheck size={13} className="text-[#3B82F6] shrink-0" />}
+                        {isProtegido(p) && <ShieldCheck size={13} className="text-[#1D4E89] shrink-0" />}
                         {p.nome}
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <div className="flex items-center gap-2">
                         <div className="h-1 w-16 rounded-full bg-gray-100 overflow-hidden">
-                          <div className="h-full rounded-full bg-[#3B82F6]"
+                          <div className="h-full rounded-full bg-[#1D4E89]"
                             style={{ width: `${TOTAL_PERMISSION_COUNT ? (p.acessos.length / TOTAL_PERMISSION_COUNT) * 100 : 0}%` }} />
                         </div>
                         <span className="text-xs text-gray-500 whitespace-nowrap tabular-nums">
@@ -329,14 +329,14 @@ export function PerfisPage() {
             <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
               <button key={p} onClick={() => goPage(p)}
-                className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
                 {p}
               </button>
             ))}
             <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
             <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
             <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-              className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+              className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
               {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>

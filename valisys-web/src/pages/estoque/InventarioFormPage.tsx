@@ -26,7 +26,7 @@ function uid() { return Math.random().toString(36).slice(2); }
 
 const ul = (err?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  err ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  err ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 function UField({ label, required, error, children }: {
@@ -297,7 +297,7 @@ export function InventarioFormPage() {
                 placeholder={readonly ? '—' : 'Observações sobre esta contagem…'}
                 className={cn(
                   'w-full text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none py-2 bg-transparent',
-                  'border-gray-300 focus:border-[#3B82F6]',
+                  'border-gray-300 focus:border-[#1D4E89]',
                   readonly && 'cursor-default',
                 )}
               />
@@ -312,7 +312,7 @@ export function InventarioFormPage() {
                 <button
                   type="button"
                   onClick={addItem}
-                  className="flex items-center gap-1.5 text-sm text-[#3B82F6] hover:text-[#2563eb] transition-colors"
+                  className="flex items-center gap-1.5 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors"
                 >
                   <Plus size={13} /> Adicionar produto
                 </button>
@@ -340,7 +340,7 @@ export function InventarioFormPage() {
                         <button
                           type="button"
                           onClick={addItem}
-                          className="ml-1 text-[#3B82F6] hover:underline"
+                          className="ml-1 text-[#1D4E89] hover:underline"
                         >
                           Adicionar produto
                         </button>
@@ -359,8 +359,8 @@ export function InventarioFormPage() {
                           className={cn(
                             'w-full h-8 bg-transparent text-sm border-b focus:outline-none transition-colors',
                             item.produtoId
-                              ? 'border-gray-300 focus:border-[#3B82F6] text-gray-700'
-                              : 'border-gray-300 focus:border-[#3B82F6] text-gray-400',
+                              ? 'border-gray-300 focus:border-[#1D4E89] text-gray-700'
+                              : 'border-gray-300 focus:border-[#1D4E89] text-gray-400',
                           )}
                         >
                           <option value="">Selecione um produto…</option>
@@ -382,7 +382,7 @@ export function InventarioFormPage() {
                           min={0}
                           value={item.quantidadeContada}
                           onChange={e => updateItem(item.tempId, 'quantidadeContada', Math.max(0, Number(e.target.value)))}
-                          className="w-28 h-8 text-right bg-transparent text-sm border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors"
+                          className="w-28 h-8 text-right bg-transparent text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none transition-colors"
                         />
                       )}
                     </td>
@@ -432,7 +432,7 @@ export function InventarioFormPage() {
               <button
                 type="button"
                 onClick={() => navigate(`/estoque/inventario/${id}/editar`)}
-                className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+                className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
               >
                 <Pencil size={13} /> Editar
               </button>
@@ -441,7 +441,7 @@ export function InventarioFormPage() {
                 <button
                   type="submit"
                   disabled={saving || finalizing}
-                  className="h-9 px-6 rounded-full border border-[#3B82F6] text-[#3B82F6] text-sm font-medium hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="h-9 px-6 rounded-full border border-[#1D4E89] text-[#1D4E89] text-sm font-medium hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {saving
                     ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>
@@ -451,7 +451,7 @@ export function InventarioFormPage() {
                   type="button"
                   onClick={handleFinalizar}
                   disabled={saving || finalizing}
-                  className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {finalizing
                     ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Finalizando…</span>

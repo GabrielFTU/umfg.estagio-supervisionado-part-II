@@ -14,7 +14,7 @@ function UField({ label, required, error, children }: {
 }) {
   return (
     <div className={cn(
-      'border-b py-3 transition-colors focus-within:border-[#3B82F6]',
+      'border-b py-3 transition-colors focus-within:border-[#1D4E89]',
       error ? 'border-red-400' : 'border-gray-200',
     )}>
       <label className="block text-xs text-gray-400 mb-0.5">
@@ -144,7 +144,7 @@ export function FinalidadeFormPage() {
                 </div>
                 <button type="button" onClick={() => setAtivo(v => !v)}
                   className={cn('relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
-                    ativo ? 'bg-[#3B82F6]' : 'bg-gray-200')}>
+                    ativo ? 'bg-[#1D4E89]' : 'bg-gray-200')}>
                   <span className={cn('absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
                     ativo ? 'translate-x-[17px]' : 'translate-x-0')} />
                 </button>
@@ -173,7 +173,7 @@ export function FinalidadeFormPage() {
               Voltar
             </button>
             <button onClick={() => navigate(`/cadastros/finalidades/${id}/editar`)}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors">
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors">
               Editar
             </button>
           </>
@@ -184,7 +184,7 @@ export function FinalidadeFormPage() {
               Cancelar
             </button>
             <button onClick={handleSalvar} disabled={saving}
-              className="flex items-center gap-2 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-60">
+              className="flex items-center gap-2 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-60">
               {saving && <Loader2 size={14} className="animate-spin" />}
               {saving ? 'Salvando…' : 'Salvar'}
             </button>

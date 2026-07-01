@@ -138,7 +138,7 @@ export function ContaPagarComprovantePage() {
             Contas a pagar
           </button>
           <ChevronRight size={12} className="shrink-0" />
-          <span className="text-[#3B82F6] font-medium">Comprovante</span>
+          <span className="text-[#1D4E89] font-medium">Comprovante</span>
         </nav>
 
         {/* Card */}
@@ -199,7 +199,7 @@ export function ContaPagarComprovantePage() {
           Voltar
         </button>
         <button onClick={handlePrint}
-          className="h-9 px-5 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+          className="h-9 px-5 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
           <Printer size={14} />
           Imprimir
         </button>

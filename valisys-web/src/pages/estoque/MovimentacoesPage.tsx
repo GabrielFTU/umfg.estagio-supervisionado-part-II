@@ -81,8 +81,8 @@ function SortHeader({ col, label, sort, onSort, align = 'left' }: {
       <span className="inline-flex items-center gap-1">
         {label}
         <span className="flex flex-col leading-none">
-          <ChevronUp  size={9} className={cn(active && sort.dir === 'asc'  ? 'text-[#3B82F6]' : 'text-gray-300')} />
-          <ChevronDown size={9} className={cn(active && sort.dir === 'desc' ? 'text-[#3B82F6]' : 'text-gray-300')} />
+          <ChevronUp  size={9} className={cn(active && sort.dir === 'asc'  ? 'text-[#1D4E89]' : 'text-gray-300')} />
+          <ChevronDown size={9} className={cn(active && sort.dir === 'desc' ? 'text-[#1D4E89]' : 'text-gray-300')} />
         </span>
       </span>
     </th>
@@ -484,14 +484,14 @@ export function MovimentacoesPage() {
                   }).filter(p => p <= totalPages).map(p => (
                     <button key={p} onClick={() => goPage(p)}
                       className={cn('w-7 h-7 rounded-full text-sm transition-colors',
-                        p === page ? 'bg-blue-100 text-[#3B82F6] font-semibold' : 'hover:bg-gray-100')}>
+                        p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
                       {p}
                     </button>
                   ))}
                   <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
                   <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
                   <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                    className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#3B82F6]">
+                    className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
                     {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>

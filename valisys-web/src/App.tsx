@@ -47,6 +47,7 @@ import { FichaTecnicaPainelPage } from './pages/producao/FichaTecnicaPainelPage'
 import { FichaConsumoPage } from './pages/producao/FichaConsumoPage';
 import { SequenciaOperacionalPage } from './pages/producao/SequenciaOperacionalPage';
 import { KanbanPage } from './pages/producao/KanbanPage';
+import { ConsultaAcaoPage } from './pages/ConsultaAcaoPage';
 import { LotesPage } from './pages/producao/LotesPage';
 import { LoteFormPage } from './pages/producao/LoteFormPage';
 import { RoteiroProducaoPage } from './pages/producao/RoteiroProducaoPage';
@@ -217,6 +218,7 @@ const App = () => (
       <Route path="/producao/ordens/:id/editar" element={<PrivateRoute><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/ordens/:id" element={<PrivateRoute><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/kanban" element={<PrivateRoute><AppLayout><KanbanPage /></AppLayout></PrivateRoute>} />
+      <Route path="/scan" element={<PrivateRoute><AppLayout><ConsultaAcaoPage /></AppLayout></PrivateRoute>} />
       <Route path="/lotes" element={<PrivateRoute><AppLayout><LotesPage /></AppLayout></PrivateRoute>} />
       <Route path="/lotes/novo" element={<PrivateRoute><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/lotes/:id/editar" element={<PrivateRoute><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />

@@ -53,7 +53,7 @@ const uid = () => Math.random().toString(36).slice(2);
 
 const underline = (error?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  error ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 function Toggle({ checked, onChange, disabled }: {
@@ -68,7 +68,7 @@ function Toggle({ checked, onChange, disabled }: {
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
         'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
-        checked ? 'bg-[#3B82F6]' : 'bg-gray-200',
+        checked ? 'bg-[#1D4E89]' : 'bg-gray-200',
         disabled && 'opacity-60 cursor-default',
       )}
     >
@@ -551,7 +551,7 @@ export function RoteiroProducaoFormPage() {
             <button
               type="button"
               onClick={() => navigate(`/producao/roteiros/${id}/editar`)}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
             >
               Editar
             </button>
@@ -559,7 +559,7 @@ export function RoteiroProducaoFormPage() {
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving
                 ? <><Loader2 size={14} className="animate-spin" /> Salvando…</>

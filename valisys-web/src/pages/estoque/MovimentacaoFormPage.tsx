@@ -46,7 +46,7 @@ function detectTipo(
 
 const selectCls = (err?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none',
-  err ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  err ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 function Field({ label, required, error, children }: {
@@ -293,7 +293,7 @@ export function MovimentacaoFormPage() {
                 placeholder="Descreva o motivo da movimentação…"
                 className={cn(
                   'w-full text-sm border-b pt-1 resize-none bg-transparent focus:outline-none placeholder:text-gray-300 transition-colors',
-                  errors.justificativa ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+                  errors.justificativa ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
                 )}
               />
             </Field>
@@ -329,7 +329,7 @@ export function MovimentacaoFormPage() {
                             onChange={e => updateItem(item.tempId, 'produtoId', e.target.value)}
                             className={cn(
                               'w-full h-8 bg-transparent text-sm border-b transition-colors focus:outline-none',
-                              errors[`item_produto_${idx}`] ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+                              errors[`item_produto_${idx}`] ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
                             )}
                           >
                             <option value="">Selecionar produto…</option>
@@ -352,7 +352,7 @@ export function MovimentacaoFormPage() {
                               placeholder="0"
                               className={cn(
                                 'w-full h-8 bg-transparent text-sm border-b text-right transition-colors focus:outline-none tabular-nums',
-                                errors[`item_qtd_${idx}`] ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+                                errors[`item_qtd_${idx}`] ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
                               )}
                             />
                             {prod && (

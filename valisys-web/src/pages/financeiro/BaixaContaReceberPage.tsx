@@ -248,7 +248,7 @@ function ReciboModal({ recibo, onClose }: { recibo: ReciboData; onClose: () => v
             Fechar
           </button>
           <button onClick={handlePrint}
-            className="h-9 px-5 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+            className="h-9 px-5 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
             <Printer size={14} />
             Imprimir
           </button>
@@ -529,7 +529,7 @@ export function BaixaContaReceberPage() {
                       onClick={() => { setFormaPagamento(f.value); setFormaOpen(false); }}
                       className={cn(
                         'w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors',
-                        formaPagamento === f.value ? 'text-[#3B82F6] font-medium' : 'text-gray-700',
+                        formaPagamento === f.value ? 'text-[#1D4E89] font-medium' : 'text-gray-700',
                       )}
                     >
                       {f.label}
@@ -552,7 +552,7 @@ export function BaixaContaReceberPage() {
                   'h-9 text-sm bg-transparent border-b transition-colors focus:outline-none',
                   erros.data
                     ? 'border-red-400 text-red-500'
-                    : 'border-gray-300 focus:border-[#3B82F6] text-gray-700',
+                    : 'border-gray-300 focus:border-[#1D4E89] text-gray-700',
                 )}
               />
               {erros.data && <p className="text-[11px] text-red-500 mt-0.5">{erros.data}</p>}
@@ -590,7 +590,7 @@ export function BaixaContaReceberPage() {
                           'w-28 text-right text-sm border-b focus:outline-none bg-transparent',
                           isBoleto
                             ? 'border-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'border-gray-300 focus:border-[#3B82F6]',
+                            : 'border-gray-300 focus:border-[#1D4E89]',
                         )}
                         value={`R$ ${p.valorAPagar}`}
                         onChange={e => updateParcela(p.parcelaId, 'valorAPagar', e.target.value)}
@@ -599,7 +599,7 @@ export function BaixaContaReceberPage() {
                     </td>
                     <td className="py-3 px-3 text-right">
                       <input
-                        className="w-24 text-right text-sm border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none bg-transparent"
+                        className="w-24 text-right text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent"
                         value={`R$ ${p.multa}`}
                         onChange={e => updateParcela(p.parcelaId, 'multa', e.target.value)}
                         onFocus={e => e.target.select()}
@@ -607,7 +607,7 @@ export function BaixaContaReceberPage() {
                     </td>
                     <td className="py-3 px-3 text-right">
                       <input
-                        className="w-24 text-right text-sm border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none bg-transparent"
+                        className="w-24 text-right text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent"
                         value={`R$ ${p.juros}`}
                         onChange={e => updateParcela(p.parcelaId, 'juros', e.target.value)}
                         onFocus={e => e.target.select()}
@@ -615,7 +615,7 @@ export function BaixaContaReceberPage() {
                     </td>
                     <td className="py-3 px-3 text-right">
                       <input
-                        className="w-24 text-right text-sm border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none bg-transparent"
+                        className="w-24 text-right text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent"
                         value={`R$ ${p.desconto}`}
                         onChange={e => updateParcela(p.parcelaId, 'desconto', e.target.value)}
                         onFocus={e => e.target.select()}

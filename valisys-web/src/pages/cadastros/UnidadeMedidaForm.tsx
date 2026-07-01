@@ -45,7 +45,7 @@ function Field({ label, required, error, children }: {
 
 const inputCls = (error?: string) => cn(
   'w-full h-9 px-3 text-sm border rounded-md transition-all',
-  'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6]',
+  'focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89]',
   'placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-default',
   error ? 'border-red-400' : 'border-gray-300',
 );
@@ -199,7 +199,7 @@ export function UnidadeMedidaFormPage() {
 
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-              <Ruler size={20} className="text-[#3B82F6]" />
+              <Ruler size={20} className="text-[#1D4E89]" />
             </div>
             <h1 className="text-base font-semibold text-gray-800">{titulo[modo]}</h1>
           </div>
@@ -321,7 +321,7 @@ export function UnidadeMedidaFormPage() {
                       onClick={() => setAtivo(v => !v)}
                       className={cn(
                         'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
-                        ativo ? 'bg-[#3B82F6]' : 'bg-gray-200',
+                        ativo ? 'bg-[#1D4E89]' : 'bg-gray-200',
                       )}
                     >
                       <span className={cn(
@@ -358,7 +358,7 @@ export function UnidadeMedidaFormPage() {
                     <button
                       type="button"
                       onClick={() => navigate(`/cadastros/unidades/${id}/editar`)}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md bg-[#3B82F6] text-white text-xs font-medium hover:bg-[#2563eb] transition-colors"
+                      className="flex items-center gap-1.5 h-8 px-4 rounded-md bg-[#1D4E89] text-white text-xs font-medium hover:bg-[#163D6D] transition-colors"
                     >
                       <Pencil size={12} /> Editar
                     </button>
@@ -375,7 +375,7 @@ export function UnidadeMedidaFormPage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md bg-[#3B82F6] text-white text-xs font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                      className="flex items-center gap-1.5 h-8 px-4 rounded-md bg-[#1D4E89] text-white text-xs font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                       {saving ? 'Salvando…' : 'Salvar'}

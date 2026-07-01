@@ -56,7 +56,7 @@ const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
 
 const inputCls = (err?: boolean, ro?: boolean) => cn(
   'w-full h-8 px-3 text-sm text-gray-800 rounded-md border bg-white transition-colors',
-  'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6]',
+  'focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89]',
   'placeholder:text-gray-300',
   ro  ? 'bg-gray-50 cursor-default border-gray-100' :
   err ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 hover:border-gray-300',
@@ -138,15 +138,15 @@ function PapelMultiSelect({ value, onChange, error, readOnly }: {
         className={cn(
           'w-full min-h-8 px-3 py-1 text-sm rounded-md border bg-white text-left',
           'flex items-center flex-wrap gap-1.5 transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25',
+          'focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25',
           readOnly ? 'bg-gray-50 border-gray-100 cursor-default' :
-          open ? 'border-[#3B82F6]' : error ? 'border-red-300' : 'border-gray-200 hover:border-gray-300',
+          open ? 'border-[#1D4E89]' : error ? 'border-red-300' : 'border-gray-200 hover:border-gray-300',
         )}
       >
         {value.length === 0
           ? <span className="text-gray-300 text-sm">Selecione…</span>
           : value.map(p => (
-              <span key={p} className="flex items-center gap-1 text-xs bg-[#eff6ff] text-[#3B82F6] font-medium px-2 py-0.5 rounded-md">
+              <span key={p} className="flex items-center gap-1 text-xs bg-[#EAF1FB] text-[#1D4E89] font-medium px-2 py-0.5 rounded-md">
                 {p}
                 {!readOnly && (
                   <span role="button" tabIndex={-1}
@@ -169,9 +169,9 @@ function PapelMultiSelect({ value, onChange, error, readOnly }: {
             return (
               <button key={p} type="button" onClick={() => toggle(p)}
                 className={cn('w-full flex items-center gap-3 px-3 py-2 text-sm text-left transition-colors',
-                  checked ? 'bg-[#eff6ff] text-[#3B82F6]' : 'text-gray-700 hover:bg-gray-50')}>
+                  checked ? 'bg-[#EAF1FB] text-[#1D4E89]' : 'text-gray-700 hover:bg-gray-50')}>
                 <div className={cn('w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
-                  checked ? 'bg-[#3B82F6] border-[#3B82F6]' : 'border-gray-300')}>
+                  checked ? 'bg-[#1D4E89] border-[#1D4E89]' : 'border-gray-300')}>
                   {checked && <Check size={10} className="text-white" strokeWidth={3} />}
                 </div>
                 {p}
@@ -201,7 +201,7 @@ function Section({ title, open: defaultOpen = true, children }: {
       <button type="button" onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between py-2 text-left">
         <span className="flex items-center gap-2.5">
-          <span className="w-[3px] h-4 rounded-full bg-[#3B82F6]" />
+          <span className="w-[3px] h-4 rounded-full bg-[#1D4E89]" />
           <span className="text-sm font-semibold text-gray-700">{title}</span>
         </span>
         {open ? <ChevronUp size={14} className="text-gray-400" />
@@ -453,21 +453,21 @@ export function PessoaFormPage() {
     : 'Visualizar Pessoa';
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
 
       {/* ── Breadcrumb ── */}
-      <div className="shrink-0 bg-white border-b border-gray-200/70 px-4 sm:px-6 pt-4 pb-3">
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+      <div className="shrink-0 border-b border-gray-100 px-4 sm:px-6 pt-4 pb-3">
+        <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Home size={11} /><ChevronRight size={11} />
           <span>Cadastros</span><ChevronRight size={11} />
-          <a href="/cadastros/pessoas" className="hover:text-[#3B82F6] transition-colors">Pessoas</a>
+          <a href="/cadastros/pessoas" className="hover:text-[#1D4E89] transition-colors">Pessoas</a>
           <ChevronRight size={11} />
           <span className="text-gray-600 font-medium">{tituloModo}</span>
         </div>
       </div>
 
       {/* ── Subheader: seletor de tipo + ações ── */}
-      <div className="shrink-0 border-b border-gray-200/50 px-4 sm:px-6 py-3">
+      <div className="shrink-0 border-b border-gray-100 px-4 sm:px-6 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Seletor de tipo — bloqueado em editar/visualizar */}
           <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
@@ -482,7 +482,7 @@ export function PessoaFormPage() {
                 onClick={() => { setTipo(v); setErrors({}); }}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all',
-                  tipo === v ? 'bg-white text-[#3B82F6] shadow-sm' : 'text-gray-500',
+                  tipo === v ? 'bg-white text-[#1D4E89] shadow-sm' : 'text-gray-500',
                   modo === 'criar' && tipo !== v && 'hover:text-gray-700',
                 )}
               >
@@ -504,7 +504,7 @@ export function PessoaFormPage() {
               <button
                 type="button"
                 onClick={() => navigate(`/cadastros/pessoas/${tipoParam}/${id}/editar`)}
-                className="flex items-center gap-1.5 h-9 px-5 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] shadow-sm transition-colors"
+                className="flex items-center gap-1.5 h-9 px-5 rounded-md bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] shadow-sm transition-colors"
               >
                 <Pencil size={14} /> Editar
               </button>
@@ -513,7 +513,7 @@ export function PessoaFormPage() {
                 form="pessoa-form"
                 type="submit"
                 disabled={loading}
-                className="flex items-center gap-1.5 h-9 px-5 rounded-md bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] disabled:opacity-60 shadow-sm transition-colors"
+                className="flex items-center gap-1.5 h-9 px-5 rounded-md bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] disabled:opacity-60 shadow-sm transition-colors"
               >
                 <Save size={14} />
                 {loading ? 'Salvando…' : 'Salvar'}
@@ -721,7 +721,7 @@ export function PessoaFormPage() {
                     <textarea rows={4} readOnly={ro}
                       className={cn(
                         'w-full px-3 py-2.5 text-sm text-gray-800 rounded-md border transition-colors',
-                        'focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/25 focus:border-[#3B82F6]',
+                        'focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89]',
                         'resize-none placeholder:text-gray-300',
                         ro ? 'bg-gray-50 border-gray-100 cursor-default'
                            : 'border-gray-200 hover:border-gray-300',

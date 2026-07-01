@@ -37,8 +37,8 @@ const CONFIG: Record<Variante, {
   info: {
     icon: Info,
     iconBg: 'bg-blue-50',
-    iconColor: 'text-[#3B82F6]',
-    btnCls: 'bg-[#3B82F6] hover:bg-[#2563eb] focus-visible:ring-blue-400',
+    iconColor: 'text-[#1D4E89]',
+    btnCls: 'bg-[#1D4E89] hover:bg-[#163D6D] focus-visible:ring-blue-400',
   },
 };
 

@@ -111,7 +111,7 @@ export function BoletoViewer({ onClose, ...opts }: BoletoViewerProps) {
             </div>
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[#3B82F6] text-white text-xs font-medium hover:bg-[#2563eb] transition-colors"
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-[#1D4E89] text-white text-xs font-medium hover:bg-[#163D6D] transition-colors"
             >
               <Printer size={12} /> Imprimir
             </button>

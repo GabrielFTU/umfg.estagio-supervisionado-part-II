@@ -30,7 +30,7 @@ function BankInitials({ nome }: { nome: string }) {
     ? words[0][0] + words[1][0]
     : nome.slice(0, 2);
   return (
-    <div className="w-10 h-10 rounded-lg bg-[#3B82F6] flex items-center justify-center shrink-0">
+    <div className="w-10 h-10 rounded-lg bg-[#1D4E89] flex items-center justify-center shrink-0">
       <span className="text-white text-xs font-bold uppercase">{initials}</span>
     </div>
   );
@@ -165,13 +165,13 @@ export function CarteirasPage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Informe o Titular / Banco"
-                className="w-full pl-9 pr-3 h-9 bg-transparent border-b border-gray-200 text-sm focus:outline-none focus:border-[#3B82F6] placeholder:text-gray-300 transition-colors"
+                className="w-full pl-9 pr-3 h-9 bg-transparent border-b border-gray-200 text-sm focus:outline-none focus:border-[#1D4E89] placeholder:text-gray-300 transition-colors"
               />
             </div>
             {apenasAtivos && (
               <button
                 onClick={() => setApenasAtivos(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#3B82F6] text-white text-xs font-medium"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1D4E89] text-white text-xs font-medium"
               >
                 Status: ATIVO
                 <span className="text-white/70 hover:text-white">&times;</span>
@@ -189,7 +189,7 @@ export function CarteirasPage() {
 
           <button
             onClick={() => navigate('/financeiro/carteira/nova')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors shrink-0"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors shrink-0"
           >
             <Plus size={15} />
             Nova carteira
@@ -209,7 +209,7 @@ export function CarteirasPage() {
             <p>Nenhuma carteira encontrada</p>
             <button
               onClick={() => navigate('/financeiro/carteira/nova')}
-              className="mt-1 text-[#3B82F6] hover:underline text-xs"
+              className="mt-1 text-[#1D4E89] hover:underline text-xs"
             >
               Cadastrar nova carteira
             </button>

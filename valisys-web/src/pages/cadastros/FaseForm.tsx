@@ -48,7 +48,7 @@ function Toggle({ checked, onChange, disabled }: {
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
         'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
-        checked ? 'bg-[#3B82F6]' : 'bg-gray-200',
+        checked ? 'bg-[#1D4E89]' : 'bg-gray-200',
         disabled && 'opacity-60 cursor-default',
       )}
     >
@@ -62,7 +62,7 @@ function Toggle({ checked, onChange, disabled }: {
 
 const underline = (error?: string) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  error ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
 export function FaseFormPage() {
@@ -297,7 +297,7 @@ export function FaseFormPage() {
               <select
                 value={tipoFase}
                 onChange={e => setTipoFase(e.target.value as TipoFase)}
-                className="w-full h-9 bg-transparent text-sm border-b border-gray-300 focus:border-[#3B82F6] focus:outline-none transition-colors text-gray-700"
+                className="w-full h-9 bg-transparent text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none transition-colors text-gray-700"
               >
                 {TIPO_FASE_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -317,7 +317,7 @@ export function FaseFormPage() {
               rows={3}
               className={cn(
                 'w-full bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none pt-1',
-                'border-gray-300 focus:border-[#3B82F6]',
+                'border-gray-300 focus:border-[#1D4E89]',
                 readonly && 'opacity-60 cursor-default',
               )}
             />
@@ -355,7 +355,7 @@ export function FaseFormPage() {
             <button
               type="button"
               onClick={() => navigate(`/cadastros/fases/${id}/editar`)}
-              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
+              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
             >
               <Pencil size={13} /> Editar
             </button>
@@ -363,7 +363,7 @@ export function FaseFormPage() {
             <button
               type="submit"
               disabled={saving}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving
                 ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>

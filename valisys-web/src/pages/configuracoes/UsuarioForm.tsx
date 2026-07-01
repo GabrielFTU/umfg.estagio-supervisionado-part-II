@@ -31,7 +31,7 @@ function Toggle({ checked, onChange, disabled }: {
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
         'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
-        checked ? 'bg-[#3B82F6]' : 'bg-gray-200',
+        checked ? 'bg-[#1D4E89]' : 'bg-gray-200',
         disabled && 'opacity-60 cursor-default',
       )}>
       <span className={cn('absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
@@ -43,7 +43,7 @@ function Toggle({ checked, onChange, disabled }: {
 
 const underline = (error?: string, disabled?: boolean) => cn(
   'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  error ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
   disabled && 'opacity-60 cursor-default',
 );
 
@@ -240,7 +240,7 @@ export function UsuarioFormPage() {
           )}
 
           {souEu && modo === 'editar' && (
-            <div className="mb-5 px-4 py-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-[#3B82F6]">
+            <div className="mb-5 px-4 py-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-[#1D4E89]">
               Você está editando o seu próprio usuário. Por segurança, não é possível desativar a própria conta.
             </div>
           )}
@@ -373,7 +373,7 @@ export function UsuarioFormPage() {
             <button
               type="button"
               onClick={() => navigate(`/configuracoes/usuarios/${id}/editar`)}
-              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] active:scale-95 transition-all"
+              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] active:scale-95 transition-all"
             >
               <Pencil size={13} /> Editar
             </button>
@@ -381,7 +381,7 @@ export function UsuarioFormPage() {
             <button
               type="submit"
               disabled={saving}
-              className="h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {saving
                 ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>
