@@ -5,7 +5,7 @@ import type { LoginResponse } from '@/types';
 const API_BASE: string =
   process.env.NODE_ENV === 'development'
     ? '/api'
-    : process.env.VITE_API_URL || 'http://localhost:5019/api';
+    : process.env.VITE_API_URL || '/api';
 
 export async function login(email: string, senha: string): Promise<LoginResponse> {
   const res = await fetch(`${API_BASE}/Auth/login`, {

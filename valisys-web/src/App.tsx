@@ -62,6 +62,8 @@ import { PerfisPage } from './pages/configuracoes/PerfisPage';
 import { PerfilFormPage } from './pages/configuracoes/PerfilForm';
 import { UsuariosPage } from './pages/configuracoes/UsuariosPage';
 import { UsuarioFormPage } from './pages/configuracoes/UsuarioForm';
+import { TiposDeOrdemPage } from './pages/cadastros/TiposDeOrdemPage';
+import { TiposDeOrdemFormPage } from './pages/cadastros/TiposDeOrdemForm';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -204,6 +206,11 @@ const App = () => (
       <Route path="/cadastros/condicoes-pagamento/novo" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/cadastros/condicoes-pagamento/:id/editar" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/cadastros/condicoes-pagamento/:id" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/cadastros/tipos-ordem" element={<PrivateRoute><AppLayout><TiposDeOrdemPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/tipos-ordem/novo" element={<PrivateRoute><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/tipos-ordem/:id/editar" element={<PrivateRoute><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/tipos-ordem/:id" element={<PrivateRoute><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/estoque/inventario" element={<PrivateRoute><AppLayout><InventariosPage /></AppLayout></PrivateRoute>} />
       <Route path="/estoque/inventario/novo" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
