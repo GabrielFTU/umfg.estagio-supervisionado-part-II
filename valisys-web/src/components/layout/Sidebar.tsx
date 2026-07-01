@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Gauge, LayersPlus, Briefcase, ScanLine, Factory, DraftingCompass, Package, CircleDollarSign, BarChart3,
@@ -6,22 +7,23 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface SubItem { label: string; href: string }
+interface SubItem { label: string; href: string; permissions?: string[] }
 interface NavGroup { label: string; items: SubItem[] }
 interface NavItemDef {
   icon: React.ElementType;
   label: string;
   href: string;
-  children?: SubItem[];  
-  groups?: NavGroup[]; 
+  permissions?: string[];
+  children?: SubItem[];
+  groups?: NavGroup[];
 }
 
 const NAV_ITEMS: NavItemDef[] = [
-  // Dashboard — sempre primeiro
   {
     icon: Gauge,
     label: 'Dashboard',
     href: '/dashboard',
+    permissions: ['Dashboard.Visualizar'],
   },
   {
     icon: LayersPlus,
@@ -31,22 +33,22 @@ const NAV_ITEMS: NavItemDef[] = [
       {
         label: 'Basicos',
         items: [
-          { label: 'Almoxarifados',          href: '/cadastros/almoxarifados' },
-          { label: 'Categorias de Produto',  href: '/cadastros/categorias' },
-          { label: 'Condições de Pagamento', href: '/cadastros/condicoes-pagamento' },
-          { label: 'Depósitos',              href: '/cadastros/depositos' },
-          { label: 'Fases de Produção',      href: '/cadastros/fases' },
-          { label: 'Finalidades de Pedido',  href: '/cadastros/finalidades' },
-          { label: 'Formas de Pagamento',    href: '/cadastros/formas-pagamento' },
-          { label: 'Tipos de Ordem',         href: '/cadastros/tipos-ordem' },
-          { label: 'Unidades de Medida',     href: '/cadastros/unidades' },
+          { label: 'Almoxarifados',          href: '/cadastros/almoxarifados',       permissions: ['Almoxarifados.Visualizar'] },
+          { label: 'Categorias de Produto',  href: '/cadastros/categorias',          permissions: ['Categorias.Visualizar'] },
+          { label: 'Condições de Pagamento', href: '/cadastros/condicoes-pagamento', permissions: ['CondicoesPagamento.Visualizar'] },
+          { label: 'Depósitos',              href: '/cadastros/depositos',           permissions: ['Depositos.Visualizar'] },
+          { label: 'Fases de Produção',      href: '/cadastros/fases',               permissions: ['FasesProducao.Visualizar'] },
+          { label: 'Finalidades de Pedido',  href: '/cadastros/finalidades',         permissions: ['Finalidades.Visualizar'] },
+          { label: 'Formas de Pagamento',    href: '/cadastros/formas-pagamento',    permissions: ['FormasPagamento.Visualizar'] },
+          { label: 'Tipos de Ordem',         href: '/cadastros/tipos-ordem',         permissions: ['TiposOrdem.Visualizar'] },
+          { label: 'Unidades de Medida',     href: '/cadastros/unidades',            permissions: ['UnidadesMedida.Visualizar'] },
         ],
       },
       {
         label: 'Avançados',
         items: [
-          { label: 'Pessoas',  href: '/cadastros/pessoas' },
-          { label: 'Produtos', href: '/cadastros/produtos' },
+          { label: 'Pessoas',  href: '/cadastros/pessoas',  permissions: ['Fornecedores.Visualizar'] },
+          { label: 'Produtos', href: '/cadastros/produtos', permissions: ['Produtos.Visualizar'] },
         ],
       },
     ],
@@ -56,10 +58,10 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Comercial',
     href: '/comercial',
     children: [
-      { label: 'Catalogo de Produtos',         href: '/catalogo/produtos' },
-      { label: 'Clientes',         href: '/comercial/clientes' },
-      { label: 'Orçamentos',       href: '/comercial/orcamentos' },
-      { label: 'Pedidos de Venda', href: '/comercial/pedidos' },
+      { label: 'Catalogo de Produtos', href: '/catalogo/produtos',    permissions: ['Produtos.Visualizar'] },
+      { label: 'Clientes',             href: '/comercial/clientes',   permissions: ['Fornecedores.Visualizar'] },
+      { label: 'Orçamentos',           href: '/comercial/orcamentos', permissions: ['Orcamentos.Visualizar'] },
+      { label: 'Pedidos de Venda',     href: '/comercial/pedidos',    permissions: ['PedidosVenda.Visualizar'] },
     ],
   },
   {
@@ -75,7 +77,7 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Engenharia',
     href: '/engenharia',
     children: [
-      { label: 'Ficha Técnica',      href: '/producao/fichas-tecnicas' }
+      { label: 'Ficha Técnica', href: '/producao/fichas-tecnicas', permissions: ['FichasTecnicas.Visualizar'] },
     ],
   },
   {
@@ -83,8 +85,8 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Estoque',
     href: '/estoque',
     children: [
-      { label: 'Inventário',    href: '/estoque/inventario' },
-      { label: 'Movimentações', href: '/estoque/movimentacoes' },
+      { label: 'Inventário',    href: '/estoque/inventario',    permissions: ['Estoque.Visualizar'] },
+      { label: 'Movimentações', href: '/estoque/movimentacoes', permissions: ['Movimentacoes.Visualizar'] },
     ],
   },
   {
@@ -92,10 +94,10 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Financeiro',
     href: '/financeiro',
     children: [
-      { label: 'Contas a Pagar',     href: '/financeiro/contas-pagar' },
-      { label: 'Contas a Receber',   href: '/financeiro/contas-receber' },
-      { label: 'Fluxo de Caixa',     href: '/financeiro/fluxo-caixa' },
-      { label: 'Gestão de Carteira', href: '/financeiro/carteira' },
+      { label: 'Contas a Pagar',   href: '/financeiro/contas-pagar',   permissions: ['Financeiro.Visualizar'] },
+      { label: 'Contas a Receber', href: '/financeiro/contas-receber', permissions: ['Financeiro.Visualizar'] },
+      { label: 'Fluxo de Caixa',   href: '/financeiro/fluxo-caixa',   permissions: ['Financeiro.Visualizar'] },
+      { label: 'Gestão de Carteira', href: '/financeiro/carteira',     permissions: ['Financeiro.Visualizar'] },
     ],
   },
   {
@@ -103,10 +105,10 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Produção',
     href: '/producao',
     children: [
-      { label: 'Kanban',             href: '/producao/kanban' },
-      { label: 'Lotes',              href: '/lotes' },
-      { label: 'Ordens de Produção', href: '/producao/ordens' },
-      { label: 'Roteiros de Produção', href: '/producao/roteiros' },
+      { label: 'Kanban',               href: '/producao/kanban',   permissions: ['OrdensProducao.Visualizar'] },
+      { label: 'Lotes',                href: '/lotes',             permissions: ['Lotes.Visualizar'] },
+      { label: 'Ordens de Produção',   href: '/producao/ordens',   permissions: ['OrdensProducao.Visualizar'] },
+      { label: 'Roteiros de Produção', href: '/producao/roteiros', permissions: ['Roteiros.Visualizar'] },
     ],
   },
   {
@@ -114,9 +116,9 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Relatórios',
     href: '/relatorios',
     children: [
-      { label: 'Estoque',    href: '/relatorios/estoque' },
-      { label: 'Financeiro', href: '/relatorios/financeiro' },
-      { label: 'Vendas',     href: '/relatorios/vendas' },
+      { label: 'Estoque',    href: '/relatorios/estoque',    permissions: ['Relatorios.Visualizar'] },
+      { label: 'Financeiro', href: '/relatorios/financeiro', permissions: ['Relatorios.Visualizar'] },
+      { label: 'Vendas',     href: '/relatorios/vendas',     permissions: ['Relatorios.Visualizar'] },
     ],
   },
 ];
@@ -126,11 +128,52 @@ const CONFIG_ITEM: NavItemDef = {
   label: 'Configurações',
   href: '/configuracoes',
   children: [
-    { label: 'Logs',     href: '/configuracoes/Logs' },
-    { label: 'Perfis',   href: '/configuracoes/perfis' },
-    { label: 'Usuários', href: '/configuracoes/usuarios' },
+    { label: 'Logs',      href: '/configuracoes/Logs',     permissions: ['Logs.Visualizar'] },
+    { label: 'Perfis',    href: '/configuracoes/perfis',   permissions: ['Perfis.Visualizar'] },
+    { label: 'Usuários',  href: '/configuracoes/usuarios', permissions: ['Usuarios.Visualizar'] },
   ],
 };
+
+
+function getAcessos(): { acessos: string[]; isAdmin: boolean } {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') ?? '{}');
+    return {
+      acessos: Array.isArray(user.acessos) ? user.acessos : [],
+      isAdmin: user.perfilNome === 'Administrador',
+    };
+  } catch {
+    return { acessos: [], isAdmin: false };
+  }
+}
+
+function canAccess(permissions: string[] | undefined, acessos: string[], isAdmin: boolean): boolean {
+  if (isAdmin) return true;
+  if (!permissions || permissions.length === 0) return true;
+  return permissions.some(p => acessos.includes(p));
+}
+
+function filterItem(item: NavItemDef, acessos: string[], isAdmin: boolean): NavItemDef | null {
+  const filteredChildren = item.children
+    ?.filter(c => canAccess(c.permissions, acessos, isAdmin));
+
+  const filteredGroups = item.groups
+    ?.map(g => ({ ...g, items: g.items.filter(i => canAccess(i.permissions, acessos, isAdmin)) }))
+    .filter(g => g.items.length > 0);
+
+  if (item.children) {
+    if (!filteredChildren || filteredChildren.length === 0) return null;
+    return { ...item, children: filteredChildren };
+  }
+
+  if (item.groups) {
+    if (!filteredGroups || filteredGroups.length === 0) return null;
+    return { ...item, groups: filteredGroups };
+  }
+
+  return canAccess(item.permissions, acessos, isAdmin) ? item : null;
+}
+
 
 interface FlyoutProps {
   item: NavItemDef;
@@ -140,7 +183,14 @@ interface FlyoutProps {
 
 function Flyout({ item, anchorY, onClose }: FlyoutProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+
+  const goTo = (href: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    onClose();
+    navigate(href);
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -178,7 +228,7 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
       {item.children && (
         <div className="py-1">
           {item.children.map(child => (
-            <a key={child.href} href={child.href} onClick={onClose} className={linkClass}>
+            <a key={child.href} href={child.href} onClick={(e) => goTo(child.href, e)} className={linkClass}>
               {child.label}{chevron}
             </a>
           ))}
@@ -187,7 +237,7 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
 
       {item.groups && (
         <div className="py-1">
-          {item.groups.map((group, gi) => {
+          {item.groups.map((group) => {
             const isOpen = openGroup === group.label;
             return (
               <div key={group.label}>
@@ -212,7 +262,7 @@ function Flyout({ item, anchorY, onClose }: FlyoutProps) {
                       className="overflow-hidden"
                     >
                       {group.items.map(child => (
-                        <a key={child.href} href={child.href} onClick={onClose} className={linkClass}>
+                        <a key={child.href} href={child.href} onClick={(e) => goTo(child.href, e)} className={linkClass}>
                           {child.label}{chevron}
                         </a>
                       ))}
@@ -238,6 +288,15 @@ interface SidebarProps {
 
 export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps) {
   const [flyout, setFlyout] = useState<{ id: string; y: number } | null>(null);
+  const navigate = useNavigate();
+
+  const { acessos, isAdmin } = getAcessos();
+
+  const visibleNavItems = NAV_ITEMS
+    .map(item => filterItem(item, acessos, isAdmin))
+    .filter(Boolean) as NavItemDef[];
+
+  const visibleConfigItem = filterItem(CONFIG_ITEM, acessos, isAdmin);
 
   const handleClick = (item: NavItemDef, e: React.MouseEvent<HTMLElement>) => {
     if (item.children || item.groups) {
@@ -246,14 +305,19 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
         prev?.id === item.href ? null : { id: item.href, y: rect.top },
       );
     } else {
+      e.preventDefault();
       setFlyout(null);
-      window.location.href = item.href;
+      navigate(item.href);
     }
   };
 
-  const activeItem = NAV_ITEMS.find(
+  const activeItem = visibleNavItems.find(
     i => currentPath === i.href || currentPath.startsWith(i.href + '/'),
   );
+
+  const allVisible = visibleConfigItem
+    ? [...visibleNavItems, visibleConfigItem]
+    : visibleNavItems;
 
   return (
     <>
@@ -263,7 +327,7 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
       )}>
         {/* Navegação */}
         <nav className="flex-1 py-3 px-2 space-y-0.5">
-          {NAV_ITEMS.map(item => {
+          {visibleNavItems.map(item => {
             const active = activeItem?.href === item.href;
             const isOpen = flyout?.id === item.href;
             const Icon = item.icon;
@@ -272,8 +336,8 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
               return (
                 <a
                   key={item.href}
-                  href={item.children || item.groups ? undefined : item.href}
-                  onClick={item.children || item.groups ? (e) => handleClick(item, e) : undefined}
+                  href={item.href}
+                  onClick={(e) => handleClick(item, e)}
                   className={cn(
                     'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
                     active
@@ -319,19 +383,17 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
           })}
         </nav>
 
-        {/* Configurações + Sair */}
         <div className="px-2 py-3 border-t border-gray-100 space-y-0.5">
-          {/* Configurações */}
-          {(() => {
-            const item = CONFIG_ITEM;
+          {visibleConfigItem && (() => {
+            const item = visibleConfigItem;
             const active = currentPath.startsWith(item.href);
             const isOpen = flyout?.id === item.href;
             const Icon = item.icon;
             if (showLabels) {
               return (
                 <a
-                  href={item.children || item.groups ? undefined : item.href}
-                  onClick={item.children || item.groups ? (e) => handleClick(item, e) : undefined}
+                  href={item.href}
+                  onClick={(e) => handleClick(item, e)}
                   className={cn(
                     'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer',
                     active ? 'bg-[#3B82F6] text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-[#3B82F6]',
@@ -400,7 +462,7 @@ export function Sidebar({ currentPath = '/', showLabels = false }: SidebarProps)
       </aside>
       <AnimatePresence>
         {flyout && (() => {
-          const item = [...NAV_ITEMS, CONFIG_ITEM].find(i => i.href === flyout.id);
+          const item = allVisible.find(i => i.href === flyout.id);
           return (item?.children || item?.groups) ? (
             <Flyout
               key={flyout.id}

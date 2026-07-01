@@ -57,6 +57,10 @@ import { CarteiraFormPage } from './pages/financeiro/CarteiraFormPage';
 import { BaixaContaPagarPage } from './pages/financeiro/BaixaContaPagarPage';
 import { BaixaContaReceberPage } from './pages/financeiro/BaixaContaReceberPage';
 import { ContaPagarComprovantePage } from './pages/financeiro/ContaPagarComprovantePage';
+import { PerfisPage } from './pages/configuracoes/PerfisPage';
+import { PerfilFormPage } from './pages/configuracoes/PerfilForm';
+import { UsuariosPage } from './pages/configuracoes/UsuariosPage';
+import { UsuarioFormPage } from './pages/configuracoes/UsuarioForm';
 import { AppLayout } from './components/layout/AppLayout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -233,6 +237,16 @@ const App = () => (
       <Route path="/financeiro/carteira/nova" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/:id/editar" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/:id" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/configuracoes/perfis" element={<PrivateRoute><AppLayout><PerfisPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/perfis/novo" element={<PrivateRoute><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/perfis/:id/editar" element={<PrivateRoute><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/perfis/:id" element={<PrivateRoute><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/configuracoes/usuarios" element={<PrivateRoute><AppLayout><UsuariosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/usuarios/novo" element={<PrivateRoute><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/usuarios/:id/editar" element={<PrivateRoute><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/usuarios/:id" element={<PrivateRoute><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -56,7 +56,6 @@ namespace Valisys_Production.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
         [ProducesResponseType(typeof(UsuarioReadDto), 201)]
         [ProducesResponseType(400)]
         public async Task<ActionResult<UsuarioReadDto>> PostUsuario(UsuarioCreateDto usuarioDto)

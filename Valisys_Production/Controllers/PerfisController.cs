@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using Valisys_Production.Models;
 using Valisys_Production.Services.Interfaces;
@@ -8,6 +9,7 @@ namespace Valisys_Production.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PerfisController : ControllerBase
     {
         private readonly IPerfilService _service;

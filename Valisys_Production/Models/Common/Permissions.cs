@@ -190,6 +190,19 @@
             public const string Visualizar = "Logs.Visualizar";
         }
 
+        public static class Financeiro
+        {
+            public const string Visualizar = "Financeiro.Visualizar";
+        }
+
+        public static class Depositos
+        {
+            public const string Visualizar = "Depositos.Visualizar";
+            public const string Criar      = "Depositos.Criar";
+            public const string Editar     = "Depositos.Editar";
+            public const string Excluir    = "Depositos.Excluir";
+        }
+
         public static IReadOnlyList<string> Todas() =>
         [
             Finalidades.Visualizar, Finalidades.Criar, Finalidades.Editar, Finalidades.Inativar,
@@ -203,6 +216,7 @@
             Categorias.Visualizar, Categorias.Criar, Categorias.Editar, Categorias.Inativar,
             Fornecedores.Visualizar, Fornecedores.Criar, Fornecedores.Editar, Fornecedores.Inativar,
             Almoxarifados.Visualizar, Almoxarifados.Criar, Almoxarifados.Editar, Almoxarifados.Inativar,
+            Depositos.Visualizar, Depositos.Criar, Depositos.Editar, Depositos.Excluir,
             Lotes.Visualizar, Lotes.Criar, Lotes.Editar, Lotes.Cancelar,
             OrdensProducao.Visualizar, OrdensProducao.Criar, OrdensProducao.Editar,
             OrdensProducao.Cancelar, OrdensProducao.Finalizar, OrdensProducao.AvancarFase, OrdensProducao.Estornar,
@@ -215,7 +229,8 @@
             Perfis.Visualizar, Perfis.Criar, Perfis.Editar, Perfis.Excluir,
             UnidadesMedida.Visualizar, UnidadesMedida.Criar, UnidadesMedida.Editar, UnidadesMedida.Excluir,
             TiposOrdem.Visualizar, TiposOrdem.Criar, TiposOrdem.Editar, TiposOrdem.Excluir,
-            Relatorios.Visualizar, Dashboard.Visualizar, Estoque.Visualizar, Logs.Visualizar
+            Relatorios.Visualizar, Dashboard.Visualizar, Estoque.Visualizar, Logs.Visualizar,
+            Financeiro.Visualizar,
         ];
     }
 }

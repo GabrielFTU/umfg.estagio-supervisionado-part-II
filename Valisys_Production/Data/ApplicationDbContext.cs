@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Valisys_Production.Models;
 using Valisys_Production.Models.Enums;
+using P = Valisys_Production.Infrastructure.Authorization.Permissions;
 
 namespace Valisys_Production.Data
 {
@@ -10,7 +11,9 @@ namespace Valisys_Production.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
 
-        private static readonly Guid AdminProfileId = Guid.Parse("C0DE0000-0000-0000-0000-000000000001");
+        private static readonly Guid AdminProfileId    = Guid.Parse("C0DE0000-0000-0000-0000-000000000001");
+        private static readonly Guid GerenteProfileId  = Guid.Parse("C0DE0000-0000-0000-0000-000000000050");
+        private static readonly Guid VendedorProfileId = Guid.Parse("C0DE0000-0000-0000-0000-000000000051");
         private static readonly Guid UnitId = Guid.Parse("C0DE0000-0000-0000-0000-000000000002");
         private static readonly Guid KgId = Guid.Parse("C0DE0000-0000-0000-0000-000000000003");
         private static readonly Guid Phase1Id = Guid.Parse("C0DE0000-0000-0000-0000-000000000004");
@@ -468,7 +471,61 @@ namespace Valisys_Production.Data
 
             var adminPerfil = new Perfil("Administrador");
             adminPerfil.InicializarParaSeed(AdminProfileId, seedDate);
-            modelBuilder.Entity<Perfil>().HasData(adminPerfil);
+
+            var vendedorAcessos = new List<string>
+            {
+                P.Dashboard.Visualizar,
+                P.Produtos.Visualizar,
+                P.Fornecedores.Visualizar,
+                P.Orcamentos.Visualizar, P.Orcamentos.Criar, P.Orcamentos.Editar,
+                P.Orcamentos.Enviar, P.Orcamentos.Aprovar, P.Orcamentos.Cancelar, P.Orcamentos.ConverterEmPedido,
+                P.PedidosVenda.Visualizar, P.PedidosVenda.Criar, P.PedidosVenda.Editar,
+                P.PedidosVenda.Confirmar, P.PedidosVenda.Cancelar, P.PedidosVenda.Concluir,
+            };
+            var vendedorPerfil = new Perfil("Vendedor", vendedorAcessos);
+            vendedorPerfil.InicializarParaSeed(VendedorProfileId, seedDate);
+
+            var gerenteAcessos = new List<string>
+            {
+                P.Dashboard.Visualizar,
+                // Cadastros básicos
+                P.Almoxarifados.Visualizar, P.Almoxarifados.Criar, P.Almoxarifados.Editar, P.Almoxarifados.Inativar,
+                P.Categorias.Visualizar, P.Categorias.Criar, P.Categorias.Editar, P.Categorias.Inativar,
+                P.CondicoesPagamento.Visualizar, P.CondicoesPagamento.Criar, P.CondicoesPagamento.Editar, P.CondicoesPagamento.Inativar,
+                P.Depositos.Visualizar, P.Depositos.Criar, P.Depositos.Editar, P.Depositos.Excluir,
+                P.FasesProducao.Visualizar, P.FasesProducao.Criar, P.FasesProducao.Editar, P.FasesProducao.Excluir,
+                P.Finalidades.Visualizar, P.Finalidades.Criar, P.Finalidades.Editar, P.Finalidades.Inativar,
+                P.FormasPagamento.Visualizar, P.FormasPagamento.Criar, P.FormasPagamento.Editar, P.FormasPagamento.Inativar,
+                P.TiposOrdem.Visualizar, P.TiposOrdem.Criar, P.TiposOrdem.Editar, P.TiposOrdem.Excluir,
+                P.UnidadesMedida.Visualizar, P.UnidadesMedida.Criar, P.UnidadesMedida.Editar, P.UnidadesMedida.Excluir,
+                // Cadastros avançados
+                P.Fornecedores.Visualizar, P.Fornecedores.Criar, P.Fornecedores.Editar, P.Fornecedores.Inativar,
+                P.Produtos.Visualizar, P.Produtos.Criar, P.Produtos.Editar, P.Produtos.Inativar,
+                // Comercial
+                P.Orcamentos.Visualizar, P.Orcamentos.Criar, P.Orcamentos.Editar,
+                P.Orcamentos.Enviar, P.Orcamentos.Aprovar, P.Orcamentos.Cancelar, P.Orcamentos.ConverterEmPedido,
+                P.PedidosVenda.Visualizar, P.PedidosVenda.Criar, P.PedidosVenda.Editar,
+                P.PedidosVenda.Confirmar, P.PedidosVenda.Cancelar, P.PedidosVenda.Concluir,
+                // Engenharia
+                P.FichasTecnicas.Visualizar, P.FichasTecnicas.Criar, P.FichasTecnicas.Editar, P.FichasTecnicas.Inativar,
+                P.Roteiros.Visualizar, P.Roteiros.Criar, P.Roteiros.Editar, P.Roteiros.Excluir,
+                // Estoque
+                P.Estoque.Visualizar,
+                P.Movimentacoes.Visualizar, P.Movimentacoes.Criar, P.Movimentacoes.Editar, P.Movimentacoes.Excluir,
+                // Financeiro
+                P.Financeiro.Visualizar,
+                // Produção
+                P.Lotes.Visualizar, P.Lotes.Criar, P.Lotes.Editar, P.Lotes.Cancelar,
+                P.OrdensProducao.Visualizar, P.OrdensProducao.Criar, P.OrdensProducao.Editar,
+                P.OrdensProducao.Cancelar, P.OrdensProducao.Finalizar, P.OrdensProducao.AvancarFase, P.OrdensProducao.Estornar,
+                P.Solicitacoes.Visualizar, P.Solicitacoes.Criar, P.Solicitacoes.Aprovar, P.Solicitacoes.Cancelar,
+                // Relatórios
+                P.Relatorios.Visualizar,
+            };
+            var gerentePerfil = new Perfil("Gerente", gerenteAcessos);
+            gerentePerfil.InicializarParaSeed(GerenteProfileId, seedDate);
+
+            modelBuilder.Entity<Perfil>().HasData(adminPerfil, vendedorPerfil, gerentePerfil);
 
             var adminUsuario = new Usuario("Administrador Master", "admin@valisys.com",
                 "$2a$12$ANrNWbumb63JFxo..Ar6A.3iQJhEqJUqR5kqjklRZoZHs3uM7C4k2", AdminProfileId);
