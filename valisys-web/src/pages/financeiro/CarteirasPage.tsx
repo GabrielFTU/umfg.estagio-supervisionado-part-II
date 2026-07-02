@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, MoreHorizontal, Loader2, Landmark, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 interface CarteiraItem {
   id: string;
@@ -10,18 +11,13 @@ interface CarteiraItem {
   nomeBanco: string;
   titular: string;
   saldoInicial: number;
+  saldoAtual: number;
   dataHoraSaldoInicial: string;
   ativo: boolean;
 }
 
 function fmtBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function fmtDateTime(iso: string) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleString('pt-BR');
 }
 
 function BankInitials({ nome }: { nome: string }) {
@@ -40,10 +36,12 @@ function CardMenu({
   ativo,
   onEdit,
   onToggle,
+  onExtrato,
 }: {
   ativo: boolean;
   onEdit: () => void;
   onToggle: () => void;
+  onExtrato: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
@@ -86,6 +84,12 @@ function CardMenu({
         >
           <button
             className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            onClick={() => { setOpen(false); onExtrato(); }}
+          >
+            Ver extrato
+          </button>
+          <button
+            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             onClick={() => { setOpen(false); onEdit(); }}
           >
             Editar
@@ -117,11 +121,8 @@ export function CarteirasPage() {
 
   const fetchCarteiras = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/carteiras', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetchWithAuth('/api/carteiras');
       if (res.ok) setCarteiras(await res.json());
     } finally {
       setLoading(false);
@@ -132,12 +133,11 @@ export function CarteirasPage() {
 
   const handleToggle = async () => {
     if (!confirmToggle) return;
-    const token = localStorage.getItem('token');
     const url = confirmToggle.ativo
       ? `/api/carteiras/${confirmToggle.id}`
       : `/api/carteiras/${confirmToggle.id}/ativar`;
     const method = confirmToggle.ativo ? 'DELETE' : 'PATCH';
-    await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
+    await fetchWithAuth(url, { method });
     setConfirmToggle(null);
     fetchCarteiras();
   };
@@ -237,6 +237,7 @@ export function CarteirasPage() {
                     ativo={c.ativo}
                     onEdit={() => navigate(`/financeiro/carteira/${c.id}/editar`)}
                     onToggle={() => setConfirmToggle(c)}
+                    onExtrato={() => navigate(`/financeiro/carteira/${c.id}/extrato`)}
                   />
                 </div>
 
@@ -249,17 +250,17 @@ export function CarteirasPage() {
                 {/* Saldo */}
                 <div className="flex items-end justify-between pt-2 border-t border-gray-50">
                   <div>
-                    <p className="text-[11px] text-gray-400 mb-0.5">Saldo inicial</p>
+                    <p className="text-[11px] text-gray-400 mb-0.5">Saldo atual</p>
                     <p className={cn(
                       'text-base font-bold',
-                      c.saldoInicial >= 0 ? 'text-emerald-600' : 'text-red-500',
+                      c.saldoAtual >= 0 ? 'text-emerald-600' : 'text-red-500',
                     )}>
-                      {fmtBRL(c.saldoInicial)}
+                      {fmtBRL(c.saldoAtual)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] text-gray-400 mb-0.5">Data/hora do saldo</p>
-                    <p className="text-xs text-gray-500">{fmtDateTime(c.dataHoraSaldoInicial)}</p>
+                    <p className="text-[11px] text-gray-400 mb-0.5">Saldo inicial</p>
+                    <p className="text-xs text-gray-500">{fmtBRL(c.saldoInicial)}</p>
                   </div>
                 </div>
               </div>

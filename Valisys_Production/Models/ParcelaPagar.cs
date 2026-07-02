@@ -8,6 +8,7 @@ namespace Valisys_Production.Models
         public Guid ContaPagarId { get; private set; }
         public ContaPagar ContaPagar { get; private set; } = null!;
 
+        public string Codigo { get; private set; } = string.Empty;
         public int NumeroParcela { get; private set; }
         public decimal Valor { get; private set; }
         public DateTime DataVencimento { get; private set; }
@@ -18,6 +19,9 @@ namespace Valisys_Production.Models
         public StatusParcela Status { get; private set; }
         public FormaPagamentoEnum? FormaPagamento { get; private set; }
         public string? Observacoes { get; private set; }
+
+        public Guid? CarteiraId { get; private set; }
+        public Carteira? Carteira { get; private set; }
 
         protected ParcelaPagar() { }
 
@@ -35,8 +39,10 @@ namespace Valisys_Production.Models
             Status = StatusParcela.Pendente;
         }
 
+        public void DefinirCodigo(string codigo) => Codigo = codigo;
+
         public void Baixar(decimal valorPago, DateTime dataPagamento,
-            FormaPagamentoEnum formaPagamento, decimal? juros = null,
+            FormaPagamentoEnum formaPagamento, Guid carteiraId, decimal? juros = null,
             decimal? multa = null, string? observacoes = null)
         {
             if (Status == StatusParcela.Pago)
@@ -45,24 +51,32 @@ namespace Valisys_Production.Models
             if (valorPago <= 0)
                 throw new ArgumentException("O valor pago deve ser maior que zero.");
 
-            ValorPago = valorPago;
+            var principal = valorPago - (juros ?? 0) - (multa ?? 0);
+            var valorAberto = Valor - (ValorPago ?? 0);
+            if (principal > valorAberto)
+                throw new ArgumentException("O valor pago não pode ser maior que o valor em aberto da parcela.");
+
+            ValorPago = (ValorPago ?? 0) + principal;
             DataPagamento = dataPagamento;
             FormaPagamento = formaPagamento;
-            Juros = juros;
-            Multa = multa;
+            CarteiraId = carteiraId;
+            Juros = (Juros ?? 0) + (juros ?? 0);
+            Multa = (Multa ?? 0) + (multa ?? 0);
             Observacoes = observacoes;
-            Status = StatusParcela.Pago;
+            if (ValorPago >= Valor)
+                Status = StatusParcela.Pago;
             RegistrarAtualizacao();
         }
 
         public void EstornarBaixa()
         {
-            if (Status != StatusParcela.Pago)
-                throw new InvalidOperationException("Parcela não está paga.");
+            if ((ValorPago ?? 0) <= 0)
+                throw new InvalidOperationException("Parcela não possui pagamento para estornar.");
 
             ValorPago = null;
             DataPagamento = null;
             FormaPagamento = null;
+            CarteiraId = null;
             Juros = null;
             Multa = null;
             Observacoes = null;

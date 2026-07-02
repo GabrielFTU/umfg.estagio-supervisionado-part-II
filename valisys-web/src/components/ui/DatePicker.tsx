@@ -26,6 +26,25 @@ function fmtDisplay(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function maskDate(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 8);
+  if (digits.length > 4) return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  if (digits.length > 2) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return digits;
+}
+
+function parseTyped(masked: string): string | null {
+  const digits = masked.replace(/\D/g, '');
+  if (digits.length !== 8) return null;
+  const day   = parseInt(digits.slice(0, 2), 10);
+  const month = parseInt(digits.slice(2, 4), 10);
+  const year  = parseInt(digits.slice(4, 8), 10);
+  if (month < 1 || month > 12) return null;
+  const d = new Date(year, month - 1, day);
+  if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+  return toIso(d);
+}
+
 type Cell = { day: number; iso: string; month: 'prev' | 'curr' | 'next' };
 
 function buildCells(year: number, month: number): Cell[] {
@@ -74,9 +93,25 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
   const [viewYear, setViewYear] = useState(parsed?.getFullYear() ?? today.getFullYear());
   const [viewMonth, setViewMonth] = useState(parsed?.getMonth() ?? today.getMonth());
   const [pos, setPos] = useState({ top: 0, left: 0 });
+  const [text, setText] = useState(fmtDisplay(value));
 
   const containerRef = useRef<HTMLDivElement>(null);
   const popupRef     = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setText(fmtDisplay(value));
+  }, [value]);
+
+  const handleTextChange = (raw: string) => {
+    const masked = maskDate(raw);
+    setText(masked);
+    const digits = masked.replace(/\D/g, '');
+    if (digits.length === 0) { onChange(''); return; }
+    if (digits.length === 8) {
+      const iso = parseTyped(masked);
+      if (iso) onChange(iso);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -128,16 +163,19 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
           error  ? 'border-red-400'
           : open  ? 'border-[#1D4E89]'
           : 'border-gray-300 hover:border-gray-400',
-          disabled && 'opacity-50',
+          disabled && 'bg-gray-50 border-gray-200 cursor-not-allowed',
         )}
       >
         <input
-          readOnly
-          value={fmtDisplay(value)}
+          value={text}
           placeholder={placeholder}
           disabled={disabled}
-          onClick={handleOpen}
-          className="flex-1 min-w-0 bg-transparent text-sm focus:outline-none placeholder:text-gray-300 text-gray-700 cursor-pointer"
+          onChange={e => handleTextChange(e.target.value)}
+          inputMode="numeric"
+          className={cn(
+            'flex-1 min-w-0 bg-transparent text-sm focus:outline-none placeholder:text-gray-300',
+            disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700',
+          )}
         />
         <button
           type="button"

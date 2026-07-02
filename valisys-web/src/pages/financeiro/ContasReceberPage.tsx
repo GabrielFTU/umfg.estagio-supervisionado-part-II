@@ -8,10 +8,12 @@ import { cn } from '@/lib/utils';
 import { PixModal } from '@/components/financeiro/PixModal';
 import { BoletoViewer } from '@/components/financeiro/BoletoViewer';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 interface ParcelaRow {
   contaId: string;
   parcelaId: string;
+  codigo: string;
   descricao: string;
   numeroDocumento: string | null;
   parcela: string;
@@ -25,6 +27,7 @@ interface ParcelaRow {
   pedidoVendaId: string | null;
   pedidoVendaCodigo: string | null;
   pessoaNome: string | null;
+  formaPagamentoNome: string | null;
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
@@ -60,11 +63,14 @@ function fmtBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-function RowMenu({ ativo, onEdit, onView, onBaixar, onCancelar, onPix, onBoleto, pedidoVendaId, navigate }: {
+function RowMenu({ ativo, pago, showBoleto, onEdit, onView, onBaixar, onEstornar, onCancelar, onPix, onBoleto, pedidoVendaId, navigate }: {
   ativo: boolean;
+  pago: boolean;
+  showBoleto: boolean;
   onEdit: () => void;
   onView: () => void;
   onBaixar: () => void;
+  onEstornar: () => void;
   onCancelar: () => void;
   onPix: () => void;
   onBoleto: () => void;
@@ -108,24 +114,37 @@ function RowMenu({ ativo, onEdit, onView, onBaixar, onCancelar, onPix, onBoleto,
           className="w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
           <button onClick={() => { setOpen(false); onView(); }}
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Visualizar</button>
-          <button onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
+          {!pago && (
+            <button onClick={() => { setOpen(false); onEdit(); }}
+              className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
+          )}
           <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button onClick={() => { setOpen(false); onBaixar(); }}
-            className="w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-gray-50">Baixar</button>
+          {pago ? (
+            <button onClick={() => { setOpen(false); onEstornar(); }}
+              className="w-full text-left px-3 py-1.5 text-amber-600 hover:bg-gray-50">Estornar baixa</button>
+          ) : (
+            <button onClick={() => { setOpen(false); onBaixar(); }}
+              className="w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-gray-50">Baixar</button>
+          )}
           <button
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 opacity-50 cursor-not-allowed">
             Compensar
           </button>
-          <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button onClick={() => { setOpen(false); onBoleto(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-700 hover:bg-gray-50 font-medium">
-            Gerar boleto
-          </button>
-          <button onClick={() => { setOpen(false); onPix(); }}
-            className="w-full text-left px-3 py-1.5 hover:bg-gray-50 font-medium" style={{ color: '#32BCAD' }}>
-            Cobrar via PIX
-          </button>
+          {!pago && (
+            <>
+              <div className="my-0.5 mx-2 border-t border-gray-100" />
+              {showBoleto && (
+                <button onClick={() => { setOpen(false); onBoleto(); }}
+                  className="w-full text-left px-3 py-1.5 text-gray-700 hover:bg-gray-50 font-medium">
+                  Gerar boleto
+                </button>
+              )}
+              <button onClick={() => { setOpen(false); onPix(); }}
+                className="w-full text-left px-3 py-1.5 hover:bg-gray-50 font-medium" style={{ color: '#32BCAD' }}>
+                Cobrar via PIX
+              </button>
+            </>
+          )}
           <button
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 opacity-50 cursor-not-allowed">
             Gerar promissória
@@ -151,7 +170,7 @@ function RowMenu({ ativo, onEdit, onView, onBaixar, onCancelar, onPix, onBoleto,
   );
 }
 
-type SortKey = 'descricao' | 'pessoaNome' | 'parcela' | 'dataEmissao' | 'dataVencimento' | 'valor' | 'valorAberto' | 'statusDisplay';
+type SortKey = 'codigo' | 'descricao' | 'pessoaNome' | 'parcela' | 'dataEmissao' | 'dataVencimento' | 'valor' | 'valorAberto' | 'statusDisplay';
 
 function SortHeader({ col, label, sort, setSort, align = 'left' }: {
   col: SortKey;
@@ -186,6 +205,11 @@ export function ContasReceberPage() {
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
   const [statusFiltro, setStatusFiltro] = useState<StatusOpt>('todos');
+  const [clienteFiltro, setClienteFiltro] = useState('todos');
+  const [emissaoInicio, setEmissaoInicio] = useState('');
+  const [emissaoFim, setEmissaoFim]       = useState('');
+  const [vencimentoInicio, setVencimentoInicio] = useState('');
+  const [vencimentoFim, setVencimentoFim]       = useState('');
   const [filterOpen, setFilterOpen]     = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage]         = useState(1);
@@ -197,6 +221,7 @@ export function ContasReceberPage() {
   const [pixTarget,    setPixTarget]    = useState<ModalTarget>(null);
   const [boletoTarget, setBoletoTarget] = useState<ModalTarget>(null);
   const [cancelTarget, setCancelTarget] = useState<{ contaId: string; ativo: boolean } | null>(null);
+  const [estornarIds, setEstornarIds] = useState<{ contaId: string; parcelaId: string } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -209,9 +234,8 @@ export function ContasReceberPage() {
 
   const load = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/contas-receber', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetchWithAuth('/api/contas-receber');
       if (!res.ok) return;
       const data: any[] = await res.json();
       const flat: ParcelaRow[] = [];
@@ -222,6 +246,7 @@ export function ContasReceberPage() {
             flat.push({
               contaId: c.id,
               parcelaId: p.id,
+              codigo: p.codigo || c.codigo,
               descricao: c.descricao,
               numeroDocumento: c.numeroDocumento ?? null,
               parcela: `${p.numeroParcela}/${total}`,
@@ -235,12 +260,14 @@ export function ContasReceberPage() {
               pedidoVendaId: c.pedidoVendaId ?? null,
               pedidoVendaCodigo: c.pedidoVendaCodigo ?? null,
               pessoaNome: c.pessoaNome ?? null,
+              formaPagamentoNome: c.formaPagamentoNome ?? null,
             });
           }
         } else {
           flat.push({
             contaId: c.id,
             parcelaId: c.id,
+            codigo: c.codigo,
             descricao: c.descricao,
             numeroDocumento: c.numeroDocumento ?? null,
             parcela: '1/1',
@@ -254,6 +281,7 @@ export function ContasReceberPage() {
             pedidoVendaId: c.pedidoVendaId ?? null,
             pedidoVendaCodigo: c.pedidoVendaCodigo ?? null,
             pessoaNome: c.pessoaNome ?? null,
+            formaPagamentoNome: c.formaPagamentoNome ?? null,
           });
         }
       }
@@ -267,9 +295,20 @@ export function ContasReceberPage() {
 
   const execCancelar = async () => {
     if (!cancelTarget) return;
-    const token = localStorage.getItem('token');
-    await fetch(`/api/contas-receber/${cancelTarget.contaId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    await fetchWithAuth(`/api/contas-receber/${cancelTarget.contaId}`, { method: 'DELETE' });
     setCancelTarget(null);
+    load();
+  };
+
+  const execEstornar = async () => {
+    if (!estornarIds) return;
+    const { contaId, parcelaId } = estornarIds;
+    setEstornarIds(null);
+    await fetchWithAuth('/api/contas-receber/estornar-parcela', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contaId, parcelaId }),
+    });
     load();
   };
 
@@ -286,6 +325,11 @@ export function ContasReceberPage() {
           !(r.pedidoVendaCodigo ?? '').toLowerCase().includes(q)) return false;
     }
     if (statusFiltro !== 'todos' && r.statusDisplay !== statusFiltro) return false;
+    if (clienteFiltro !== 'todos' && (r.pessoaNome ?? '') !== clienteFiltro) return false;
+    if (emissaoInicio && r.dataEmissao.slice(0, 10) < emissaoInicio) return false;
+    if (emissaoFim && r.dataEmissao.slice(0, 10) > emissaoFim) return false;
+    if (vencimentoInicio && r.dataVencimento.slice(0, 10) < vencimentoInicio) return false;
+    if (vencimentoFim && r.dataVencimento.slice(0, 10) > vencimentoFim) return false;
     return true;
   }).sort((a, b) => {
     const dir = sort.dir === 'asc' ? 1 : -1;
@@ -307,7 +351,13 @@ export function ContasReceberPage() {
     else setSelected(prev => { const s = new Set(prev); paginated.forEach(r => s.add(r.parcelaId)); return s; });
   };
 
+  const clientesDisponiveis = Array.from(
+    new Set(rows.map(r => r.pessoaNome).filter((n): n is string => !!n)),
+  ).sort((a, b) => a.localeCompare(b));
+
   const statusLabel = statusFiltro !== 'todos' ? statusFiltro : null;
+  const anyFilterActive = statusFiltro !== 'todos' || clienteFiltro !== 'todos' ||
+    !!emissaoInicio || !!emissaoFim || !!vencimentoInicio || !!vencimentoFim;
   const totalValorAberto = filtered.reduce((s, r) => s + r.valorAberto, 0);
 
   return (
@@ -337,7 +387,7 @@ export function ContasReceberPage() {
             onClick={() => setFilterOpen(v => !v)}
             className={cn(
               'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
-              statusFiltro !== 'todos'
+              anyFilterActive
                 ? 'border-[#1D4E89] bg-blue-50 text-[#1D4E89]'
                 : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
             )}
@@ -348,28 +398,117 @@ export function ContasReceberPage() {
           {filterOpen && (
             <div
               onMouseDown={e => e.stopPropagation()}
-              className="absolute z-30 right-0 top-full mt-1.5 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-3"
+              className="absolute z-30 right-0 top-full mt-1.5 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4"
             >
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status da parcela</p>
-              {STATUS_OPTS.map(v => (
-                <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
-                  className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
-                    statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
-                  {v === 'todos' ? 'Todos' : v}
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Cliente</p>
+                <select
+                  value={clienteFiltro}
+                  onChange={e => { setClienteFiltro(e.target.value); setPage(1); }}
+                  className="w-full h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                >
+                  <option value="todos">Todos</option>
+                  {clientesDisponiveis.map(nome => (
+                    <option key={nome} value={nome}>{nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Período (emissão)</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={emissaoInicio}
+                    onChange={e => { setEmissaoInicio(e.target.value); setPage(1); }}
+                    className="flex-1 h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                  />
+                  <span className="text-gray-300 text-xs">até</span>
+                  <input
+                    type="date"
+                    value={emissaoFim}
+                    onChange={e => { setEmissaoFim(e.target.value); setPage(1); }}
+                    className="flex-1 h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Vencimento</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={vencimentoInicio}
+                    onChange={e => { setVencimentoInicio(e.target.value); setPage(1); }}
+                    className="flex-1 h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                  />
+                  <span className="text-gray-300 text-xs">até</span>
+                  <input
+                    type="date"
+                    value={vencimentoFim}
+                    onChange={e => { setVencimentoFim(e.target.value); setPage(1); }}
+                    className="flex-1 h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status da parcela</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {STATUS_OPTS.map(v => (
+                    <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); }}
+                      className={cn('text-left text-xs px-2.5 py-1.5 rounded-md transition-colors',
+                        statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100')}>
+                      {v === 'todos' ? 'Todos' : v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {anyFilterActive && (
+                <button
+                  onClick={() => {
+                    setStatusFiltro('todos');
+                    setClienteFiltro('todos');
+                    setEmissaoInicio(''); setEmissaoFim('');
+                    setVencimentoInicio(''); setVencimentoFim('');
+                    setPage(1);
+                  }}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  Limpar filtros
                 </button>
-              ))}
+              )}
             </div>
           )}
         </div>
       </div>
 
       {/* Chips */}
-      {(statusLabel || selected.size > 0) && (
+      {(anyFilterActive || selected.size > 0) && (
         <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2 flex-wrap">
           {statusLabel && (
             <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Status: {statusLabel}
               <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {clienteFiltro !== 'todos' && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Cliente: {clienteFiltro}
+              <button onClick={() => setClienteFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {(emissaoInicio || emissaoFim) && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Emissão: {emissaoInicio ? fmtDate(emissaoInicio) : '…'} até {emissaoFim ? fmtDate(emissaoFim) : '…'}
+              <button onClick={() => { setEmissaoInicio(''); setEmissaoFim(''); }} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {(vencimentoInicio || vencimentoFim) && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Vencimento: {vencimentoInicio ? fmtDate(vencimentoInicio) : '…'} até {vencimentoFim ? fmtDate(vencimentoFim) : '…'}
+              <button onClick={() => { setVencimentoInicio(''); setVencimentoFim(''); }} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {selected.size > 0 && (
@@ -402,8 +541,9 @@ export function ContasReceberPage() {
                       onChange={toggleAll} className="rounded border-gray-300" />
                   </th>
                   <th className="w-6 px-1 py-3" />
-                  <SortHeader col="descricao"      label="Descrição"    sort={sort} setSort={handleSort} />
+                  <SortHeader col="codigo"         label="Código"       sort={sort} setSort={handleSort} />
                   <SortHeader col="pessoaNome"     label="Cliente"      sort={sort} setSort={handleSort} />
+                  <SortHeader col="descricao"      label="Descrição"    sort={sort} setSort={handleSort} />
                   <SortHeader col="parcela"        label="Parcela"      sort={sort} setSort={handleSort} />
                   <SortHeader col="dataEmissao"    label="Emissão"      sort={sort} setSort={handleSort} align="center" />
                   <SortHeader col="dataVencimento" label="Vencimento"   sort={sort} setSort={handleSort} align="center" />
@@ -416,7 +556,7 @@ export function ContasReceberPage() {
               <tbody>
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="px-6 py-10 text-center text-sm text-gray-400">
+                    <td colSpan={12} className="px-6 py-10 text-center text-sm text-gray-400">
                       Nenhum registro encontrado.
                     </td>
                   </tr>
@@ -425,9 +565,8 @@ export function ContasReceberPage() {
                   const isSelected = selected.has(row.parcelaId);
                   return (
                     <tr key={row.parcelaId}
-                      onClick={() => navigate(`/financeiro/contas-receber/${row.contaId}`)}
                       className={cn(
-                        'border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors',
+                        'border-b border-gray-100 hover:bg-gray-50 transition-colors',
                         isSelected && 'bg-blue-50/40',
                       )}
                     >
@@ -443,6 +582,8 @@ export function ContasReceberPage() {
                       <td className="px-1 py-3">
                         {row.vencida && <AlertCircle size={13} className="text-red-400" />}
                       </td>
+                      <td className="px-3 py-3 text-sm text-gray-500 font-mono">{row.codigo}</td>
+                      <td className="px-3 py-3 text-sm text-gray-500">{row.pessoaNome ?? '—'}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
                           <span className={cn('text-sm', row.contaAtivo ? 'text-gray-700' : 'text-gray-400 line-through')}>
@@ -457,7 +598,6 @@ export function ContasReceberPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{row.pessoaNome ?? '—'}</td>
                       <td className="px-3 py-3 text-sm text-gray-500">{row.parcela}</td>
                       <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataEmissao)}</td>
                       <td className={cn('px-3 py-3 text-sm font-medium text-center', row.vencida ? 'text-red-500' : 'text-gray-700')}>
@@ -473,9 +613,12 @@ export function ContasReceberPage() {
                       <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
                         <RowMenu
                           ativo={row.contaAtivo}
+                          pago={row.statusDisplay === 'PAGA'}
+                          showBoleto={(row.formaPagamentoNome ?? '').toLowerCase().includes('boleto')}
                           onView={() => navigate(`/financeiro/contas-receber/${row.contaId}`)}
                           onEdit={() => navigate(`/financeiro/contas-receber/${row.contaId}/editar`)}
                           onBaixar={() => navigate(`/financeiro/contas-receber/${row.contaId}/baixar`)}
+                          onEstornar={() => setEstornarIds({ contaId: row.contaId, parcelaId: row.parcelaId })}
                           onCancelar={() => setCancelTarget({ contaId: row.contaId, ativo: row.contaAtivo })}
                           onPix={() => setPixTarget({
                             contaId: row.contaId,
@@ -539,6 +682,16 @@ export function ContasReceberPage() {
         labelConfirmar={cancelTarget?.ativo ? 'Cancelar conta' : 'Reativar'}
         onConfirmar={execCancelar}
         onCancelar={() => setCancelTarget(null)}
+      />
+
+      <ModalMsg
+        aberto={estornarIds !== null}
+        titulo="Estornar baixa"
+        descricao="Deseja estornar a baixa desta parcela? O recebimento será desfeito e a parcela voltará ao status anterior."
+        variante="perigo"
+        labelConfirmar="Estornar"
+        onConfirmar={execEstornar}
+        onCancelar={() => setEstornarIds(null)}
       />
 
       {/* PIX Modal */}

@@ -10,7 +10,8 @@ namespace Valisys_Production.DTOs
         public string? Observacoes { get; set; }
         public Guid? PessoaId { get; set; }
         public Guid? PedidoVendaId { get; set; }
-        public int NumeroParcelas { get; set; } = 1;
+        public Guid CondicaoPagamentoId { get; set; }
+        public Guid? FormaPagamentoId { get; set; }
     }
 
     public class ContaReceberReadDto
@@ -29,6 +30,8 @@ namespace Valisys_Production.DTOs
         public string? PessoaNome { get; set; }
         public Guid? PedidoVendaId { get; set; }
         public string? PedidoVendaCodigo { get; set; }
+        public Guid? FormaPagamentoId { get; set; }
+        public string? FormaPagamentoNome { get; set; }
         public bool Ativo { get; set; }
         public List<ParcelaReceberReadDto> Parcelas { get; set; } = new();
     }
@@ -44,6 +47,7 @@ namespace Valisys_Production.DTOs
     public class ParcelaReceberReadDto
     {
         public Guid Id { get; set; }
+        public string Codigo { get; set; } = string.Empty;
         public int NumeroParcela { get; set; }
         public decimal Valor { get; set; }
         public DateTime DataVencimento { get; set; }
@@ -66,7 +70,8 @@ namespace Valisys_Production.DTOs
         public string? Observacoes { get; set; }
         public string? NumeroDocumento { get; set; }
         public Guid? FornecedorId { get; set; }
-        public int NumeroParcelas { get; set; } = 1;
+        public Guid CondicaoPagamentoId { get; set; }
+        public Guid? FormaPagamentoId { get; set; }
     }
 
     public class ContaPagarReadDto
@@ -84,6 +89,8 @@ namespace Valisys_Production.DTOs
         public string? NumeroDocumento { get; set; }
         public Guid? FornecedorId { get; set; }
         public string? FornecedorNome { get; set; }
+        public Guid? FormaPagamentoId { get; set; }
+        public string? FormaPagamentoNome { get; set; }
         public bool Ativo { get; set; }
         public List<ParcelaPagarReadDto> Parcelas { get; set; } = new();
     }
@@ -100,6 +107,7 @@ namespace Valisys_Production.DTOs
     public class ParcelaPagarReadDto
     {
         public Guid Id { get; set; }
+        public string Codigo { get; set; } = string.Empty;
         public int NumeroParcela { get; set; }
         public decimal Valor { get; set; }
         public DateTime DataVencimento { get; set; }
@@ -129,9 +137,25 @@ namespace Valisys_Production.DTOs
         public decimal ValorPago { get; set; }
         public DateTime DataPagamento { get; set; }
         public int FormaPagamento { get; set; }
+        public Guid CarteiraId { get; set; }
         public decimal? Juros { get; set; }
         public decimal? Multa { get; set; }
         public string? Observacoes { get; set; }
+    }
+
+    // --- Movimentação de Carteira ---
+
+    public class MovimentacaoCarteiraReadDto
+    {
+        public Guid Id { get; set; }
+        public Guid CarteiraId { get; set; }
+        public string Tipo { get; set; } = string.Empty;
+        public string Origem { get; set; } = string.Empty;
+        public decimal Valor { get; set; }
+        public DateTime DataMovimentacao { get; set; }
+        public string Descricao { get; set; } = string.Empty;
+        public Guid? ContaPagarId { get; set; }
+        public Guid? ContaReceberId { get; set; }
     }
 
     // --- Dashboard Financeiro ---

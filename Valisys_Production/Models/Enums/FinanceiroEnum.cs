@@ -26,4 +26,16 @@ namespace Valisys_Production.Models.Enums
         Transferencia = 5,
         Cheque = 6
     }
+
+    public enum TipoMovimentacaoCarteira
+    {
+        Credito = 0,
+        Debito = 1
+    }
+
+    public enum OrigemMovimentacaoCarteira
+    {
+        ContaPagar = 0,
+        ContaReceber = 1
+    }
 }

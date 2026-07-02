@@ -169,7 +169,9 @@ namespace Valisys_Production.Helpers
                 .ForMember(dest => dest.PessoaNome, opt => opt.MapFrom(src =>
                     src.Pessoa != null ? src.Pessoa.Nome : null))
                 .ForMember(dest => dest.PedidoVendaCodigo, opt => opt.MapFrom(src =>
-                    src.PedidoVenda != null ? src.PedidoVenda.Codigo.ToString() : null));
+                    src.PedidoVenda != null ? src.PedidoVenda.Codigo.ToString() : null))
+                .ForMember(dest => dest.FormaPagamentoNome, opt => opt.MapFrom(src =>
+                    src.FormaPagamento != null ? src.FormaPagamento.Nome : null));
 
             CreateMap<ParcelaReceber, ParcelaReceberReadDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
@@ -181,7 +183,9 @@ namespace Valisys_Production.Helpers
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
                 .ForMember(dest => dest.FornecedorNome, opt => opt.MapFrom(src =>
                     src.Fornecedor != null ? src.Fornecedor.Nome : null))
-                .ForMember(dest => dest.Parcelas, opt => opt.MapFrom(src => src.Parcelas));
+                .ForMember(dest => dest.Parcelas, opt => opt.MapFrom(src => src.Parcelas))
+                .ForMember(dest => dest.FormaPagamentoNome, opt => opt.MapFrom(src =>
+                    src.FormaPagamento != null ? src.FormaPagamento.Nome : null));
 
             CreateMap<ParcelaPagar, ParcelaPagarReadDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
@@ -190,6 +194,10 @@ namespace Valisys_Production.Helpers
 
             // Carteira
             CreateMap<Carteira, CarteiraReadDto>();
+
+            CreateMap<MovimentacaoCarteira, MovimentacaoCarteiraReadDto>()
+                .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()))
+                .ForMember(dest => dest.Origem, opt => opt.MapFrom(src => src.Origem.ToString()));
         }
     }
 }

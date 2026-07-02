@@ -4,6 +4,7 @@ import { ChevronRight, Home, Loader2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -98,11 +99,8 @@ export function CarteiraFormPage() {
     if (!id) return;
     const load = async () => {
       setLoading(true);
-      const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`/api/carteiras/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetchWithAuth(`/api/carteiras/${id}`);
         if (!res.ok) throw new Error();
         const d = await res.json();
         setCodigoBanco(d.codigoBanco ?? '');
@@ -144,7 +142,6 @@ export function CarteiraFormPage() {
   const execSave = async () => {
     setSaving(true);
     setError('');
-    const token = localStorage.getItem('token');
     try {
       const body = {
         codigoBanco,
@@ -155,14 +152,14 @@ export function CarteiraFormPage() {
       };
 
       const res = modo === 'criar'
-        ? await fetch('/api/carteiras', {
+        ? await fetchWithAuth('/api/carteiras', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
           })
-        : await fetch(`/api/carteiras/${id}`, {
+        : await fetchWithAuth(`/api/carteiras/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, ...body }),
           });
 

@@ -10,11 +10,13 @@ namespace Valisys_Production.Controllers
     public class CarteirasController : ControllerBase
     {
         private readonly ICarteiraService _service;
+        private readonly IMovimentacaoCarteiraService _movimentacaoService;
         private readonly IMapper _mapper;
 
-        public CarteirasController(ICarteiraService service, IMapper mapper)
+        public CarteirasController(ICarteiraService service, IMovimentacaoCarteiraService movimentacaoService, IMapper mapper)
         {
             _service = service;
+            _movimentacaoService = movimentacaoService;
             _mapper = mapper;
         }
 
@@ -92,6 +94,14 @@ namespace Valisys_Production.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+        }
+
+        [HttpGet("{id:guid}/movimentacoes")]
+        [ProducesResponseType(typeof(IEnumerable<MovimentacaoCarteiraReadDto>), 200)]
+        public async Task<IActionResult> GetMovimentacoes(Guid id)
+        {
+            var movimentacoes = await _movimentacaoService.ListarPorCarteiraAsync(id);
+            return Ok(_mapper.Map<IEnumerable<MovimentacaoCarteiraReadDto>>(movimentacoes));
         }
 
         [HttpPatch("{id:guid}/ativar")]

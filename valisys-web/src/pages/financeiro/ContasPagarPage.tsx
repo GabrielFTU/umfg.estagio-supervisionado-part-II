@@ -6,10 +6,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 interface ParcelaRow {
   contaId: string;
   parcelaId: string;
+  codigo: string;
   descricao: string;
   numeroDocumento: string | null;
   parcela: string;
@@ -133,7 +135,7 @@ function RowMenu({ ativo, pago, onEdit, onView, onToggle, onBaixar, onEstornar, 
   );
 }
 
-type SortKey = 'descricao' | 'numeroDocumento' | 'parcela' | 'dataEmissao' | 'dataVencimento' | 'valor' | 'valorAberto' | 'statusDisplay';
+type SortKey = 'codigo' | 'descricao' | 'numeroDocumento' | 'parcela' | 'dataEmissao' | 'dataVencimento' | 'valor' | 'valorAberto' | 'statusDisplay';
 
 function SortHeader({ col, label, sort, setSort, align = 'left' }: {
   col: SortKey;
@@ -188,9 +190,8 @@ export function ContasPagarPage() {
 
   const load = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/contas-pagar', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetchWithAuth('/api/contas-pagar');
       if (!res.ok) return;
       const data: any[] = await res.json();
       const flat: ParcelaRow[] = [];
@@ -201,6 +202,7 @@ export function ContasPagarPage() {
             flat.push({
               contaId: c.id,
               parcelaId: p.id,
+              codigo: p.codigo || c.codigo,
               descricao: c.descricao,
               numeroDocumento: c.numeroDocumento,
               parcela: `${p.numeroParcela}/${total}`,
@@ -217,6 +219,7 @@ export function ContasPagarPage() {
           flat.push({
             contaId: c.id,
             parcelaId: c.id,
+            codigo: c.codigo,
             descricao: c.descricao,
             numeroDocumento: c.numeroDocumento,
             parcela: '1/1',
@@ -246,10 +249,9 @@ export function ContasPagarPage() {
     if (!estornarIds) return;
     const { contaId, parcelaId } = estornarIds;
     setEstornarIds(null);
-    const token = localStorage.getItem('token');
-    await fetch('/api/contas-pagar/estornar-parcela', {
+    await fetchWithAuth('/api/contas-pagar/estornar-parcela', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contaId, parcelaId }),
     });
     load();
@@ -259,8 +261,7 @@ export function ContasPagarPage() {
     if (!cancelarId) return;
     const contaId = cancelarId;
     setCancelarId(null);
-    const token = localStorage.getItem('token');
-    await fetch(`/api/contas-pagar/${contaId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    await fetchWithAuth(`/api/contas-pagar/${contaId}`, { method: 'DELETE' });
     load();
   };
 
@@ -392,6 +393,7 @@ export function ContasPagarPage() {
                       onChange={toggleAll} className="rounded border-gray-300" />
                   </th>
                   <th className="w-6 px-1 py-3" />
+                  <SortHeader col="codigo"          label="Código"       sort={sort} setSort={handleSort} />
                   <SortHeader col="descricao"       label="Descrição"    sort={sort} setSort={handleSort} />
                   <SortHeader col="numeroDocumento" label="Documento"    sort={sort} setSort={handleSort} />
                   <SortHeader col="parcela"         label="Parcela"      sort={sort} setSort={handleSort} />
@@ -406,7 +408,7 @@ export function ContasPagarPage() {
               <tbody>
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="px-6 py-10 text-center text-sm text-gray-400">
+                    <td colSpan={12} className="px-6 py-10 text-center text-sm text-gray-400">
                       Nenhum registro encontrado.
                     </td>
                   </tr>
@@ -415,9 +417,8 @@ export function ContasPagarPage() {
                   const isSelected = selected.has(row.parcelaId);
                   return (
                     <tr key={row.parcelaId}
-                      onClick={() => navigate(`/financeiro/contas-pagar/${row.contaId}`)}
                       className={cn(
-                        'border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors',
+                        'border-b border-gray-100 hover:bg-gray-50 transition-colors',
                         isSelected && 'bg-blue-50/40',
                       )}
                     >
@@ -433,6 +434,7 @@ export function ContasPagarPage() {
                       <td className="px-1 py-3">
                         {row.vencida && <AlertCircle size={13} className="text-red-400" />}
                       </td>
+                      <td className="px-3 py-3 text-sm text-gray-500 font-mono">{row.codigo}</td>
                       <td className="px-3 py-3">
                         <span className={cn('text-sm', row.contaAtivo ? 'text-gray-700' : 'text-gray-400 line-through')}>
                           {row.descricao}

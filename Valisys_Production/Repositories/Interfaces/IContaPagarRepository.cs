@@ -7,10 +7,10 @@ namespace Valisys_Production.Repositories.Interfaces
     {
         Task<IEnumerable<ContaPagar>> GetByPeriodoAsync(DateTime inicio, DateTime fim);
         Task<bool> BaixarParcelaAsync(Guid contaId, Guid parcelaId, decimal valorPago,
-            DateTime dataPagamento, FormaPagamentoEnum formaPagamento,
+            DateTime dataPagamento, FormaPagamentoEnum formaPagamento, Guid carteiraId,
             decimal? juros, decimal? multa, string? observacoes);
         Task<bool> EstornarParcelaAsync(Guid contaId, Guid parcelaId);
         Task VerificarVencimentosAsync();
-        Task<int> ContarAsync();
+        Task<string> ProximoCodigoAsync();
     }
 }

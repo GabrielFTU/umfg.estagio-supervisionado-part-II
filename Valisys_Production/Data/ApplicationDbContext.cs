@@ -64,6 +64,7 @@ namespace Valisys_Production.Data
         public DbSet<CondicaoPagamento> CondicoesPagamento { get; set; }
         public DbSet<ParcelaCondicao> ParcelasCondicao { get; set; }
         public DbSet<Carteira> Carteiras { get; set; }
+        public DbSet<MovimentacaoCarteira> MovimentacoesCarteira { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -267,6 +268,16 @@ namespace Valisys_Production.Data
                 .HasForeignKey(p => p.ContaReceberId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<ParcelaReceber>()
+                .HasOne(p => p.Carteira)
+                .WithMany()
+                .HasForeignKey(p => p.CarteiraId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ParcelaReceber>()
+                .HasIndex(p => new { p.ContaReceberId, p.NumeroParcela })
+                .IsUnique();
+
             modelBuilder.Entity<ContaReceber>()
                 .Navigation(c => c.Parcelas)
                 .HasField("_parcelas");
@@ -283,11 +294,28 @@ namespace Valisys_Production.Data
                 .HasForeignKey(c => c.PedidoVendaId)
                 .IsRequired(false);
 
+            modelBuilder.Entity<ContaReceber>()
+                .HasOne(c => c.FormaPagamento)
+                .WithMany()
+                .HasForeignKey(c => c.FormaPagamentoId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
             modelBuilder.Entity<ParcelaPagar>()
                 .HasOne(p => p.ContaPagar)
                 .WithMany(c => c.Parcelas)
                 .HasForeignKey(p => p.ContaPagarId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ParcelaPagar>()
+                .HasOne(p => p.Carteira)
+                .WithMany()
+                .HasForeignKey(p => p.CarteiraId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ParcelaPagar>()
+                .HasIndex(p => new { p.ContaPagarId, p.NumeroParcela })
+                .IsUnique();
 
             modelBuilder.Entity<ContaPagar>()
                 .Navigation(c => c.Parcelas)
@@ -298,6 +326,46 @@ namespace Valisys_Production.Data
                 .WithMany()
                 .HasForeignKey(c => c.FornecedorId)
                 .IsRequired(false);
+
+            modelBuilder.Entity<ContaPagar>()
+                .HasOne(c => c.FormaPagamento)
+                .WithMany()
+                .HasForeignKey(c => c.FormaPagamentoId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
+            modelBuilder.Entity<MovimentacaoCarteira>()
+                .HasOne(m => m.Carteira)
+                .WithMany()
+                .HasForeignKey(m => m.CarteiraId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MovimentacaoCarteira>()
+                .HasOne<ContaPagar>()
+                .WithMany()
+                .HasForeignKey(m => m.ContaPagarId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MovimentacaoCarteira>()
+                .HasOne<ContaReceber>()
+                .WithMany()
+                .HasForeignKey(m => m.ContaReceberId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MovimentacaoCarteira>()
+                .HasOne<ParcelaPagar>()
+                .WithMany()
+                .HasForeignKey(m => m.ParcelaPagarId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MovimentacaoCarteira>()
+                .HasOne<ParcelaReceber>()
+                .WithMany()
+                .HasForeignKey(m => m.ParcelaReceberId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MovimentacaoCarteira>()
+                .HasIndex(m => m.CarteiraId);
 
             modelBuilder.Entity<LimiteCredito>()
                 .HasOne(l => l.Pessoa)
@@ -461,11 +529,20 @@ namespace Valisys_Production.Data
             modelBuilder.Entity<ContaReceber>()
                 .HasIndex(c => c.Status);
 
+            modelBuilder.Entity<ContaReceber>()
+                .HasIndex(c => c.Codigo).IsUnique();
+
             modelBuilder.Entity<ContaPagar>()
                 .HasIndex(c => c.FornecedorId);
 
             modelBuilder.Entity<ContaPagar>()
                 .HasIndex(c => c.Status);
+
+            modelBuilder.Entity<ContaPagar>()
+                .HasIndex(c => c.Codigo).IsUnique();
+
+            modelBuilder.HasSequence<long>("conta_pagar_codigo_seq").StartsAt(1).IncrementsBy(1);
+            modelBuilder.HasSequence<long>("conta_receber_codigo_seq").StartsAt(1).IncrementsBy(1);
 
             var seedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 

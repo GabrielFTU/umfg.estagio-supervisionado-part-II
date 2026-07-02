@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Home, ChevronRight, ChevronDown, Loader2, Printer, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { fetchWithAuth } from '@/services/api';
 
 interface CarteiraItem {
   id: string;
@@ -282,10 +283,9 @@ export function BaixaContaReceberPage() {
   const isBoleto = formaPagamento === 2;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
     Promise.all([
-      fetch(`/api/contas-receber/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch('/api/carteiras',             { headers: { Authorization: `Bearer ${token}` } }),
+      fetchWithAuth(`/api/contas-receber/${id}`),
+      fetchWithAuth('/api/carteiras'),
     ]).then(async ([resConta, resCart]) => {
       if (!resConta.ok) { navigate('/financeiro/contas-receber'); return; }
       const conta: any      = await resConta.json();
@@ -350,12 +350,19 @@ export function BaixaContaReceberPage() {
     setParcelas(prev =>
       prev.map(p => p.parcelaId === pid ? { ...p, [field]: maskBRL(raw) } : p)
     );
+    setErros(prev => ({ ...prev, [`valor-${pid}`]: '' }));
   };
 
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!carteiraId)     errs.carteira = 'Selecione uma conta financeira';
     if (!dataLancamento) errs.data     = 'Informe a data de lançamento';
+    for (const p of parcelas) {
+      const principal = parseBRL(p.valorAPagar) - parseBRL(p.juros) - parseBRL(p.multa);
+      if (principal > p.valorAberto) {
+        errs[`valor-${p.parcelaId}`] = 'Valor recebido maior que o valor em aberto da parcela.';
+      }
+    }
     setErros(errs);
     return Object.keys(errs).length === 0;
   };
@@ -363,20 +370,20 @@ export function BaixaContaReceberPage() {
   const handleSalvar = async () => {
     if (!validate()) return;
     setSaving(true);
-    const token = localStorage.getItem('token');
     try {
       for (const p of parcelas) {
         const vPago = calcTotal(p);
         if (vPago <= 0) continue;
-        const res = await fetch('/api/contas-receber/baixar-parcela', {
+        const res = await fetchWithAuth('/api/contas-receber/baixar-parcela', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contaId: id,
             parcelaId: p.parcelaId,
             valorPago: vPago,
             dataPagamento: dataLancamento,
             formaPagamento,
+            carteiraId,
             juros:  parseBRL(p.juros)  || null,
             multa:  parseBRL(p.multa)  || null,
             observacoes: null,
@@ -590,12 +597,17 @@ export function BaixaContaReceberPage() {
                           'w-28 text-right text-sm border-b focus:outline-none bg-transparent',
                           isBoleto
                             ? 'border-gray-200 text-gray-400 cursor-not-allowed'
-                            : 'border-gray-300 focus:border-[#1D4E89]',
+                            : erros[`valor-${p.parcelaId}`]
+                              ? 'border-red-400 text-red-500'
+                              : 'border-gray-300 focus:border-[#1D4E89]',
                         )}
                         value={`R$ ${p.valorAPagar}`}
                         onChange={e => updateParcela(p.parcelaId, 'valorAPagar', e.target.value)}
                         onFocus={e => e.target.select()}
                       />
+                      {erros[`valor-${p.parcelaId}`] && (
+                        <p className="text-[11px] text-red-500 mt-0.5">{erros[`valor-${p.parcelaId}`]}</p>
+                      )}
                     </td>
                     <td className="py-3 px-3 text-right">
                       <input

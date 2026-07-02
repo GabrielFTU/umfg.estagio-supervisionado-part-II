@@ -11,12 +11,15 @@ namespace Valisys_Production.Services
         private readonly IPedidoVendaRepository _repository;
         private readonly ILogSistemaService _log;
         private readonly IContaReceberService _contaReceberService;
+        private readonly ICondicaoPagamentoRepository _condicaoPagamentoRepository;
 
-        public PedidoVendaService(IPedidoVendaRepository repository, ILogSistemaService log, IContaReceberService contaReceberService)
+        public PedidoVendaService(IPedidoVendaRepository repository, ILogSistemaService log,
+            IContaReceberService contaReceberService, ICondicaoPagamentoRepository condicaoPagamentoRepository)
         {
             _repository = repository;
             _log = log;
             _contaReceberService = contaReceberService;
+            _condicaoPagamentoRepository = condicaoPagamentoRepository;
         }
 
         public async Task<PedidoVenda> CreateAsync(PedidoVendaCreateDto dto, Guid usuarioId)
@@ -147,14 +150,20 @@ namespace Valisys_Production.Services
             if (pedido.Total <= 0) return;
             if (await _contaReceberService.ExisteParaPedidoAsync(pedido.Id)) return;
 
+            var condicoes = await _condicaoPagamentoRepository.GetAllAsync();
+            var condicaoPadrao = condicoes.FirstOrDefault(c => c.Ativo && c.NumeroParcelas == 1)
+                ?? throw new InvalidOperationException(
+                    "Nenhuma condição de pagamento à vista (1 parcela) cadastrada. " +
+                    "Cadastre uma condição de pagamento padrão antes de gerar a conta a receber automática.");
+
             var dto = new ContaReceberCreateDto
             {
-                Descricao      = $"Pedido de Venda #{pedido.Codigo}",
-                ValorTotal     = pedido.Total,
-                DataVencimento = DateTime.UtcNow.AddDays(30),
-                PessoaId       = pedido.ClienteId,
-                PedidoVendaId  = pedido.Id,
-                NumeroParcelas = 1,
+                Descricao           = $"Pedido de Venda #{pedido.Codigo}",
+                ValorTotal          = pedido.Total,
+                DataVencimento      = DateTime.UtcNow.AddDays(30),
+                PessoaId            = pedido.ClienteId,
+                PedidoVendaId       = pedido.Id,
+                CondicaoPagamentoId = condicaoPadrao.Id,
             };
 
             await _contaReceberService.CreateAsync(dto);

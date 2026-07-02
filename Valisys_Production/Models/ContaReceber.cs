@@ -23,12 +23,16 @@ namespace Valisys_Production.Models
         public Guid? PedidoVendaId { get; private set; }
         public PedidoVenda? PedidoVenda { get; private set; }
 
+        public Guid? FormaPagamentoId { get; private set; }
+        public FormaPagamento? FormaPagamento { get; private set; }
+
         public IReadOnlyCollection<ParcelaReceber> Parcelas => _parcelas.AsReadOnly();
 
         protected ContaReceber() { }
 
         public ContaReceber(string descricao, decimal valorTotal, DateTime dataVencimento,
-            string? observacoes = null, Guid? pessoaId = null, Guid? pedidoVendaId = null)
+            string? observacoes = null, Guid? pessoaId = null, Guid? pedidoVendaId = null,
+            Guid? formaPagamentoId = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(descricao);
 
@@ -44,6 +48,7 @@ namespace Valisys_Production.Models
             Observacoes = observacoes;
             PessoaId = pessoaId;
             PedidoVendaId = pedidoVendaId;
+            FormaPagamentoId = formaPagamentoId;
             DataEmissao = DateTime.UtcNow;
             Status = StatusConta.Pendente;
         }
@@ -55,7 +60,7 @@ namespace Valisys_Production.Models
         public void LimparParcelas() => _parcelas.Clear();
 
         public void BaixarParcela(Guid parcelaId, decimal valorPago, DateTime dataPagamento,
-            FormaPagamentoEnum formaPagamento, decimal? juros = null,
+            FormaPagamentoEnum formaPagamento, Guid carteiraId, decimal? juros = null,
             decimal? multa = null, string? observacoes = null)
         {
             if (Status == StatusConta.Cancelado)
@@ -64,7 +69,20 @@ namespace Valisys_Production.Models
             var parcela = _parcelas.FirstOrDefault(p => p.Id == parcelaId)
                 ?? throw new KeyNotFoundException("Parcela não encontrada.");
 
-            parcela.Baixar(valorPago, dataPagamento, formaPagamento, juros, multa, observacoes);
+            parcela.Baixar(valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes);
+            RecalcularStatus();
+            RegistrarAtualizacao();
+        }
+
+        public void EstornarParcela(Guid parcelaId)
+        {
+            if (Status == StatusConta.Cancelado)
+                throw new InvalidOperationException("Não é possível estornar parcela de uma conta cancelada.");
+
+            var parcela = _parcelas.FirstOrDefault(p => p.Id == parcelaId)
+                ?? throw new KeyNotFoundException("Parcela não encontrada.");
+
+            parcela.EstornarBaixa();
             RecalcularStatus();
             RegistrarAtualizacao();
         }
@@ -103,9 +121,7 @@ namespace Valisys_Production.Models
 
         private void RecalcularStatus()
         {
-            ValorPago = _parcelas
-                .Where(p => p.Status == StatusParcela.Pago)
-                .Sum(p => p.ValorPago ?? 0);
+            ValorPago = _parcelas.Sum(p => p.ValorPago ?? 0);
 
             if (ValorPago >= ValorTotal)
                 Status = StatusConta.Pago;

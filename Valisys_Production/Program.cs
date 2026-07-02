@@ -219,6 +219,8 @@ builder.Services.AddScoped<IPessoaJuridicaRepository, PessoaJuridicaRepository>(
 builder.Services.AddScoped<IPessoaJuridicaService, PessoaJuridicaService>();
 builder.Services.AddScoped<ICarteiraRepository, CarteiraRepository>();
 builder.Services.AddScoped<ICarteiraService, CarteiraService>();
+builder.Services.AddScoped<IMovimentacaoCarteiraRepository, MovimentacaoCarteiraRepository>();
+builder.Services.AddScoped<IMovimentacaoCarteiraService, MovimentacaoCarteiraService>();
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")

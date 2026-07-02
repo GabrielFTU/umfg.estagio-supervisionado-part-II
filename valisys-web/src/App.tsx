@@ -55,6 +55,7 @@ import { RoteiroProducaoFormPage } from './pages/producao/RoteiroProducaoFormPag
 import { RelatorioEstoquePage } from './pages/relatorios/RelatorioEstoquePage';
 import { CarteirasPage } from './pages/financeiro/CarteirasPage';
 import { CarteiraFormPage } from './pages/financeiro/CarteiraFormPage';
+import { CarteiraExtratoPage } from './pages/financeiro/CarteiraExtratoPage';
 import { BaixaContaPagarPage } from './pages/financeiro/BaixaContaPagarPage';
 import { BaixaContaReceberPage } from './pages/financeiro/BaixaContaReceberPage';
 import { ContaPagarComprovantePage } from './pages/financeiro/ContaPagarComprovantePage';
@@ -245,6 +246,7 @@ const App = () => (
       <Route path="/financeiro/carteira" element={<PrivateRoute><AppLayout><CarteirasPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/nova" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/:id/editar" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira/:id/extrato" element={<PrivateRoute><AppLayout><CarteiraExtratoPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/:id" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/configuracoes/perfis" element={<PrivateRoute><AppLayout><PerfisPage /></AppLayout></PrivateRoute>} />
