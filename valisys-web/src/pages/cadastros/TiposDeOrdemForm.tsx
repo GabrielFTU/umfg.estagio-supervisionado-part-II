@@ -7,7 +7,7 @@ import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
-type CategoriaData = {
+type TipoDeOrdemData = {
   id: string;
   codigo: string | null;
   nome: string;
@@ -67,7 +67,7 @@ export function TiposDeOrdemFormPage() {
 
   useEffect(() => {
     if (!id) return;
-    const fetchCategoria = async () => {
+    const fetchTipoDeOrdem = async () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       try {
@@ -75,24 +75,26 @@ export function TiposDeOrdemFormPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error();
-        const data: CategoriaData = await res.json();
+        const data: TipoDeOrdemData = await res.json();
         setNome(data.nome);
         setDescricao(data.descricao ?? '');
         setCodigo(data.codigo ?? '');
         setAtivo(data.ativo);
       } catch {
-        setError('Não foi possível carregar a categoria.');
+        setError('Não foi possível carregar o tipo de ordem.');
       } finally {
         setLoading(false);
       }
     };
-    fetchCategoria();
+    fetchTipoDeOrdem();
   }, [id]);
 
   const clearErr = (f: string) => setFieldErrors(p => ({ ...p, [f]: '' }));
 
   const validate = (): boolean => {
     const erros: Record<string, string> = {};
+    if (!codigo.trim()) erros.codigo = 'O código é obrigatório.';
+    else if (codigo.trim().length > 10) erros.codigo = 'Máximo de 10 caracteres.';
     if (!nome.trim()) erros.nome = 'O nome é obrigatório.';
     else if (nome.trim().length > 100) erros.nome = 'Máximo de 100 caracteres.';
     if (descricao.length > 500) erros.descricao = 'Máximo de 500 caracteres.';
@@ -110,6 +112,7 @@ export function TiposDeOrdemFormPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({
+              codigo: codigo.trim(),
               nome: nome.trim(),
               descricao: descricao.trim() || undefined,
             }),
@@ -121,10 +124,10 @@ export function TiposDeOrdemFormPage() {
           });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.message ?? 'Erro ao salvar categoria.');
+        throw new Error(body.message ?? 'Erro ao salvar tipo de ordem.');
       }
       showToast();
-      navigate('/cadastros/categorias');
+      navigate('/cadastros/tipos-ordem');
     } catch (err: any) {
       setError(err.message ?? 'Erro inesperado. Tente novamente.');
     } finally {
@@ -140,9 +143,9 @@ export function TiposDeOrdemFormPage() {
   };
 
   const titulo: Record<Modo, string> = {
-    criar:      'Nova Categoria',
-    editar:     'Editar Categoria',
-    visualizar: 'Dados da Categoria',
+    criar:      'Novo Tipo de Ordem',
+    editar:     'Editar Tipo de Ordem',
+    visualizar: 'Dados do Tipo de Ordem',
   };
 
   if (loading) {
@@ -161,8 +164,8 @@ export function TiposDeOrdemFormPage() {
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Home size={11} />
           <ChevronRight size={11} />
-          <button onClick={() => navigate('/cadastros/categorias')} className="hover:text-gray-600 transition-colors">
-            Categorias
+          <button onClick={() => navigate('/cadastros/tipos-ordem')} className="hover:text-gray-600 transition-colors">
+            Tipos de Ordem
           </button>
           <ChevronRight size={11} />
           <span className="text-gray-600 font-medium">{titulo[modo]}</span>
@@ -178,6 +181,24 @@ export function TiposDeOrdemFormPage() {
             </div>
           )}
 
+          {/* Código */}
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">
+              Código {!readonly && <span className="text-red-400">*</span>}
+            </label>
+            <input
+              disabled={readonly}
+              value={codigo}
+              onChange={e => { setCodigo(e.target.value); clearErr('codigo'); }}
+              placeholder="Ex: TP01"
+              maxLength={10}
+              className={underline(fieldErrors.codigo)}
+            />
+            {fieldErrors.codigo && (
+              <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.codigo}</p>
+            )}
+          </div>
+
           {/* Nome */}
           <div className="mb-6">
             <label className="block text-xs text-gray-500 mb-1">
@@ -187,7 +208,7 @@ export function TiposDeOrdemFormPage() {
               disabled={readonly}
               value={nome}
               onChange={e => { setNome(e.target.value); clearErr('nome'); }}
-              placeholder="Ex: Matéria-Prima"
+              placeholder="Ex: Produção Normal"
               maxLength={100}
               className={underline(fieldErrors.nome)}
             />
@@ -203,7 +224,7 @@ export function TiposDeOrdemFormPage() {
               disabled={readonly}
               value={descricao}
               onChange={e => { setDescricao(e.target.value); clearErr('descricao'); }}
-              placeholder={readonly ? '—' : 'Descreva a finalidade desta categoria…'}
+              placeholder={readonly ? '—' : 'Descreva a finalidade deste tipo de ordem…'}
               rows={3}
               maxLength={500}
               className={cn(
@@ -241,7 +262,7 @@ export function TiposDeOrdemFormPage() {
         <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate('/cadastros/categorias')}
+            onClick={() => navigate('/cadastros/tipos-ordem')}
             className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
           >
             {readonly ? 'Voltar' : 'Cancelar'}
@@ -250,7 +271,7 @@ export function TiposDeOrdemFormPage() {
           {readonly ? (
             <button
               type="button"
-              onClick={() => navigate(`/cadastros/categorias/${id}/editar`)}
+              onClick={() => navigate(`/cadastros/tipos-ordem/${id}/editar`)}
               className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors"
             >
               <Pencil size={13} /> Editar
@@ -274,7 +295,7 @@ export function TiposDeOrdemFormPage() {
         aberto={confirmOpen}
         variante="aviso"
         titulo="Salvar alterações?"
-        descricao="Os dados do tipo da ordem serão atualizados. Deseja continuar?"
+        descricao="Os dados do tipo de ordem serão atualizados. Deseja continuar?"
         labelConfirmar="Salvar"
         onConfirmar={() => { setConfirmOpen(false); execSave(); }}
         onCancelar={() => setConfirmOpen(false)}

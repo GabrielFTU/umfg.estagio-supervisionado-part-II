@@ -113,17 +113,17 @@ export function TiposDeOrdemPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = (c: TipoDeOrdemItem) => {
-    setConfirmTarget(c);
+  const handleToggleAtivo = (t: TipoDeOrdemItem) => {
+    setConfirmTarget(t);
   };
 
   const execToggleAtivo = async () => {
     if (!confirmTarget) return;
-    const c = confirmTarget;
+    const t = confirmTarget;
     setConfirmTarget(null);
     const token = localStorage.getItem('token');
-    if (c.ativo) {
-      const res = await fetch(`/api/tipos-ordem-producao/${c.id}`, {
+    if (t.ativo) {
+      const res = await fetch(`/api/tipos-ordem-producao/${t.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -133,12 +133,12 @@ export function TiposDeOrdemPage() {
         return;
       }
     } else {
-      const res = await fetch(`/api/tipos-ordem-producao/${c.id}`, {
+      const res = await fetch(`/api/tipos-ordem-producao/${t.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        await fetch(`/api/tipos-ordem-producao/${c.id}`, {
+        await fetch(`/api/tipos-ordem-producao/${t.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ ...data, ativo: true }),
@@ -148,13 +148,13 @@ export function TiposDeOrdemPage() {
     load();
   };
 
-  const filtered = tiposDeOrdem.filter(c => {
+  const filtered = tiposDeOrdem.filter(t => {
     if (search) {
       const q = search.toLowerCase();
-      if (!c.nome.toLowerCase().includes(q) && !c.codigo.includes(q)) return false;
+      if (!t.nome.toLowerCase().includes(q) && !t.codigo.includes(q)) return false;
     }
-    if (statusFiltro === 'ativo'   && !c.ativo) return false;
-    if (statusFiltro === 'inativo' &&  c.ativo) return false;
+    if (statusFiltro === 'ativo'   && !t.ativo) return false;
+    if (statusFiltro === 'inativo' &&  t.ativo) return false;
     return true;
   });
 
@@ -178,7 +178,7 @@ export function TiposDeOrdemPage() {
           />
         </div>
 
-        <button onClick={() => navigate('/cadastros/categorias/novo')}
+        <button onClick={() => navigate('/cadastros/tipos-ordem/novo')}
           className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#3B82F6] text-white text-sm font-medium hover:bg-[#2563eb] transition-colors shrink-0">
           <Plus size={14} /> Novo tipo de ordem
         </button>
@@ -244,24 +244,24 @@ export function TiposDeOrdemPage() {
                       Nenhum registro encontrado.
                     </td>
                   </tr>
-                ) : paginated.map(c => (
-                  <tr key={c.id}
-                    onClick={() => navigate(`/cadastros/categorias/${c.id}`)}
+                ) : paginated.map(t => (
+                  <tr key={t.id}
+                    onClick={() => navigate(`/cadastros/tipos-ordem/${t.id}`)}
                     className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
                     <td className="px-6 py-3 text-sm text-gray-500">
-                      {c.codigo !== '—' ? String(c.codigo).padStart(3, '0') : '—'}
+                      {t.codigo !== '—' ? String(t.codigo).padStart(3, '0') : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={cn('text-sm', c.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
-                        {c.nome.toUpperCase()}
+                      <span className={cn('text-sm', t.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                        {t.nome.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{c.descricao ?? '—'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{t.descricao ?? '—'}</td>
                     <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
-                      <RowMenu ativo={c.ativo}
-                        onView={() => navigate(`/cadastros/categorias/${c.id}`)}
-                        onEdit={() => navigate(`/cadastros/categorias/${c.id}/editar`)}
-                        onToggleAtivo={() => handleToggleAtivo(c)} />
+                      <RowMenu ativo={t.ativo}
+                        onView={() => navigate(`/cadastros/tipos-ordem/${t.id}`)}
+                        onEdit={() => navigate(`/cadastros/tipos-ordem/${t.id}/editar`)}
+                        onToggleAtivo={() => handleToggleAtivo(t)} />
                     </td>
                   </tr>
                 ))}
@@ -294,8 +294,8 @@ export function TiposDeOrdemPage() {
 
       <ModalMsg
         aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} categoria` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a categoria "${confirmTarget.nome}"?` : ''}
+        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} tipo de ordem` : ''}
+        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} o tipo de ordem "${confirmTarget.nome}"?` : ''}
         variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
         onConfirmar={execToggleAtivo}
         onCancelar={() => setConfirmTarget(null)}
