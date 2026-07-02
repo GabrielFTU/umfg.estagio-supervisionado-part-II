@@ -86,6 +86,7 @@ export function ContaPagarFormPage() {
   // Checkbox extras do footer
   const [criarRegra, setCriarRegra] = useState(false);
   const [baixar, setBaixar]         = useState(false);
+  const [status, setStatus]         = useState<string | null>(null);
 
   useEffect(() => {
     fetchWithAuth('/api/Pessoas')
@@ -117,6 +118,7 @@ export function ContaPagarFormPage() {
         setPessoaId(d.fornecedorId ?? '');
         setFormaPag(d.formaPagamentoId ?? '');
         setEmissao(d.dataEmissao?.slice(0, 10) ?? hoje());
+        setStatus(d.status ?? null);
       } catch {
         setError('Não foi possível carregar a conta a pagar.');
       } finally {
@@ -423,13 +425,15 @@ export function ContaPagarFormPage() {
           </button>
 
           {readonly ? (
-            <button
-              type="button"
-              onClick={() => navigate(`/financeiro/contas-pagar/${id}/editar`)}
-              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
-            >
-              <Pencil size={13} /> Editar
-            </button>
+            status !== 'Pago' && status !== 'Cancelado' && (
+              <button
+                type="button"
+                onClick={() => navigate(`/financeiro/contas-pagar/${id}/editar`)}
+                className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
+              >
+                <Pencil size={13} /> Editar
+              </button>
+            )
           ) : (
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">

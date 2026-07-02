@@ -431,13 +431,15 @@ export function ContaReceberFormPage() {
           </button>
 
           {readonly ? (
-            <button
-              type="button"
-              onClick={() => navigate(`/financeiro/contas-receber/${id}/editar`)}
-              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
-            >
-              <Pencil size={13} /> Editar
-            </button>
+            status !== 'Pago' && status !== 'Cancelado' && (
+              <button
+                type="button"
+                onClick={() => navigate(`/financeiro/contas-receber/${id}/editar`)}
+                className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
+              >
+                <Pencil size={13} /> Editar
+              </button>
+            )
           ) : (
             <button
               type="submit"
