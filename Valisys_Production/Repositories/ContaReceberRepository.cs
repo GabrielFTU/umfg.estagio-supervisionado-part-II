@@ -73,6 +73,7 @@ namespace Valisys_Production.Repositories
         {
             var conta = await _context.ContasReceber
                 .Include(c => c.Parcelas)
+                    .ThenInclude(p => p.Baixas)
                 .FirstOrDefaultAsync(c => c.Id == contaId);
 
             if (conta is null) return false;
@@ -80,24 +81,24 @@ namespace Valisys_Production.Repositories
             var parcela = conta.Parcelas.FirstOrDefault(p => p.Id == parcelaId)
                 ?? throw new KeyNotFoundException("Parcela não encontrada.");
 
-            var valorPago = parcela.ValorPago;
-            var carteiraId = parcela.CarteiraId;
+            var baixasRevertidas = conta.EstornarParcela(parcelaId);
 
-            conta.EstornarParcela(parcelaId);
+            var carteiraIds = baixasRevertidas.Select(b => b.CarteiraId).Distinct().ToList();
+            var carteiras = await _context.Carteiras
+                .Where(c => carteiraIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id);
 
-            if (valorPago.HasValue && carteiraId.HasValue)
+            foreach (var baixa in baixasRevertidas)
             {
-                var carteira = await _context.Carteiras.FirstOrDefaultAsync(c => c.Id == carteiraId.Value);
-                if (carteira is not null)
-                {
-                    carteira.Debitar(valorPago.Value);
+                if (!carteiras.TryGetValue(baixa.CarteiraId, out var carteira)) continue;
 
-                    var movimentacao = new MovimentacaoCarteira(carteiraId.Value, TipoMovimentacaoCarteira.Debito,
-                        OrigemMovimentacaoCarteira.ContaReceber, valorPago.Value, DateTime.UtcNow,
-                        $"Estorno baixa parcela {parcela.NumeroParcela}/{conta.Parcelas.Count} - {conta.Descricao}",
-                        contaReceberId: contaId, parcelaReceberId: parcelaId);
-                    _context.MovimentacoesCarteira.Add(movimentacao);
-                }
+                carteira.Debitar(baixa.ValorPago);
+
+                var movimentacao = new MovimentacaoCarteira(baixa.CarteiraId, TipoMovimentacaoCarteira.Debito,
+                    OrigemMovimentacaoCarteira.ContaReceber, baixa.ValorPago, DateTime.UtcNow,
+                    $"Estorno baixa parcela {parcela.NumeroParcela}/{conta.Parcelas.Count} - {conta.Descricao}",
+                    contaReceberId: contaId, parcelaReceberId: parcelaId);
+                _context.MovimentacoesCarteira.Add(movimentacao);
             }
 
             try { return await _context.SaveChangesAsync() > 0; }

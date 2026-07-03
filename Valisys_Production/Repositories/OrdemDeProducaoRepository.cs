@@ -19,6 +19,7 @@ namespace Valisys_Production.Repositories
                 .Include(o => o.FaseAtual)
                 .Include(o => o.TipoOrdemDeProducao)
                 .Include(o => o.RoteiroProducao)
+                .Include(o => o.Deposito)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
         public override async Task<IEnumerable<OrdemDeProducao>> GetAllAsync()
@@ -46,6 +47,7 @@ namespace Valisys_Production.Repositories
                 .Include(o => o.Produto)
                 .Include(o => o.FaseAtual)
                 .Include(o => o.RoteiroProducao)
+                .Include(o => o.Deposito)
                 .FirstOrDefaultAsync(o => o.CodigoOrdem == codigo);
 
         public async Task<IEnumerable<OrdemDeProducaoReadDto>> GetAllReadDtosAsync()
@@ -76,7 +78,9 @@ namespace Valisys_Production.Repositories
                     TipoOrdemDeProducaoId = o.TipoOrdemDeProducaoId,
                     TipoOrdemDeProducaoNome = o.TipoOrdemDeProducao != null ? o.TipoOrdemDeProducao.Nome : null,
                     RoteiroProducaoId = o.RoteiroProducaoId,
-                    RoteiroCodigo = o.RoteiroProducao != null ? o.RoteiroProducao.Codigo : null
+                    RoteiroCodigo = o.RoteiroProducao != null ? o.RoteiroProducao.Codigo : null,
+                    DepositoId = o.DepositoId,
+                    DepositoNome = o.Deposito != null ? o.Deposito.Nome : null
                 })
                 .ToListAsync();
 

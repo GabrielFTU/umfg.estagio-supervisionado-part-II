@@ -23,5 +23,6 @@ namespace Valisys_Production.DTOs
 
         public Guid? LoteId { get; set; }
         public Guid? ProdutoVariacaoId { get; set; }
+        public Guid? DepositoId { get; set; }
     }
 }

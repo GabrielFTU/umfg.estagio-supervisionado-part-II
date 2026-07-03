@@ -7,7 +7,7 @@ namespace Valisys_Production.DTOs
         public string Nome { get; set; } = string.Empty;
         public int NumeroParcelas { get; set; }
         public int DiasParaPrimeiroVencimento { get; set; }
-        public int DiastEntreParcelas { get; set; }
+        public int DiasEntreParcelas { get; set; }
         public bool VencimentoDiaFixo { get; set; }
         public List<ParcelaCondicaoDto> Parcelas { get; set; } = [];
     }
@@ -18,7 +18,7 @@ namespace Valisys_Production.DTOs
         public string Nome { get; set; } = string.Empty;
         public int NumeroParcelas { get; set; }
         public int DiasParaPrimeiroVencimento { get; set; }
-        public int DiastEntreParcelas { get; set; }
+        public int DiasEntreParcelas { get; set; }
         public bool VencimentoDiaFixo { get; set; }
         public bool Ativo { get; set; }
         public List<ParcelaCondicaoDto> Parcelas { get; set; } = [];
@@ -31,7 +31,7 @@ namespace Valisys_Production.DTOs
         public string Nome { get; set; } = string.Empty;
         public int NumeroParcelas { get; set; }
         public int DiasParaPrimeiroVencimento { get; set; }
-        public int DiastEntreParcelas { get; set; }
+        public int DiasEntreParcelas { get; set; }
         public bool VencimentoDiaFixo { get; set; }
         public bool Ativo { get; set; }
         public DateTime CriadoEm { get; set; }

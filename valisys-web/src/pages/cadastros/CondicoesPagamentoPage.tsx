@@ -196,6 +196,7 @@ export function CondicoesPagamentoPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
+                <th className="text-left text-sm font-semibold text-gray-700 px-4 py-3 w-20">Código</th>
                 <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Nome</th>
                 <th className="text-left text-sm font-semibold text-gray-700 px-4 py-3 w-28">Parcelas</th>
                 <th className="text-left text-sm font-semibold text-gray-700 px-4 py-3 w-40">1º Vencimento</th>
@@ -205,7 +206,7 @@ export function CondicoesPagamentoPage() {
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-sm text-gray-400">
+                  <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
                     Nenhum registro encontrado.
                   </td>
                 </tr>
@@ -213,6 +214,7 @@ export function CondicoesPagamentoPage() {
                 <tr key={item.id}
                   onClick={() => navigate(`/cadastros/condicoes-pagamento/${item.id}`)}
                   className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  <td className="px-4 py-3 text-sm text-gray-500">{item.codigo}</td>
                   <td className="px-6 py-3">
                     <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
                       {item.nome}

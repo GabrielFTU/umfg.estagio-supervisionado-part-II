@@ -14,7 +14,7 @@ namespace Valisys_Production.Services
 
             var codigo    = await repo.GetProximoCodigoAsync();
             var condicao  = new CondicaoPagamento(codigo, dto.Nome, dto.NumeroParcelas,
-                dto.DiasParaPrimeiroVencimento, dto.DiastEntreParcelas, dto.VencimentoDiaFixo);
+                dto.DiasParaPrimeiroVencimento, dto.DiasEntreParcelas, dto.VencimentoDiaFixo);
 
             var parcelas = dto.Parcelas.Select(p => new ParcelaCondicao(condicao.Id, p.Numero, p.NumeroDias, p.Percentual));
             condicao.SetParcelas(parcelas);
@@ -45,7 +45,7 @@ namespace Valisys_Production.Services
                 throw new InvalidOperationException($"Já existe uma condição de pagamento com o nome '{dto.Nome}'.");
 
             c.Atualizar(dto.Nome, dto.NumeroParcelas, dto.DiasParaPrimeiroVencimento,
-                dto.DiastEntreParcelas, dto.VencimentoDiaFixo, dto.Ativo);
+                dto.DiasEntreParcelas, dto.VencimentoDiaFixo, dto.Ativo);
 
             var novasParcelas = dto.Parcelas
                 .Select(p => new ParcelaCondicao(c.Id, p.Numero, p.NumeroDias, p.Percentual))
@@ -72,7 +72,7 @@ namespace Valisys_Production.Services
             Nome                       = c.Nome,
             NumeroParcelas             = c.NumeroParcelas,
             DiasParaPrimeiroVencimento = c.DiasParaPrimeiroVencimento,
-            DiastEntreParcelas         = c.DiastEntreParcelas,
+            DiasEntreParcelas         = c.DiasEntreParcelas,
             VencimentoDiaFixo          = c.VencimentoDiaFixo,
             Ativo                      = c.Ativo,
             CriadoEm                   = c.CriadoEm,

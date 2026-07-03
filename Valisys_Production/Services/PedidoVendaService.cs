@@ -150,23 +150,42 @@ namespace Valisys_Production.Services
             if (pedido.Total <= 0) return;
             if (await _contaReceberService.ExisteParaPedidoAsync(pedido.Id)) return;
 
+            var nomeCondicaoSelecionada = ExtrairTag(pedido.ObservacaoInterna, "Condicao");
             var condicoes = await _condicaoPagamentoRepository.GetAllAsync();
-            var condicaoPadrao = condicoes.FirstOrDefault(c => c.Ativo && c.NumeroParcelas == 1)
+
+            var condicao = (!string.IsNullOrWhiteSpace(nomeCondicaoSelecionada)
+                    ? condicoes.FirstOrDefault(c => c.Ativo &&
+                        c.Nome.Equals(nomeCondicaoSelecionada, StringComparison.OrdinalIgnoreCase))
+                    : null)
+                ?? condicoes.FirstOrDefault(c => c.Ativo && c.NumeroParcelas == 1)
                 ?? throw new InvalidOperationException(
                     "Nenhuma condição de pagamento à vista (1 parcela) cadastrada. " +
                     "Cadastre uma condição de pagamento padrão antes de gerar a conta a receber automática.");
 
+            // A data-base é a emissão do pedido: cada parcela soma seus próprios
+            // NumeroDias (0, 30, 60...) já configurados na condição de pagamento.
             var dto = new ContaReceberCreateDto
             {
                 Descricao           = $"Pedido de Venda #{pedido.Codigo}",
                 ValorTotal          = pedido.Total,
-                DataVencimento      = DateTime.UtcNow.AddDays(30),
+                DataVencimento      = DateTime.UtcNow,
                 PessoaId            = pedido.ClienteId,
                 PedidoVendaId       = pedido.Id,
-                CondicaoPagamentoId = condicaoPadrao.Id,
+                CondicaoPagamentoId = condicao.Id,
             };
 
             await _contaReceberService.CreateAsync(dto);
+        }
+
+        private static string? ExtrairTag(string? obs, string tag)
+        {
+            if (string.IsNullOrWhiteSpace(obs)) return null;
+            var prefix = $"[{tag}: ";
+            var idx = obs.IndexOf(prefix, StringComparison.Ordinal);
+            if (idx < 0) return null;
+            var start = idx + prefix.Length;
+            var end = obs.IndexOf(']', start);
+            return end > start ? obs[start..end] : null;
         }
 
         private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento, string? condicaoPagamento, string? finalidade)

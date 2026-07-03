@@ -17,6 +17,7 @@ namespace Valisys_Production.Services
         private readonly ILoteRepository _loteRepository;
         private readonly ApplicationDbContext _context;
         private readonly IAlmoxarifadoRepository _almoxarifadoRepository;
+        private readonly IDepositoRepository _depositoRepository;
         private readonly ILogSistemaService _logService;
 
         public OrdemDeProducaoService(
@@ -27,6 +28,7 @@ namespace Valisys_Production.Services
             ILoteRepository loteRepository,
             ApplicationDbContext context,
             IAlmoxarifadoRepository almoxarifadoRepository,
+            IDepositoRepository depositoRepository,
             ILogSistemaService logService)
         {
             _repository = repository;
@@ -36,6 +38,7 @@ namespace Valisys_Production.Services
             _loteRepository = loteRepository;
             _context = context;
             _almoxarifadoRepository = almoxarifadoRepository;
+            _depositoRepository = depositoRepository;
             _logService = logService;
         }
 
@@ -51,6 +54,8 @@ namespace Valisys_Production.Services
             if (produto == null) throw new KeyNotFoundException("Produto não encontrado.");
             if (produto.ControlarPorLote && dto.LoteId == null) throw new ArgumentException("Produto exige lote.");
 
+            await ValidarDepositoAsync(dto.DepositoId, dto.AlmoxarifadoId, produto.ControlarPorLote);
+
             if (dto.ProdutoVariacaoId.HasValue)
             {
                 var variacao = await _context.Set<ProdutoVariacao>().FindAsync(dto.ProdutoVariacaoId.Value);
@@ -60,7 +65,8 @@ namespace Valisys_Production.Services
 
             var faseAtualId = dto.FaseAtualId ?? Guid.Empty;
             var ordem = new OrdemDeProducao(dto.Quantidade, dto.ProdutoId, dto.AlmoxarifadoId,
-                faseAtualId, dto.TipoOrdemDeProducaoId, dto.LoteId, dto.Observacoes, dto.ProdutoVariacaoId);
+                faseAtualId, dto.TipoOrdemDeProducaoId, dto.LoteId, dto.Observacoes, dto.ProdutoVariacaoId,
+                dto.DepositoId);
 
             var anoAtual = DateTime.UtcNow.Year;
             var sequencial = await _repository.ObterProximoSequencialAsync(anoAtual);
@@ -89,7 +95,7 @@ namespace Valisys_Production.Services
                     novaOrdem.ProdutoId, novaOrdem.Quantidade,
                     $"Início de Produção OP: {novaOrdem.CodigoOrdem}",
                     almoxarifadoMP.Id, null,
-                    novaOrdem.AlmoxarifadoId, null,
+                    novaOrdem.AlmoxarifadoId, novaOrdem.DepositoId,
                     usuarioId,
                     ordemDeProducaoId: novaOrdem.Id);
                 await _movimentacaoRepository.AddAsync(mov);
@@ -134,7 +140,7 @@ namespace Valisys_Production.Services
                     ordem.ProdutoId, ordem.Quantidade,
                     $"Finalização OP: {ordem.CodigoOrdem}",
                     almoxarifadoMP.Id, null,
-                    ordem.AlmoxarifadoId, null,
+                    ordem.AlmoxarifadoId, ordem.DepositoId,
                     usuarioId,
                     ordemDeProducaoId: ordem.Id);
                 await _movimentacaoRepository.AddAsync(mov);
@@ -212,7 +218,7 @@ namespace Valisys_Production.Services
                 var movEstorno = new Movimentacao(
                     ordem.ProdutoId, ordem.Quantidade,
                     $"Estorno de Produção OP: {ordem.CodigoOrdem}",
-                    ordem.AlmoxarifadoId, null,
+                    ordem.AlmoxarifadoId, ordem.DepositoId,
                     almoxarifadoMP.Id, null,
                     usuarioId,
                     ordemDeProducaoId: ordem.Id);
@@ -264,7 +270,10 @@ namespace Valisys_Production.Services
 
             await ValidarLoteUnicoAsync(dto.LoteId, dto.Id);
 
-            existing.Atualizar(dto.Quantidade, dto.Observacoes, dto.AlmoxarifadoId, dto.Status, dto.LoteId, dto.ProdutoVariacaoId);
+            var produto = await _produtoRepository.GetByIdAsync(existing.ProdutoId);
+            await ValidarDepositoAsync(dto.DepositoId, dto.AlmoxarifadoId, produto?.ControlarPorLote ?? false);
+
+            existing.Atualizar(dto.Quantidade, dto.Observacoes, dto.AlmoxarifadoId, dto.Status, dto.LoteId, dto.ProdutoVariacaoId, dto.DepositoId);
 
             var updated = await _repository.UpdateAsync(existing);
             if (updated)
@@ -315,6 +324,22 @@ namespace Valisys_Production.Services
                 o.Status != StatusOrdemDeProducao.Cancelada &&
                 o.Status != StatusOrdemDeProducao.Estornada);
             if (emUso) throw new InvalidOperationException("Lote já está em uso em outra OP.");
+        }
+
+        private async Task ValidarDepositoAsync(Guid? depositoId, Guid almoxarifadoId, bool exigeLote)
+        {
+            if (exigeLote && depositoId == null)
+                throw new ArgumentException("Selecione um depósito para gerar o produto com lote.");
+
+            if (depositoId == null) return;
+
+            var deposito = await _depositoRepository.GetByIdAsync(depositoId.Value);
+            if (deposito == null)
+                throw new ArgumentException("Depósito não encontrado.");
+            if (deposito.AlmoxarifadoId != almoxarifadoId)
+                throw new ArgumentException("O depósito selecionado não pertence ao almoxarifado escolhido.");
+            if (exigeLote && !deposito.ControlaLote)
+                throw new ArgumentException($"O depósito '{deposito.Nome}' não controla lote. Selecione um depósito habilitado para controle de lote.");
         }
 
         private async Task ConfigurarRoteiroInicialAsync(OrdemDeProducao ordem, Guid? roteiroId = null)

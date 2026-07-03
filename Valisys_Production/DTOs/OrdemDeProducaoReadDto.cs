@@ -30,5 +30,8 @@ namespace Valisys_Production.DTOs
 
         public Guid? RoteiroProducaoId { get; set; }
         public string? RoteiroCodigo { get; set; }
+
+        public Guid? DepositoId { get; set; }
+        public string? DepositoNome { get; set; }
     }
 }

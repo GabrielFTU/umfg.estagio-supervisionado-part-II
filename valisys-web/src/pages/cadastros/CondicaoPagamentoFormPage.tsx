@@ -88,7 +88,7 @@ export function CondicaoPagamentoFormPage() {
       setForm({
         nome: data.nome, numeroParcelas: data.numeroParcelas,
         diasParaPrimeiroVencimento: data.diasParaPrimeiroVencimento,
-        diasEntreParcelas: data.diastEntreParcelas ?? data.diasEntreParcelas ?? 30,
+        diasEntreParcelas: data.diasEntreParcelas,
         vencimentoDiaFixo: data.vencimentoDiaFixo, ativo: data.ativo,
       });
       setParcelas(data.parcelas.map((p: any) => ({
@@ -134,7 +134,7 @@ export function CondicaoPagamentoFormPage() {
     const body = {
       id, nome: form.nome.trim(), numeroParcelas: form.numeroParcelas,
       diasParaPrimeiroVencimento: form.diasParaPrimeiroVencimento,
-      diastEntreParcelas: form.diasEntreParcelas,
+      diasEntreParcelas: form.diasEntreParcelas,
       vencimentoDiaFixo: form.vencimentoDiaFixo, ativo: form.ativo,
       parcelas: parcelas.map(p => ({ numero: p.numero, numeroDias: p.numeroDias, percentual: p.percentual })),
     };
@@ -218,7 +218,7 @@ export function CondicaoPagamentoFormPage() {
                 }
               </UField>
 
-              <UField label="Número de dias para primeiro vencimento" required>
+              <UField label="Dias para primeiro vencimento" required>
                 {readOnly
                   ? <p className="text-sm text-gray-700">{form.diasParaPrimeiroVencimento}</p>
                   : <input type="number" min={0} className={uInput} value={form.diasParaPrimeiroVencimento}
@@ -226,7 +226,7 @@ export function CondicaoPagamentoFormPage() {
                 }
               </UField>
 
-              <UField label="Número de dias entre parcelas" required>
+              <UField label="Dias entre parcelas" required>
                 {readOnly
                   ? <p className="text-sm text-gray-700">{form.diasEntreParcelas}</p>
                   : <input type="number" min={0} className={uInput} value={form.diasEntreParcelas}
@@ -284,7 +284,7 @@ export function CondicaoPagamentoFormPage() {
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-left text-sm font-semibold text-gray-700 py-2 w-24">Parcela</th>
-                    <th className="text-left text-sm font-semibold text-gray-700 py-2">Número de dias</th>
+                    <th className="text-right text-sm font-semibold text-gray-700 py-2">Número de dias</th>
                     <th className="text-right text-sm font-semibold text-gray-700 py-2 pr-2">Percentual (%)</th>
                   </tr>
                 </thead>

@@ -51,8 +51,10 @@ namespace Valisys_Production.Data
         public DbSet<LogSistema> LogsSistema { get; set; }
         public DbSet<ContaReceber> ContasReceber { get; set; }
         public DbSet<ParcelaReceber> ParcelasReceber { get; set; }
+        public DbSet<BaixaParcelaReceber> BaixasParcelaReceber { get; set; }
         public DbSet<ContaPagar> ContasPagar { get; set; }
         public DbSet<ParcelaPagar> ParcelasPagar { get; set; }
+        public DbSet<BaixaParcelaPagar> BaixasParcelaPagar { get; set; }
         public DbSet<PedidoVenda> PedidosVenda { get; set; }
         public DbSet<ItemPedido> ItensPedido { get; set; }
         public DbSet<Orcamento> Orcamentos { get; set; }
@@ -279,6 +281,22 @@ namespace Valisys_Production.Data
                 .HasIndex(p => new { p.ContaReceberId, p.NumeroParcela })
                 .IsUnique();
 
+            modelBuilder.Entity<ParcelaReceber>()
+                .Navigation(p => p.Baixas)
+                .HasField("_baixas");
+
+            modelBuilder.Entity<BaixaParcelaReceber>()
+                .HasOne(b => b.ParcelaReceber)
+                .WithMany(p => p.Baixas)
+                .HasForeignKey(b => b.ParcelaReceberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BaixaParcelaReceber>()
+                .HasOne(b => b.Carteira)
+                .WithMany()
+                .HasForeignKey(b => b.CarteiraId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<ContaReceber>()
                 .Navigation(c => c.Parcelas)
                 .HasField("_parcelas");
@@ -317,6 +335,22 @@ namespace Valisys_Production.Data
             modelBuilder.Entity<ParcelaPagar>()
                 .HasIndex(p => new { p.ContaPagarId, p.NumeroParcela })
                 .IsUnique();
+
+            modelBuilder.Entity<ParcelaPagar>()
+                .Navigation(p => p.Baixas)
+                .HasField("_baixas");
+
+            modelBuilder.Entity<BaixaParcelaPagar>()
+                .HasOne(b => b.ParcelaPagar)
+                .WithMany(p => p.Baixas)
+                .HasForeignKey(b => b.ParcelaPagarId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BaixaParcelaPagar>()
+                .HasOne(b => b.Carteira)
+                .WithMany()
+                .HasForeignKey(b => b.CarteiraId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ContaPagar>()
                 .Navigation(c => c.Parcelas)

@@ -90,7 +90,8 @@ namespace Valisys_Production.Helpers
                 .ForMember(dest => dest.FaseAtualNome, opt => opt.MapFrom(src => src.FaseAtual.Nome))
                 .ForMember(dest => dest.LoteNumero, opt => opt.MapFrom(src => src.Lote != null ? src.Lote.CodigoLote : null))
                 .ForMember(dest => dest.TipoOrdemDeProducaoNome, opt => opt.MapFrom(src => src.TipoOrdemDeProducao != null ? src.TipoOrdemDeProducao.Nome : null))
-                .ForMember(dest => dest.RoteiroCodigo, opt => opt.MapFrom(src => src.RoteiroProducao != null ? src.RoteiroProducao.Codigo : null));
+                .ForMember(dest => dest.RoteiroCodigo, opt => opt.MapFrom(src => src.RoteiroProducao != null ? src.RoteiroProducao.Codigo : null))
+                .ForMember(dest => dest.DepositoNome, opt => opt.MapFrom(src => src.Deposito != null ? src.Deposito.Nome : null));
 
             // Perfil
             CreateMap<Perfil, PerfilReadDto>();

@@ -8,7 +8,7 @@ namespace Valisys_Production.Models
         public string Nome { get; private set; } = string.Empty;
         public int NumeroParcelas { get; private set; }
         public int DiasParaPrimeiroVencimento { get; private set; }
-        public int DiastEntreParcelas { get; private set; }
+        public int DiasEntreParcelas { get; private set; }
         public bool VencimentoDiaFixo { get; private set; }
 
         private readonly List<ParcelaCondicao> _parcelas = [];
@@ -24,7 +24,7 @@ namespace Valisys_Production.Models
             Nome                        = nome.Trim();
             NumeroParcelas              = numeroParcelas;
             DiasParaPrimeiroVencimento  = diasParaPrimeiroVencimento;
-            DiastEntreParcelas          = diasEntreParcelas;
+            DiasEntreParcelas           = diasEntreParcelas;
             VencimentoDiaFixo           = vencimentoDiaFixo;
         }
 
@@ -35,7 +35,7 @@ namespace Valisys_Production.Models
             Nome                        = nome.Trim();
             NumeroParcelas              = numeroParcelas;
             DiasParaPrimeiroVencimento  = diasParaPrimeiroVencimento;
-            DiastEntreParcelas          = diasEntreParcelas;
+            DiasEntreParcelas           = diasEntreParcelas;
             VencimentoDiaFixo           = vencimentoDiaFixo;
             DefinirAtivo(ativo);
             RegistrarAtualizacao();

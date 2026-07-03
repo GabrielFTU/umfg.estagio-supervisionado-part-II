@@ -1,19 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronRight, Home, Loader2, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, Home, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 type AlmoxarifadoOption = { id: string; nome: string };
-
-type FormatoLocal = {
-  id: string;
-  formato: string;
-  prefixoLocal: string;
-  ativo: boolean;
-};
 
 type DepositoData = {
   id: string;
@@ -96,11 +89,6 @@ export function DepositoFormPage() {
   const [controlaQualidade2a, setControlaQualidade2a]             = useState(false);
   const [controlaLote, setControlaLote]                           = useState(false);
   const [controlaMultiplosLocais, setControlaMultiplosLocais]     = useState(false);
-
-  const [formatos, setFormatos]       = useState<FormatoLocal[]>([]);
-  const [adicionando, setAdicionando] = useState(false);
-  const [novoFormato, setNovoFormato] = useState('');
-  const [novoPrefixo, setNovoPrefixo] = useState('');
 
   useEffect(() => {
     const fetchAlmox = async () => {
@@ -202,25 +190,6 @@ export function DepositoFormPage() {
     if (!validate()) return;
     if (modo === 'editar') { setConfirmOpen(true); return; }
     execSave();
-  };
-
-  const confirmarFormato = () => {
-    if (!novoFormato.trim()) return;
-    setFormatos(prev => [...prev, {
-      id: crypto.randomUUID(),
-      formato: novoFormato.trim(),
-      prefixoLocal: novoPrefixo.trim(),
-      ativo: true,
-    }]);
-    setNovoFormato('');
-    setNovoPrefixo('');
-    setAdicionando(false);
-  };
-
-  const cancelarFormato = () => {
-    setAdicionando(false);
-    setNovoFormato('');
-    setNovoPrefixo('');
   };
 
   const almoxNome = almoxarifados.find(a => a.id === almoxarifadoId)?.nome ?? '—';
@@ -351,107 +320,6 @@ export function DepositoFormPage() {
           {modo === 'editar' && (
             <ToggleRow label="Ativo?" checked={ativo} onChange={setAtivo} />
           )}
-
-          {/* Formato do local */}
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-[#1D4E89]">Formato do local</h2>
-              {!readonly && (
-                <button
-                  type="button"
-                  onClick={() => setAdicionando(true)}
-                  className="flex items-center gap-1 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors"
-                >
-                  <Plus size={13} /> Adicionar
-                </button>
-              )}
-            </div>
-
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left font-semibold text-gray-600 py-2 pr-6 text-xs">Formato</th>
-                  <th className="text-left font-semibold text-gray-600 py-2 pr-6 text-xs">Prefixo local</th>
-                  <th className="text-left font-semibold text-gray-600 py-2 text-xs w-24">Status</th>
-                  {!readonly && <th className="w-8" />}
-                </tr>
-              </thead>
-              <tbody>
-                {adicionando && (
-                  <tr className="border-b border-gray-100">
-                    <td className="py-2 pr-6">
-                      <input
-                        autoFocus
-                        value={novoFormato}
-                        onChange={e => setNovoFormato(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') { e.preventDefault(); confirmarFormato(); }
-                          if (e.key === 'Escape') cancelarFormato();
-                        }}
-                        placeholder="Ex: AAA"
-                        className="w-full border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none text-sm py-1 bg-transparent"
-                      />
-                    </td>
-                    <td className="py-2 pr-6">
-                      <input
-                        value={novoPrefixo}
-                        onChange={e => setNovoPrefixo(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') { e.preventDefault(); confirmarFormato(); }
-                          if (e.key === 'Escape') cancelarFormato();
-                        }}
-                        placeholder="Ex: A"
-                        className="w-full border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none text-sm py-1 bg-transparent"
-                      />
-                    </td>
-                    <td className="py-2 text-[11px] text-emerald-600">Ativo</td>
-                    <td className="py-2">
-                      <div className="flex items-center gap-2">
-                        <button type="button" onClick={confirmarFormato}
-                          className="text-xs text-[#1D4E89] hover:underline">OK</button>
-                        <button type="button" onClick={cancelarFormato}
-                          className="text-xs text-gray-400 hover:text-gray-600">✕</button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-
-                {formatos.length === 0 && !adicionando ? (
-                  <tr>
-                    <td colSpan={readonly ? 3 : 4} className="py-8 text-center text-sm text-gray-400">
-                      Nenhum registro encontrado.
-                    </td>
-                  </tr>
-                ) : (
-                  formatos.map(f => (
-                    <tr key={f.id} className="border-b border-gray-100">
-                      <td className="py-2.5 pr-6 text-gray-700">{f.formato}</td>
-                      <td className="py-2.5 pr-6 text-gray-500">{f.prefixoLocal || '—'}</td>
-                      <td className="py-2.5">
-                        <span className={cn(
-                          'text-[11px] px-2 py-0.5 rounded-full font-medium',
-                          f.ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500',
-                        )}>
-                          {f.ativo ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      {!readonly && (
-                        <td className="py-2.5">
-                          <button
-                            type="button"
-                            onClick={() => setFormatos(prev => prev.filter(x => x.id !== f.id))}
-                            className="text-gray-300 hover:text-red-400 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
         </div>
 
         {/* Bottom bar */}

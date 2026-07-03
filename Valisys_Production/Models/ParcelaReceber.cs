@@ -5,6 +5,8 @@ namespace Valisys_Production.Models
 {
     public class ParcelaReceber : BaseModels
     {
+        private readonly List<BaixaParcelaReceber> _baixas = new();
+
         public Guid ContaReceberId { get; private set; }
         public ContaReceber ContaReceber { get; private set; } = null!;
 
@@ -22,6 +24,8 @@ namespace Valisys_Production.Models
 
         public Guid? CarteiraId { get; private set; }
         public Carteira? Carteira { get; private set; }
+
+        public IReadOnlyCollection<BaixaParcelaReceber> Baixas => _baixas.AsReadOnly();
 
         protected ParcelaReceber() { }
 
@@ -68,13 +72,21 @@ namespace Valisys_Production.Models
             Observacoes = observacoes;
             if (ValorPago >= Valor)
                 Status = StatusParcela.Pago;
+
+            _baixas.Add(new BaixaParcelaReceber(carteiraId, valorPago, principal, juros, multa,
+                dataPagamento, formaPagamento, observacoes));
+
             RegistrarAtualizacao();
         }
 
-        public void EstornarBaixa()
+        public IReadOnlyList<BaixaParcelaReceber> EstornarBaixa()
         {
-            if ((ValorPago ?? 0) <= 0)
+            var baixasAtivas = _baixas.Where(b => !b.Estornada).ToList();
+            if (baixasAtivas.Count == 0)
                 throw new InvalidOperationException("Parcela não possui pagamento para estornar.");
+
+            foreach (var baixa in baixasAtivas)
+                baixa.Estornar();
 
             ValorPago = null;
             DataPagamento = null;
@@ -87,6 +99,8 @@ namespace Valisys_Production.Models
                 ? StatusParcela.Vencido
                 : StatusParcela.Pendente;
             RegistrarAtualizacao();
+
+            return baixasAtivas;
         }
 
         public void VerificarVencimento()
