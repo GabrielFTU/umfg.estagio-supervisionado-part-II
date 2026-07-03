@@ -38,4 +38,15 @@ namespace Valisys_Production.Models.Enums
         ContaPagar = 0,
         ContaReceber = 1
     }
+
+    public enum FrequenciaRecorrencia
+    {
+        Semanal = 0,
+        Quinzenal = 1,
+        Mensal = 2,
+        Bimestral = 3,
+        Trimestral = 4,
+        Semestral = 5,
+        Anual = 6
+    }
 }

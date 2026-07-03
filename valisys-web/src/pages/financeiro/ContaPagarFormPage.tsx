@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronRight, Home, Loader2, ChevronDown, Pencil } from 'lucide-react';
+import { ChevronRight, Home, Loader2, ChevronDown, Pencil, Repeat, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { SelectField } from '@/components/ui/SelectField';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
 import { fetchWithAuth } from '@/services/api';
@@ -12,6 +13,10 @@ type Modo = 'criar' | 'editar' | 'visualizar';
 type PessoaOpt = { id: string; nome: string };
 type FormaPagOpt = { id: string; nome: string };
 type CondicaoPagOpt = { id: string; nome: string; numeroParcelas: number };
+
+const FREQUENCIAS = ['Semanal', 'Quinzenal', 'Mensal', 'Bimestral', 'Trimestral', 'Semestral', 'Anual'] as const;
+type Frequencia = typeof FREQUENCIAS[number];
+interface Recorrencia { frequencia: Frequencia; numeroOcorrencias: number }
 
 function hoje() {
   return new Date().toISOString().slice(0, 10);
@@ -43,6 +48,93 @@ function UField({ label, required, error, children }: {
       </label>
       {children}
       {error && <p className="text-[11px] text-red-500 mt-0.5">{error}</p>}
+    </div>
+  );
+}
+
+function RepetirMenu({ value, onChange, disabled }: {
+  value: Recorrencia | null; onChange: (v: Recorrencia | null) => void; disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [frequencia, setFrequencia] = useState<Frequencia>(value?.frequencia ?? 'Mensal');
+  const [numero, setNumero] = useState(value?.numeroOcorrencias ?? 12);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen(v => !v)}
+        className={cn(
+          'flex items-center gap-1.5 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+          value ? 'text-[#1D4E89] font-medium' : 'text-[#1D4E89] hover:text-[#163D6D]',
+        )}
+      >
+        <Repeat size={14} />
+        {value ? `Repete: ${value.frequencia} · ${value.numeroOcorrencias}x` : 'Repetir'}
+      </button>
+
+      {open && (
+        <div className="absolute z-30 left-0 top-full mt-1.5 w-72 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Repetir lançamento</p>
+            <button type="button" onClick={() => setOpen(false)} className="text-gray-300 hover:text-gray-500">
+              <X size={13} />
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Frequência</label>
+            <select
+              value={frequencia}
+              onChange={e => setFrequencia(e.target.value as Frequencia)}
+              className="w-full h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+            >
+              {FREQUENCIAS.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Número de repetições (2 a 60)</label>
+            <input
+              type="number"
+              min={2}
+              max={60}
+              value={numero}
+              onChange={e => setNumero(Math.min(60, Math.max(2, Number(e.target.value) || 2)))}
+              className="w-full h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+            />
+          </div>
+
+          <p className="text-[11px] text-gray-400">
+            Serão geradas {numero} contas a partir do vencimento informado, repetindo a cada período {frequencia.toLowerCase()}.
+          </p>
+
+          <div className="flex items-center justify-between pt-1">
+            {value ? (
+              <button type="button" onClick={() => { onChange(null); setOpen(false); }}
+                className="text-xs text-red-500 hover:text-red-600">
+                Remover repetição
+              </button>
+            ) : <span />}
+            <button
+              type="button"
+              onClick={() => { onChange({ frequencia, numeroOcorrencias: numero }); setOpen(false); }}
+              className="text-xs px-3 py-1.5 rounded-full bg-[#1D4E89] text-white hover:bg-[#163D6D] transition-colors"
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -82,16 +174,16 @@ export function ContaPagarFormPage() {
   const [formaPagamento, setFormaPag]   = useState('');
   const [observacao, setObs]            = useState('');
   const [condicaoPagamentoId, setCondicaoPagamentoId] = useState('');
+  const [recorrencia, setRecorrencia]   = useState<Recorrencia | null>(null);
 
   // Checkbox extras do footer
-  const [criarRegra, setCriarRegra] = useState(false);
   const [baixar, setBaixar]         = useState(false);
   const [status, setStatus]         = useState<string | null>(null);
 
   useEffect(() => {
-    fetchWithAuth('/api/Pessoas')
+    fetchWithAuth('/api/Pessoas?papel=Fornecedor')
       .then(r => r.ok ? r.json() : [])
-      .then((d: any[]) => setPessoas(d.map(p => ({ id: p.id, nome: p.nomeCompleto ?? p.razaoSocial ?? p.nome ?? '—' }))));
+      .then((d: any[]) => setPessoas(d.map(p => ({ id: p.id, nome: p.nomeCompleto ?? p.nome ?? '—' }))));
 
     fetchWithAuth('/api/formas-pagamento')
       .then(r => r.ok ? r.json() : [])
@@ -136,6 +228,7 @@ export function ContaPagarFormPage() {
       e.valor = 'Valor inválido.';
     if (!vencimento) e.vencimento = 'Obrigatório.';
     if (!descricao.trim()) e.descricao = 'Obrigatório.';
+    if (!readonly && !pessoaId) e.pessoaId = 'Selecione a pessoa (fornecedor).';
     if (modo === 'criar' && !condicaoPagamentoId) e.condicaoPagamentoId = 'Selecione a condição de pagamento.';
     setFieldErrors(e);
     return Object.keys(e).length === 0;
@@ -154,6 +247,7 @@ export function ContaPagarFormPage() {
         fornecedorId: pessoaId || undefined,
         condicaoPagamentoId: condicaoPagamentoId || undefined,
         formaPagamentoId: formaPagamento || undefined,
+        recorrencia: modo === 'criar' && recorrencia ? recorrencia : undefined,
       };
       const res = modo === 'criar'
         ? await fetchWithAuth('/api/contas-pagar', {
@@ -223,6 +317,20 @@ export function ContaPagarFormPage() {
             <div className="mb-5 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">{error}</div>
           )}
 
+          {/* Pessoa (fornecedor) */}
+          <div className="mb-6 max-w-md">
+            <SelectField
+              label="Pessoa"
+              required={!readonly}
+              error={fieldErrors.pessoaId}
+              value={pessoaId}
+              onChange={v => { setPessoaId(v); clearErr('pessoaId'); }}
+              options={pessoas.map(p => ({ value: p.id, label: p.nome }))}
+              placeholder="Selecione uma pessoa…"
+              readOnly={readonly}
+            />
+          </div>
+
           {/* Linha 1: Valor | Vencimento | Competência */}
           <div className="grid grid-cols-3 gap-8 mb-6">
             <UField label="Valor" required={!readonly} error={fieldErrors.valor}>
@@ -277,21 +385,25 @@ export function ContaPagarFormPage() {
             </UField>
           </div>
 
-          {/* Condição de pagamento (apenas criar) */}
+          {/* Forma de pagamento + Condição de pagamento (apenas criar) */}
           {modo === 'criar' && (
-            <div className="mb-6 max-w-xs">
-              <UField label="Condição de pagamento" required error={fieldErrors.condicaoPagamentoId}>
-                <select
-                  value={condicaoPagamentoId}
-                  onChange={e => { setCondicaoPagamentoId(e.target.value); clearErr('condicaoPagamentoId'); }}
-                  className={ul(fieldErrors.condicaoPagamentoId)}
-                >
-                  <option value="">Selecione…</option>
-                  {condicoesPag.map(c => (
-                    <option key={c.id} value={c.id}>{c.nome} ({c.numeroParcelas}x)</option>
-                  ))}
-                </select>
-              </UField>
+            <div className="mb-6 grid grid-cols-2 gap-8 max-w-xl">
+              <SelectField
+                label="Forma de pagamento"
+                value={formaPagamento}
+                onChange={setFormaPag}
+                options={formasPag.map(f => ({ value: f.id, label: f.nome }))}
+                placeholder="Selecione…"
+              />
+              <SelectField
+                label="Condição de pagamento"
+                required
+                value={condicaoPagamentoId}
+                onChange={v => { setCondicaoPagamentoId(v); clearErr('condicaoPagamentoId'); }}
+                options={condicoesPag.map(c => ({ value: c.id, label: `${c.nome} (${c.numeroParcelas}x)` }))}
+                placeholder="Selecione…"
+                error={fieldErrors.condicaoPagamentoId}
+              />
             </div>
           )}
 
@@ -347,47 +459,22 @@ export function ContaPagarFormPage() {
                     />
                   </UField>
                   <div className="pb-1">
-                    <button
-                      type="button"
-                      disabled={readonly}
-                      className="flex items-center gap-1.5 text-sm text-[#1D4E89] hover:text-[#163D6D] transition-colors disabled:opacity-50"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 4v6h6M23 20v-6h-6" />
-                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
-                      </svg>
-                      Repetir
-                    </button>
+                    <RepetirMenu
+                      value={recorrencia}
+                      onChange={setRecorrencia}
+                      disabled={readonly || modo !== 'criar'}
+                    />
                   </div>
                 </div>
 
-                {/* Pessoa */}
-                <UField label="Pessoa">
-                  {readonly ? (
-                    <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
-                      {pessoas.find(p => p.id === pessoaId)?.nome ?? '—'}
-                    </p>
-                  ) : (
-                    <select value={pessoaId} onChange={e => setPessoaId(e.target.value)} className={ul()}>
-                      <option value="">Selecione uma pessoa…</option>
-                      {pessoas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                    </select>
-                  )}
-                </UField>
-
-                {/* Forma de pagamento (apenas criar) */}
-                <UField label="Forma de pagamento">
-                  {modo === 'criar' ? (
-                    <select value={formaPagamento} onChange={e => setFormaPag(e.target.value)} className={ul()}>
-                      <option value="">Selecione…</option>
-                      {formasPag.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                    </select>
-                  ) : (
+                {/* Forma de pagamento (somente leitura fora do modo criar) */}
+                {modo !== 'criar' && (
+                  <UField label="Forma de pagamento">
                     <p className="text-sm text-gray-500 border-b border-gray-200 bg-gray-50 h-9 px-2 flex items-center">
                       {formasPag.find(f => f.id === formaPagamento)?.nome ?? '—'}
                     </p>
-                  )}
-                </UField>
+                  </UField>
+                )}
 
                 {/* Observação */}
                 <UField label="Observação">
@@ -436,15 +523,6 @@ export function ContaPagarFormPage() {
             )
           ) : (
             <div className="flex items-center gap-6">
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={criarRegra}
-                  onChange={e => setCriarRegra(e.target.checked)}
-                  className="rounded border-gray-300"
-                />
-                Criar regra de preenchimento
-              </label>
               <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
                 <input
                   type="checkbox"

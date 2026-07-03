@@ -72,6 +72,13 @@ namespace Valisys_Production.DTOs
         public Guid? FornecedorId { get; set; }
         public Guid CondicaoPagamentoId { get; set; }
         public Guid? FormaPagamentoId { get; set; }
+        public RecorrenciaDto? Recorrencia { get; set; }
+    }
+
+    public class RecorrenciaDto
+    {
+        public string Frequencia { get; set; } = string.Empty;
+        public int NumeroOcorrencias { get; set; }
     }
 
     public class ContaPagarReadDto
@@ -92,6 +99,8 @@ namespace Valisys_Production.DTOs
         public Guid? FormaPagamentoId { get; set; }
         public string? FormaPagamentoNome { get; set; }
         public bool Ativo { get; set; }
+        public bool Recorrente { get; set; }
+        public int? NumeroOcorrenciaRecorrencia { get; set; }
         public List<ParcelaPagarReadDto> Parcelas { get; set; } = new();
     }
 

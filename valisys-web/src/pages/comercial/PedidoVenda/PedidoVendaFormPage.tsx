@@ -678,7 +678,7 @@ export function PedidoVendaFormPage() {
 
       {/* ── Barra superior ── */}
       <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
-        <button onClick={() => navigate('/comercial/pedidos')}
+        <button onClick={() => navigate(-1)}
           className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0">
           <ChevronLeft size={17} />
         </button>
@@ -873,7 +873,7 @@ export function PedidoVendaFormPage() {
       {/* ── Rodapé fixo (criar/editar) ── */}
       {(modo === 'criar' || modo === 'editar') && (
         <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
-          <button type="button" onClick={() => navigate('/comercial/pedidos')}
+          <button type="button" onClick={() => navigate(-1)}
             className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
             Cancelar
           </button>

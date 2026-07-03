@@ -63,6 +63,7 @@ namespace Valisys_Production.Data
         public DbSet<Finalidade> Finalidades { get; set; }
         public DbSet<CondicaoPagamento> CondicoesPagamento { get; set; }
         public DbSet<ParcelaCondicao> ParcelasCondicao { get; set; }
+        public DbSet<RegraRecorrencia> RegrasRecorrencia { get; set; }
         public DbSet<Carteira> Carteiras { get; set; }
         public DbSet<MovimentacaoCarteira> MovimentacoesCarteira { get; set; }
 
@@ -331,6 +332,13 @@ namespace Valisys_Production.Data
                 .HasOne(c => c.FormaPagamento)
                 .WithMany()
                 .HasForeignKey(c => c.FormaPagamentoId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+
+            modelBuilder.Entity<ContaPagar>()
+                .HasOne(c => c.RegraRecorrencia)
+                .WithMany()
+                .HasForeignKey(c => c.RegraRecorrenciaId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
 

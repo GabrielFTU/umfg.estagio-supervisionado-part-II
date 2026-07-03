@@ -213,6 +213,7 @@ builder.Services.AddScoped<IContaReceberRepository, ContaReceberRepository>();
 builder.Services.AddScoped<IContaReceberService, ContaReceberService>();
 builder.Services.AddScoped<IContaPagarRepository, ContaPagarRepository>();
 builder.Services.AddScoped<IContaPagarService, ContaPagarService>();
+builder.Services.AddScoped<IRegraRecorrenciaRepository, RegraRecorrenciaRepository>();
 builder.Services.AddScoped<IPessoaFisicaRepository, PessoaFisicaRepository>();
 builder.Services.AddScoped<IPessoaFisicaService, PessoaFisicaService>();
 builder.Services.AddScoped<IPessoaJuridicaRepository, PessoaJuridicaRepository>();

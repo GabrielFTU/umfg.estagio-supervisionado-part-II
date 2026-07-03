@@ -19,10 +19,14 @@ namespace Valisys_Production.Models
         public string? NumeroDocumento { get; private set; }
 
         public Guid? FornecedorId { get; private set; }
-        public Fornecedor? Fornecedor { get; private set; }
+        public Pessoa? Fornecedor { get; private set; }
 
         public Guid? FormaPagamentoId { get; private set; }
         public FormaPagamento? FormaPagamento { get; private set; }
+
+        public Guid? RegraRecorrenciaId { get; private set; }
+        public RegraRecorrencia? RegraRecorrencia { get; private set; }
+        public int? NumeroOcorrenciaRecorrencia { get; private set; }
 
         public IReadOnlyCollection<ParcelaPagar> Parcelas => _parcelas.AsReadOnly();
 
@@ -49,6 +53,12 @@ namespace Valisys_Production.Models
         }
 
         public void DefinirCodigo(string codigo) => Codigo = codigo;
+
+        public void VincularRecorrencia(Guid regraRecorrenciaId, int numeroOcorrencia)
+        {
+            RegraRecorrenciaId = regraRecorrenciaId;
+            NumeroOcorrenciaRecorrencia = numeroOcorrencia;
+        }
 
         public void AdicionarParcela(ParcelaPagar parcela) => _parcelas.Add(parcela);
 

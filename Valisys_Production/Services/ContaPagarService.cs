@@ -10,13 +10,16 @@ namespace Valisys_Production.Services
     {
         private readonly IContaPagarRepository _repository;
         private readonly ICondicaoPagamentoRepository _condicaoPagamentoRepository;
+        private readonly IRegraRecorrenciaRepository _regraRecorrenciaRepository;
         private readonly ILogSistemaService _logService;
 
         public ContaPagarService(IContaPagarRepository repository,
-            ICondicaoPagamentoRepository condicaoPagamentoRepository, ILogSistemaService logService)
+            ICondicaoPagamentoRepository condicaoPagamentoRepository,
+            IRegraRecorrenciaRepository regraRecorrenciaRepository, ILogSistemaService logService)
         {
             _repository = repository;
             _condicaoPagamentoRepository = condicaoPagamentoRepository;
+            _regraRecorrenciaRepository = regraRecorrenciaRepository;
             _logService = logService;
         }
 
@@ -33,37 +36,81 @@ namespace Valisys_Production.Services
             if (!condicao.Parcelas.Any())
                 throw new ArgumentException("A condição de pagamento selecionada não possui parcelas configuradas.");
 
-            var conta = new ContaPagar(dto.Descricao, dto.ValorTotal, dto.DataVencimento,
-                dto.Observacoes, dto.NumeroDocumento, dto.FornecedorId, dto.FormaPagamentoId);
+            RegraRecorrencia? regra = null;
+            var vencimentos = new List<DateTime> { dto.DataVencimento };
 
-            var codigo = await _repository.ProximoCodigoAsync();
-            conta.DefinirCodigo(codigo);
-
-            var parcelasCondicao = condicao.Parcelas.OrderBy(p => p.Numero).ToList();
-            var valorAcumulado = 0m;
-
-            for (int i = 0; i < parcelasCondicao.Count; i++)
+            if (dto.Recorrencia is not null)
             {
-                var pc = parcelasCondicao[i];
-                var isUltima = i == parcelasCondicao.Count - 1;
-                var valor = isUltima
-                    ? dto.ValorTotal - valorAcumulado
-                    : Math.Round(dto.ValorTotal * pc.Percentual / 100m, 2);
-                valorAcumulado += valor;
+                if (!Enum.TryParse<FrequenciaRecorrencia>(dto.Recorrencia.Frequencia, true, out var frequencia))
+                    throw new ArgumentException("Frequência de recorrência inválida.");
 
-                var vencimentoParcela = dto.DataVencimento.AddDays(pc.NumeroDias);
-                var parcela = new ParcelaPagar(pc.Numero, valor, vencimentoParcela);
-                parcela.DefinirCodigo($"{codigo}/{pc.Numero}");
-                conta.AdicionarParcela(parcela);
+                regra = new RegraRecorrencia(frequencia, dto.Recorrencia.NumeroOcorrencias);
+                await _regraRecorrenciaRepository.AddAsync(regra);
+
+                var atual = dto.DataVencimento;
+                for (int i = 1; i < regra.NumeroOcorrencias; i++)
+                {
+                    atual = ProximaData(atual, frequencia);
+                    vencimentos.Add(atual);
+                }
             }
 
-            var created = await _repository.AddAsync(conta);
+            var parcelasCondicao = condicao.Parcelas.OrderBy(p => p.Numero).ToList();
+            ContaPagar? primeira = null;
 
-            await _logService.RegistrarAsync("Criação", "ContasPagar",
-                $"Cadastrou conta a pagar '{created.Descricao}' ({parcelasCondicao.Count}x) no valor de {created.ValorTotal:N2}");
+            for (int i = 0; i < vencimentos.Count; i++)
+            {
+                var descricao = vencimentos.Count > 1
+                    ? $"{dto.Descricao} ({i + 1}/{vencimentos.Count})"
+                    : dto.Descricao;
 
-            return created;
+                var conta = new ContaPagar(descricao, dto.ValorTotal, vencimentos[i],
+                    dto.Observacoes, dto.NumeroDocumento, dto.FornecedorId, dto.FormaPagamentoId);
+
+                if (regra is not null)
+                    conta.VincularRecorrencia(regra.Id, i + 1);
+
+                var codigo = await _repository.ProximoCodigoAsync();
+                conta.DefinirCodigo(codigo);
+
+                var valorAcumulado = 0m;
+
+                for (int j = 0; j < parcelasCondicao.Count; j++)
+                {
+                    var pc = parcelasCondicao[j];
+                    var isUltima = j == parcelasCondicao.Count - 1;
+                    var valor = isUltima
+                        ? dto.ValorTotal - valorAcumulado
+                        : Math.Round(dto.ValorTotal * pc.Percentual / 100m, 2);
+                    valorAcumulado += valor;
+
+                    var vencimentoParcela = vencimentos[i].AddDays(pc.NumeroDias);
+                    var parcela = new ParcelaPagar(pc.Numero, valor, vencimentoParcela);
+                    parcela.DefinirCodigo($"{codigo}/{pc.Numero}");
+                    conta.AdicionarParcela(parcela);
+                }
+
+                var created = await _repository.AddAsync(conta);
+                primeira ??= created;
+
+                await _logService.RegistrarAsync("Criação", "ContasPagar",
+                    $"Cadastrou conta a pagar '{created.Descricao}' ({parcelasCondicao.Count}x) no valor de {created.ValorTotal:N2}");
+            }
+
+            return primeira!;
         }
+
+        private static DateTime ProximaData(DateTime atual, FrequenciaRecorrencia frequencia) => frequencia switch
+        {
+            FrequenciaRecorrencia.Semanal    => atual.AddDays(7),
+            FrequenciaRecorrencia.Quinzenal  => atual.AddDays(14),
+            FrequenciaRecorrencia.Mensal     => atual.AddMonths(1),
+            FrequenciaRecorrencia.Bimestral  => atual.AddMonths(2),
+            FrequenciaRecorrencia.Trimestral => atual.AddMonths(3),
+            FrequenciaRecorrencia.Semestral  => atual.AddMonths(6),
+            FrequenciaRecorrencia.Anual      => atual.AddYears(1),
+            _ => atual,
+        };
 
         public async Task<ContaPagar?> GetByIdAsync(Guid id)
         {

@@ -185,7 +185,8 @@ namespace Valisys_Production.Helpers
                     src.Fornecedor != null ? src.Fornecedor.Nome : null))
                 .ForMember(dest => dest.Parcelas, opt => opt.MapFrom(src => src.Parcelas))
                 .ForMember(dest => dest.FormaPagamentoNome, opt => opt.MapFrom(src =>
-                    src.FormaPagamento != null ? src.FormaPagamento.Nome : null));
+                    src.FormaPagamento != null ? src.FormaPagamento.Nome : null))
+                .ForMember(dest => dest.Recorrente, opt => opt.MapFrom(src => src.RegraRecorrenciaId != null));
 
             CreateMap<ParcelaPagar, ParcelaPagarReadDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))

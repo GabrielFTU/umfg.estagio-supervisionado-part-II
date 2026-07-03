@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X,
-  ChevronUp, ChevronDown, AlertCircle, Link2,
+  ChevronUp, ChevronDown, AlertCircle, Link2, Home, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PixModal } from '@/components/financeiro/PixModal';
@@ -32,8 +32,18 @@ interface ParcelaRow {
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-const STATUS_OPTS = ['todos', 'ABERTA', 'PARCIAL', 'PAGA', 'VENCIDA', 'CANCELADA'] as const;
-type StatusOpt = typeof STATUS_OPTS[number];
+const STATUS_VALUES = ['ABERTA', 'PARCIAL', 'PAGA', 'VENCIDA', 'CANCELADA'] as const;
+type StatusValue = typeof STATUS_VALUES[number];
+const STATUS_ABERTOS: readonly StatusValue[] = ['ABERTA', 'PARCIAL', 'VENCIDA'];
+const STATUS_LABELS: Record<StatusValue, string> = {
+  ABERTA: 'ABERTA', PARCIAL: 'PARCIAL', PAGA: 'PAGA', VENCIDA: 'VENCIDA', CANCELADA: 'CANCELADA',
+};
+
+function setsEqual<T>(a: Set<T>, b: Set<T>): boolean {
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+}
 
 function statusInfo(s: string): { label: string; cls: string } {
   switch (s) {
@@ -130,7 +140,7 @@ function RowMenu({ ativo, pago, showBoleto, onEdit, onView, onBaixar, onEstornar
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 opacity-50 cursor-not-allowed">
             Compensar
           </button>
-          {!pago && (
+          {!pago && ativo && (
             <>
               <div className="my-0.5 mx-2 border-t border-gray-100" />
               {showBoleto && (
@@ -204,8 +214,11 @@ export function ContasReceberPage() {
   const [rows, setRows]         = useState<ParcelaRow[]>([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
-  const [statusFiltro, setStatusFiltro] = useState<StatusOpt>('todos');
+  const [statusFiltro, setStatusFiltro] = useState<Set<StatusValue>>(new Set(STATUS_ABERTOS));
   const [clienteFiltro, setClienteFiltro] = useState('todos');
+  const [clienteSearch, setClienteSearch] = useState('');
+  const [clienteOpen, setClienteOpen]     = useState(false);
+  const clienteRef = useRef<HTMLDivElement>(null);
   const [emissaoInicio, setEmissaoInicio] = useState('');
   const [emissaoFim, setEmissaoFim]       = useState('');
   const [vencimentoInicio, setVencimentoInicio] = useState('');
@@ -222,6 +235,15 @@ export function ContasReceberPage() {
   const [boletoTarget, setBoletoTarget] = useState<ModalTarget>(null);
   const [cancelTarget, setCancelTarget] = useState<{ contaId: string; ativo: boolean } | null>(null);
   const [estornarIds, setEstornarIds] = useState<{ contaId: string; parcelaId: string } | null>(null);
+
+  useEffect(() => {
+    if (!clienteOpen) return;
+    const h = (e: MouseEvent) => {
+      if (clienteRef.current && !clienteRef.current.contains(e.target as Node)) setClienteOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [clienteOpen]);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -324,8 +346,8 @@ export function ContasReceberPage() {
           !(r.pessoaNome ?? '').toLowerCase().includes(q) &&
           !(r.pedidoVendaCodigo ?? '').toLowerCase().includes(q)) return false;
     }
-    if (statusFiltro !== 'todos' && r.statusDisplay !== statusFiltro) return false;
-    if (clienteFiltro !== 'todos' && (r.pessoaNome ?? '') !== clienteFiltro) return false;
+    if (statusFiltro.size > 0 && !statusFiltro.has(r.statusDisplay as StatusValue)) return false;
+    if (clienteFiltro !== 'todos' && !(r.pessoaNome ?? '').toLowerCase().includes(clienteFiltro.toLowerCase())) return false;
     if (emissaoInicio && r.dataEmissao.slice(0, 10) < emissaoInicio) return false;
     if (emissaoFim && r.dataEmissao.slice(0, 10) > emissaoFim) return false;
     if (vencimentoInicio && r.dataVencimento.slice(0, 10) < vencimentoInicio) return false;
@@ -355,13 +377,49 @@ export function ContasReceberPage() {
     new Set(rows.map(r => r.pessoaNome).filter((n): n is string => !!n)),
   ).sort((a, b) => a.localeCompare(b));
 
-  const statusLabel = statusFiltro !== 'todos' ? statusFiltro : null;
-  const anyFilterActive = statusFiltro !== 'todos' || clienteFiltro !== 'todos' ||
+  const DEFAULT_STATUS = new Set<StatusValue>(STATUS_ABERTOS);
+  const isAbertosFull = STATUS_ABERTOS.every(s => statusFiltro.has(s));
+
+  const toggleStatusTodos = () => { setStatusFiltro(new Set()); setPage(1); };
+  const toggleStatusAbertos = () => {
+    setStatusFiltro(prev => {
+      const next = new Set(prev);
+      if (isAbertosFull) STATUS_ABERTOS.forEach(s => next.delete(s));
+      else STATUS_ABERTOS.forEach(s => next.add(s));
+      return next;
+    });
+    setPage(1);
+  };
+  const toggleStatusValue = (v: StatusValue) => {
+    setStatusFiltro(prev => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v); else next.add(v);
+      return next;
+    });
+    setPage(1);
+  };
+
+  const statusLabel = statusFiltro.size === 0 ? null : (() => {
+    const parts: string[] = [];
+    if (isAbertosFull) parts.push('Em aberto');
+    else STATUS_ABERTOS.forEach(s => { if (statusFiltro.has(s)) parts.push(STATUS_LABELS[s]); });
+    STATUS_VALUES.forEach(s => { if (!STATUS_ABERTOS.includes(s) && statusFiltro.has(s)) parts.push(STATUS_LABELS[s]); });
+    return parts.join(', ');
+  })();
+  const anyFilterActive = !setsEqual(statusFiltro, DEFAULT_STATUS) || clienteFiltro !== 'todos' ||
     !!emissaoInicio || !!emissaoFim || !!vencimentoInicio || !!vencimentoFim;
-  const totalValorAberto = filtered.reduce((s, r) => s + r.valorAberto, 0);
 
   return (
     <div className="flex flex-col h-full bg-white">
+
+      {/* Breadcrumb */}
+      <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-100">
+        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <Home size={11} /><ChevronRight size={11} />
+          <span>Financeiro</span><ChevronRight size={11} />
+          <span className="text-gray-600 font-medium">Contas a Receber</span>
+        </div>
+      </div>
 
       {/* Toolbar */}
       <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
@@ -400,18 +458,47 @@ export function ContasReceberPage() {
               onMouseDown={e => e.stopPropagation()}
               className="absolute z-30 right-0 top-full mt-1.5 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4"
             >
-              <div>
+              <div className="relative" ref={clienteRef}>
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Cliente</p>
-                <select
-                  value={clienteFiltro}
-                  onChange={e => { setClienteFiltro(e.target.value); setPage(1); }}
-                  className="w-full h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
-                >
-                  <option value="todos">Todos</option>
-                  {clientesDisponiveis.map(nome => (
-                    <option key={nome} value={nome}>{nome}</option>
-                  ))}
-                </select>
+                <input
+                  value={clienteSearch}
+                  onChange={e => {
+                    const v = e.target.value;
+                    setClienteSearch(v);
+                    setClienteFiltro(v.trim() ? v : 'todos');
+                    setClienteOpen(true);
+                    setPage(1);
+                  }}
+                  onFocus={() => setClienteOpen(true)}
+                  placeholder="Digite o nome do cliente…"
+                  autoComplete="off"
+                  className="w-full h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700 placeholder:text-gray-300"
+                />
+                {clienteOpen && clienteSearch.trim() && (
+                  <div className="absolute z-30 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto">
+                    {clientesDisponiveis.filter(nome => nome.toLowerCase().includes(clienteSearch.toLowerCase())).length === 0 ? (
+                      <p className="px-3 py-2 text-xs text-gray-400">Nenhum cliente encontrado</p>
+                    ) : (
+                      clientesDisponiveis
+                        .filter(nome => nome.toLowerCase().includes(clienteSearch.toLowerCase()))
+                        .map(nome => (
+                          <button
+                            key={nome}
+                            type="button"
+                            onMouseDown={() => {
+                              setClienteFiltro(nome);
+                              setClienteSearch(nome);
+                              setClienteOpen(false);
+                              setPage(1);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#1D4E89] transition-colors"
+                          >
+                            {nome}
+                          </button>
+                        ))
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -454,12 +541,23 @@ export function ContasReceberPage() {
 
               <div>
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status da parcela</p>
+                <p className="text-[10px] text-gray-400 mb-2">Selecione um ou mais status (exceto "Todos", que é exclusivo)</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {STATUS_OPTS.map(v => (
-                    <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); }}
+                  <button onClick={toggleStatusTodos}
+                    className={cn('text-left text-xs px-2.5 py-1.5 rounded-md transition-colors',
+                      statusFiltro.size === 0 ? 'bg-[#1D4E89] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100')}>
+                    Todos
+                  </button>
+                  <button onClick={toggleStatusAbertos}
+                    className={cn('text-left text-xs px-2.5 py-1.5 rounded-md transition-colors',
+                      isAbertosFull ? 'bg-[#1D4E89] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100')}>
+                    Em aberto
+                  </button>
+                  {STATUS_VALUES.map(v => (
+                    <button key={v} onClick={() => toggleStatusValue(v)}
                       className={cn('text-left text-xs px-2.5 py-1.5 rounded-md transition-colors',
-                        statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100')}>
-                      {v === 'todos' ? 'Todos' : v}
+                        statusFiltro.has(v) ? 'bg-[#1D4E89] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100')}>
+                      {STATUS_LABELS[v]}
                     </button>
                   ))}
                 </div>
@@ -468,8 +566,9 @@ export function ContasReceberPage() {
               {anyFilterActive && (
                 <button
                   onClick={() => {
-                    setStatusFiltro('todos');
+                    setStatusFiltro(new Set(STATUS_ABERTOS));
                     setClienteFiltro('todos');
+                    setClienteSearch('');
                     setEmissaoInicio(''); setEmissaoFim('');
                     setVencimentoInicio(''); setVencimentoFim('');
                     setPage(1);
@@ -490,13 +589,13 @@ export function ContasReceberPage() {
           {statusLabel && (
             <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Status: {statusLabel}
-              <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+              <button onClick={() => setStatusFiltro(new Set(STATUS_ABERTOS))} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {clienteFiltro !== 'todos' && (
             <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Cliente: {clienteFiltro}
-              <button onClick={() => setClienteFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+              <button onClick={() => { setClienteFiltro('todos'); setClienteSearch(''); }} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {(emissaoInicio || emissaoFim) && (
@@ -514,14 +613,6 @@ export function ContasReceberPage() {
           {selected.size > 0 && (
             <span className="text-xs text-gray-500">{selected.size} selecionado{selected.size !== 1 ? 's' : ''}</span>
           )}
-        </div>
-      )}
-
-      {/* Totalizador */}
-      {filtered.length > 0 && (
-        <div className="shrink-0 px-6 py-2 border-b border-gray-100 flex items-center gap-6 text-xs text-gray-500">
-          <span>Total a receber: <strong className="text-gray-700">{fmtBRL(totalValorAberto)}</strong></span>
-          <span>{filtered.length} registro{filtered.length !== 1 ? 's' : ''}</span>
         </div>
       )}
 
@@ -623,7 +714,7 @@ export function ContasReceberPage() {
                           onPix={() => setPixTarget({
                             contaId: row.contaId,
                             descricao: row.descricao,
-                            valor: row.valor,
+                            valor: row.valorAberto,
                             pagadorNome: row.pessoaNome ?? 'Cliente',
                             pagadorDoc: '',
                             dataVencimento: row.dataVencimento,
@@ -632,7 +723,7 @@ export function ContasReceberPage() {
                           onBoleto={() => setBoletoTarget({
                             contaId: row.contaId,
                             descricao: row.descricao,
-                            valor: row.valor,
+                            valor: row.valorAberto,
                             pagadorNome: row.pessoaNome ?? 'Cliente',
                             pagadorDoc: '',
                             dataVencimento: row.dataVencimento,

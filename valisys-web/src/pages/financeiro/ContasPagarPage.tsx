@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X,
-  ChevronUp, ChevronDown, AlertCircle,
+  ChevronUp, ChevronDown, AlertCircle, Home, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
@@ -26,8 +26,13 @@ interface ParcelaRow {
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-const STATUS_OPTS = ['todos', 'ABERTA', 'PARCIAL', 'PAGA', 'VENCIDA', 'CANCELADA'] as const;
+const STATUS_OPTS = ['abertos', 'todos', 'ABERTA', 'PARCIAL', 'PAGA', 'VENCIDA', 'CANCELADA'] as const;
 type StatusOpt = typeof STATUS_OPTS[number];
+const STATUS_ABERTOS: readonly string[] = ['ABERTA', 'PARCIAL', 'VENCIDA'];
+const STATUS_LABELS: Record<StatusOpt, string> = {
+  abertos: 'Em aberto', todos: 'Todos', ABERTA: 'ABERTA', PARCIAL: 'PARCIAL',
+  PAGA: 'PAGA', VENCIDA: 'VENCIDA', CANCELADA: 'CANCELADA',
+};
 
 function statusInfo(s: string): { label: string; cls: string } {
   switch (s) {
@@ -169,7 +174,7 @@ export function ContasPagarPage() {
   const [rows, setRows]         = useState<ParcelaRow[]>([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
-  const [statusFiltro, setStatusFiltro] = useState<StatusOpt>('todos');
+  const [statusFiltro, setStatusFiltro] = useState<StatusOpt>('abertos');
   const [filterOpen, setFilterOpen]     = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage]         = useState(1);
@@ -275,7 +280,11 @@ export function ContasPagarPage() {
       const q = search.toLowerCase();
       if (!r.descricao.toLowerCase().includes(q) && !(r.numeroDocumento ?? '').toLowerCase().includes(q)) return false;
     }
-    if (statusFiltro !== 'todos' && r.statusDisplay !== statusFiltro) return false;
+    if (statusFiltro === 'abertos') {
+      if (!STATUS_ABERTOS.includes(r.statusDisplay)) return false;
+    } else if (statusFiltro !== 'todos' && r.statusDisplay !== statusFiltro) {
+      return false;
+    }
     return true;
   }).sort((a, b) => {
     const dir = sort.dir === 'asc' ? 1 : -1;
@@ -297,12 +306,21 @@ export function ContasPagarPage() {
     else setSelected(prev => { const s = new Set(prev); paginated.forEach(r => s.add(r.parcelaId)); return s; });
   };
 
-  const statusLabel = statusFiltro !== 'todos' ? statusFiltro : null;
+  const statusLabel = statusFiltro !== 'abertos' ? STATUS_LABELS[statusFiltro] : null;
 
   const totalValorAberto = filtered.reduce((s, r) => s + r.valorAberto, 0);
 
   return (
     <div className="flex flex-col h-full bg-white">
+
+      {/* Breadcrumb */}
+      <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-100">
+        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <Home size={11} /><ChevronRight size={11} />
+          <span>Financeiro</span><ChevronRight size={11} />
+          <span className="text-gray-600 font-medium">Contas a Pagar</span>
+        </div>
+      </div>
 
       {/* Toolbar */}
       <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
@@ -328,7 +346,7 @@ export function ContasPagarPage() {
             onClick={() => setFilterOpen(v => !v)}
             className={cn(
               'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
-              statusFiltro !== 'todos'
+              statusFiltro !== 'abertos'
                 ? 'border-[#1D4E89] bg-blue-50 text-[#1D4E89]'
                 : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
             )}
@@ -346,7 +364,7 @@ export function ContasPagarPage() {
                 <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
                   className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
                     statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
-                  {v === 'todos' ? 'Todos' : v}
+                  {STATUS_LABELS[v]}
                 </button>
               ))}
             </div>
@@ -360,7 +378,7 @@ export function ContasPagarPage() {
           {statusLabel && (
             <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Status da parcela: {statusLabel}
-              <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+              <button onClick={() => setStatusFiltro('abertos')} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {selected.size > 0 && (
