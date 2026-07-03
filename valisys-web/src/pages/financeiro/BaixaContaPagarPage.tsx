@@ -51,7 +51,7 @@ function todayISO() {
 
 function fmtDate(iso: string) {
   if (!iso) return '—';
-  return new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+  return new Date(iso).toLocaleDateString('pt-BR');
 }
 
 function fmtBRL(v: number) {
@@ -336,6 +336,8 @@ export function BaixaContaPagarPage() {
       const principal = parseBRL(p.valorAPagar) - parseBRL(p.juros) - parseBRL(p.multa);
       if (principal > p.valorAberto) {
         errs[`valor-${p.parcelaId}`] = 'Valor pago maior que o valor em aberto da parcela.';
+      } else if (p.totalParcelas === 1 && Math.abs(principal - p.valorAberto) > 0.001) {
+        errs[`valor-${p.parcelaId}`] = 'Pagamento à vista deve quitar o valor integral da parcela.';
       }
     }
     setErros(errs);

@@ -69,7 +69,8 @@ namespace Valisys_Production.Models
             var parcela = _parcelas.FirstOrDefault(p => p.Id == parcelaId)
                 ?? throw new KeyNotFoundException("Parcela não encontrada.");
 
-            parcela.Baixar(valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes);
+            var pagamentoAVista = _parcelas.Count == 1;
+            parcela.Baixar(valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes, pagamentoAVista);
             RecalcularStatus();
             RegistrarAtualizacao();
         }

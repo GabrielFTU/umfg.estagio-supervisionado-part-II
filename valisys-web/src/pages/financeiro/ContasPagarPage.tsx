@@ -22,17 +22,23 @@ interface ParcelaRow {
   statusDisplay: string;
   contaAtivo: boolean;
   vencida: boolean;
+  fornecedorNome: string | null;
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-const STATUS_OPTS = ['abertos', 'todos', 'ABERTA', 'PARCIAL', 'PAGA', 'VENCIDA', 'CANCELADA'] as const;
-type StatusOpt = typeof STATUS_OPTS[number];
-const STATUS_ABERTOS: readonly string[] = ['ABERTA', 'PARCIAL', 'VENCIDA'];
-const STATUS_LABELS: Record<StatusOpt, string> = {
-  abertos: 'Em aberto', todos: 'Todos', ABERTA: 'ABERTA', PARCIAL: 'PARCIAL',
-  PAGA: 'PAGA', VENCIDA: 'VENCIDA', CANCELADA: 'CANCELADA',
+const STATUS_VALUES = ['ABERTA', 'PARCIAL', 'PAGA', 'VENCIDA', 'CANCELADA'] as const;
+type StatusValue = typeof STATUS_VALUES[number];
+const STATUS_ABERTOS: readonly StatusValue[] = ['ABERTA', 'PARCIAL', 'VENCIDA'];
+const STATUS_LABELS: Record<StatusValue, string> = {
+  ABERTA: 'ABERTA', PARCIAL: 'PARCIAL', PAGA: 'PAGA', VENCIDA: 'VENCIDA', CANCELADA: 'CANCELADA',
 };
+
+function setsEqual<T>(a: Set<T>, b: Set<T>): boolean {
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+}
 
 function statusInfo(s: string): { label: string; cls: string } {
   switch (s) {
@@ -140,7 +146,7 @@ function RowMenu({ ativo, pago, onEdit, onView, onToggle, onBaixar, onEstornar, 
   );
 }
 
-type SortKey = 'codigo' | 'descricao' | 'numeroDocumento' | 'parcela' | 'dataEmissao' | 'dataVencimento' | 'valor' | 'valorAberto' | 'statusDisplay';
+type SortKey = 'codigo' | 'descricao' | 'numeroDocumento' | 'parcela' | 'dataEmissao' | 'dataVencimento' | 'valor' | 'valorAberto' | 'statusDisplay' | 'fornecedorNome';
 
 function SortHeader({ col, label, sort, setSort, align = 'left' }: {
   col: SortKey;
@@ -153,7 +159,7 @@ function SortHeader({ col, label, sort, setSort, align = 'left' }: {
   return (
     <th
       className={cn(
-        'py-3 px-3 text-xs font-semibold text-gray-600 cursor-pointer select-none whitespace-nowrap',
+        'py-2 px-3 text-xs font-semibold text-gray-600 cursor-pointer select-none whitespace-nowrap',
         align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left',
       )}
       onClick={() => setSort(col)}
@@ -174,7 +180,15 @@ export function ContasPagarPage() {
   const [rows, setRows]         = useState<ParcelaRow[]>([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
-  const [statusFiltro, setStatusFiltro] = useState<StatusOpt>('abertos');
+  const [statusFiltro, setStatusFiltro] = useState<Set<StatusValue>>(new Set(STATUS_ABERTOS));
+  const [fornecedorFiltro, setFornecedorFiltro] = useState('todos');
+  const [fornecedorSearch, setFornecedorSearch] = useState('');
+  const [fornecedorOpen, setFornecedorOpen]     = useState(false);
+  const fornecedorRef = useRef<HTMLDivElement>(null);
+  const [emissaoInicio, setEmissaoInicio] = useState('');
+  const [emissaoFim, setEmissaoFim]       = useState('');
+  const [vencimentoInicio, setVencimentoInicio] = useState('');
+  const [vencimentoFim, setVencimentoFim]       = useState('');
   const [filterOpen, setFilterOpen]     = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage]         = useState(1);
@@ -183,6 +197,15 @@ export function ContasPagarPage() {
   const filterRef = useRef<HTMLDivElement>(null);
   const [cancelarId, setCancelarId] = useState<string | null>(null);
   const [estornarIds, setEstornarIds] = useState<{ contaId: string; parcelaId: string } | null>(null);
+
+  useEffect(() => {
+    if (!fornecedorOpen) return;
+    const h = (e: MouseEvent) => {
+      if (fornecedorRef.current && !fornecedorRef.current.contains(e.target as Node)) setFornecedorOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [fornecedorOpen]);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -218,6 +241,7 @@ export function ContasPagarPage() {
               statusDisplay: parcelaStatusDisplay(p.status, c.status),
               contaAtivo: c.ativo,
               vencida: p.status === 'Vencido',
+              fornecedorNome: c.fornecedorNome ?? null,
             });
           }
         } else {
@@ -235,6 +259,7 @@ export function ContasPagarPage() {
             statusDisplay: parcelaStatusDisplay('Pendente', c.status),
             contaAtivo: c.ativo,
             vencida: c.status === 'Vencido',
+            fornecedorNome: c.fornecedorNome ?? null,
           });
         }
       }
@@ -278,13 +303,16 @@ export function ContasPagarPage() {
   const filtered = rows.filter(r => {
     if (search) {
       const q = search.toLowerCase();
-      if (!r.descricao.toLowerCase().includes(q) && !(r.numeroDocumento ?? '').toLowerCase().includes(q)) return false;
+      if (!r.descricao.toLowerCase().includes(q) &&
+          !(r.numeroDocumento ?? '').toLowerCase().includes(q) &&
+          !(r.fornecedorNome ?? '').toLowerCase().includes(q)) return false;
     }
-    if (statusFiltro === 'abertos') {
-      if (!STATUS_ABERTOS.includes(r.statusDisplay)) return false;
-    } else if (statusFiltro !== 'todos' && r.statusDisplay !== statusFiltro) {
-      return false;
-    }
+    if (statusFiltro.size > 0 && !statusFiltro.has(r.statusDisplay as StatusValue)) return false;
+    if (fornecedorFiltro !== 'todos' && !(r.fornecedorNome ?? '').toLowerCase().includes(fornecedorFiltro.toLowerCase())) return false;
+    if (emissaoInicio && r.dataEmissao.slice(0, 10) < emissaoInicio) return false;
+    if (emissaoFim && r.dataEmissao.slice(0, 10) > emissaoFim) return false;
+    if (vencimentoInicio && r.dataVencimento.slice(0, 10) < vencimentoInicio) return false;
+    if (vencimentoFim && r.dataVencimento.slice(0, 10) > vencimentoFim) return false;
     return true;
   }).sort((a, b) => {
     const dir = sort.dir === 'asc' ? 1 : -1;
@@ -306,15 +334,47 @@ export function ContasPagarPage() {
     else setSelected(prev => { const s = new Set(prev); paginated.forEach(r => s.add(r.parcelaId)); return s; });
   };
 
-  const statusLabel = statusFiltro !== 'abertos' ? STATUS_LABELS[statusFiltro] : null;
+  const fornecedoresDisponiveis = Array.from(
+    new Set(rows.map(r => r.fornecedorNome).filter((n): n is string => !!n)),
+  ).sort((a, b) => a.localeCompare(b));
 
-  const totalValorAberto = filtered.reduce((s, r) => s + r.valorAberto, 0);
+  const DEFAULT_STATUS = new Set<StatusValue>(STATUS_ABERTOS);
+  const isAbertosFull = STATUS_ABERTOS.every(s => statusFiltro.has(s));
+
+  const toggleStatusTodos = () => { setStatusFiltro(new Set()); setPage(1); };
+  const toggleStatusAbertos = () => {
+    setStatusFiltro(prev => {
+      const next = new Set(prev);
+      if (isAbertosFull) STATUS_ABERTOS.forEach(s => next.delete(s));
+      else STATUS_ABERTOS.forEach(s => next.add(s));
+      return next;
+    });
+    setPage(1);
+  };
+  const toggleStatusValue = (v: StatusValue) => {
+    setStatusFiltro(prev => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v); else next.add(v);
+      return next;
+    });
+    setPage(1);
+  };
+
+  const statusLabel = statusFiltro.size === 0 ? null : (() => {
+    const parts: string[] = [];
+    if (isAbertosFull) parts.push('Em aberto');
+    else STATUS_ABERTOS.forEach(s => { if (statusFiltro.has(s)) parts.push(STATUS_LABELS[s]); });
+    STATUS_VALUES.forEach(s => { if (!STATUS_ABERTOS.includes(s) && statusFiltro.has(s)) parts.push(STATUS_LABELS[s]); });
+    return parts.join(', ');
+  })();
+  const anyFilterActive = !setsEqual(statusFiltro, DEFAULT_STATUS) || fornecedorFiltro !== 'todos' ||
+    !!emissaoInicio || !!emissaoFim || !!vencimentoInicio || !!vencimentoFim;
 
   return (
     <div className="flex flex-col h-full bg-white">
 
       {/* Breadcrumb */}
-      <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-100">
+      <div className="shrink-0 px-6 pt-3 pb-2 border-b border-gray-100">
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Home size={11} /><ChevronRight size={11} />
           <span>Financeiro</span><ChevronRight size={11} />
@@ -323,7 +383,7 @@ export function ContasPagarPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+      <div className="shrink-0 px-6 py-3 border-b border-gray-100 flex items-center gap-4">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -346,7 +406,7 @@ export function ContasPagarPage() {
             onClick={() => setFilterOpen(v => !v)}
             className={cn(
               'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
-              statusFiltro !== 'abertos'
+              anyFilterActive
                 ? 'border-[#1D4E89] bg-blue-50 text-[#1D4E89]'
                 : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
             )}
@@ -357,41 +417,163 @@ export function ContasPagarPage() {
           {filterOpen && (
             <div
               onMouseDown={e => e.stopPropagation()}
-              className="absolute z-30 right-0 top-full mt-1.5 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-3"
+              className="absolute z-30 right-0 top-full mt-1.5 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4"
             >
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status da parcela</p>
-              {STATUS_OPTS.map(v => (
-                <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
-                  className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
-                    statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
-                  {STATUS_LABELS[v]}
+              <div className="relative" ref={fornecedorRef}>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Pessoa</p>
+                <input
+                  value={fornecedorSearch}
+                  onChange={e => {
+                    const v = e.target.value;
+                    setFornecedorSearch(v);
+                    setFornecedorFiltro(v.trim() ? v : 'todos');
+                    setFornecedorOpen(true);
+                    setPage(1);
+                  }}
+                  onFocus={() => setFornecedorOpen(true)}
+                  placeholder="Digite o nome da pessoa…"
+                  autoComplete="off"
+                  className="w-full h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700 placeholder:text-gray-300"
+                />
+                {fornecedorOpen && fornecedorSearch.trim() && (
+                  <div className="absolute z-30 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto">
+                    {fornecedoresDisponiveis.filter(nome => nome.toLowerCase().includes(fornecedorSearch.toLowerCase())).length === 0 ? (
+                      <p className="px-3 py-2 text-xs text-gray-400">Nenhuma pessoa encontrada</p>
+                    ) : (
+                      fornecedoresDisponiveis
+                        .filter(nome => nome.toLowerCase().includes(fornecedorSearch.toLowerCase()))
+                        .map(nome => (
+                          <button
+                            key={nome}
+                            type="button"
+                            onMouseDown={() => {
+                              setFornecedorFiltro(nome);
+                              setFornecedorSearch(nome);
+                              setFornecedorOpen(false);
+                              setPage(1);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#1D4E89] transition-colors"
+                          >
+                            {nome}
+                          </button>
+                        ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Período (emissão)</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={emissaoInicio}
+                    onChange={e => { setEmissaoInicio(e.target.value); setPage(1); }}
+                    className="flex-1 h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                  />
+                  <span className="text-gray-300 text-xs">até</span>
+                  <input
+                    type="date"
+                    value={emissaoFim}
+                    onChange={e => { setEmissaoFim(e.target.value); setPage(1); }}
+                    className="flex-1 h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Vencimento</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={vencimentoInicio}
+                    onChange={e => { setVencimentoInicio(e.target.value); setPage(1); }}
+                    className="flex-1 h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                  />
+                  <span className="text-gray-300 text-xs">até</span>
+                  <input
+                    type="date"
+                    value={vencimentoFim}
+                    onChange={e => { setVencimentoFim(e.target.value); setPage(1); }}
+                    className="flex-1 h-9 text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none bg-transparent text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status da parcela</p>
+                <p className="text-[10px] text-gray-400 mb-2">Selecione um ou mais status (exceto "Todos", que é exclusivo)</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button onClick={toggleStatusTodos}
+                    className={cn('text-left text-xs px-2.5 py-1.5 rounded-md transition-colors',
+                      statusFiltro.size === 0 ? 'bg-[#1D4E89] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100')}>
+                    Todos
+                  </button>
+                  <button onClick={toggleStatusAbertos}
+                    className={cn('text-left text-xs px-2.5 py-1.5 rounded-md transition-colors',
+                      isAbertosFull ? 'bg-[#1D4E89] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100')}>
+                    Em aberto
+                  </button>
+                  {STATUS_VALUES.map(v => (
+                    <button key={v} onClick={() => toggleStatusValue(v)}
+                      className={cn('text-left text-xs px-2.5 py-1.5 rounded-md transition-colors',
+                        statusFiltro.has(v) ? 'bg-[#1D4E89] text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100')}>
+                      {STATUS_LABELS[v]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {anyFilterActive && (
+                <button
+                  onClick={() => {
+                    setStatusFiltro(new Set(STATUS_ABERTOS));
+                    setFornecedorFiltro('todos');
+                    setFornecedorSearch('');
+                    setEmissaoInicio(''); setEmissaoFim('');
+                    setVencimentoInicio(''); setVencimentoFim('');
+                    setPage(1);
+                  }}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  Limpar filtros
                 </button>
-              ))}
+              )}
             </div>
           )}
         </div>
       </div>
 
       {/* Chips */}
-      {(statusLabel || selected.size > 0) && (
-        <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2 flex-wrap">
+      {(anyFilterActive || selected.size > 0) && (
+        <div className="px-6 py-1.5 border-b border-gray-100 flex items-center gap-2 flex-wrap">
           {statusLabel && (
             <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
-              Status da parcela: {statusLabel}
-              <button onClick={() => setStatusFiltro('abertos')} className="hover:text-blue-800"><X size={11} /></button>
+              Status: {statusLabel}
+              <button onClick={() => setStatusFiltro(new Set(STATUS_ABERTOS))} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {fornecedorFiltro !== 'todos' && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Pessoa: {fornecedorFiltro}
+              <button onClick={() => { setFornecedorFiltro('todos'); setFornecedorSearch(''); }} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {(emissaoInicio || emissaoFim) && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Emissão: {emissaoInicio ? fmtDate(emissaoInicio) : '…'} até {emissaoFim ? fmtDate(emissaoFim) : '…'}
+              <button onClick={() => { setEmissaoInicio(''); setEmissaoFim(''); }} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {(vencimentoInicio || vencimentoFim) && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Vencimento: {vencimentoInicio ? fmtDate(vencimentoInicio) : '…'} até {vencimentoFim ? fmtDate(vencimentoFim) : '…'}
+              <button onClick={() => { setVencimentoInicio(''); setVencimentoFim(''); }} className="hover:text-blue-800"><X size={11} /></button>
             </span>
           )}
           {selected.size > 0 && (
             <span className="text-xs text-gray-500">{selected.size} selecionado{selected.size !== 1 ? 's' : ''}</span>
           )}
-        </div>
-      )}
-
-      {/* Totalizador */}
-      {filtered.length > 0 && (
-        <div className="shrink-0 px-6 py-2 border-b border-gray-100 flex items-center gap-6 text-xs text-gray-500">
-          <span>Total em aberto: <strong className="text-gray-700">{fmtBRL(totalValorAberto)}</strong></span>
-          <span>{filtered.length} registro{filtered.length !== 1 ? 's' : ''}</span>
         </div>
       )}
 
@@ -406,12 +588,13 @@ export function ContasPagarPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="w-10 px-4 py-3">
+                  <th className="w-10 px-4 py-2">
                     <input type="checkbox" checked={allSelected} ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
                       onChange={toggleAll} className="rounded border-gray-300" />
                   </th>
-                  <th className="w-6 px-1 py-3" />
+                  <th className="w-6 px-1 py-2" />
                   <SortHeader col="codigo"          label="Código"       sort={sort} setSort={handleSort} />
+                  <SortHeader col="fornecedorNome"  label="Pessoa"       sort={sort} setSort={handleSort} />
                   <SortHeader col="descricao"       label="Descrição"    sort={sort} setSort={handleSort} />
                   <SortHeader col="numeroDocumento" label="Documento"    sort={sort} setSort={handleSort} />
                   <SortHeader col="parcela"         label="Parcela"      sort={sort} setSort={handleSort} />
@@ -426,7 +609,7 @@ export function ContasPagarPage() {
               <tbody>
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={12} className="px-6 py-10 text-center text-sm text-gray-400">
+                    <td colSpan={13} className="px-6 py-10 text-center text-sm text-gray-400">
                       Nenhum registro encontrado.
                     </td>
                   </tr>
@@ -440,7 +623,7 @@ export function ContasPagarPage() {
                         isSelected && 'bg-blue-50/40',
                       )}
                     >
-                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      <td className="px-4 py-2" onClick={e => e.stopPropagation()}>
                         <input type="checkbox" checked={isSelected}
                           onChange={() => setSelected(prev => {
                             const s = new Set(prev);
@@ -449,24 +632,25 @@ export function ContasPagarPage() {
                           })}
                           className="rounded border-gray-300" />
                       </td>
-                      <td className="px-1 py-3">
+                      <td className="px-1 py-2">
                         {row.vencida && <AlertCircle size={13} className="text-red-400" />}
                       </td>
-                      <td className="px-3 py-3 text-sm text-gray-500 font-mono">{row.codigo}</td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2 text-sm text-gray-500 font-mono">{row.codigo}</td>
+                      <td className="px-3 py-2 text-sm text-gray-500">{row.fornecedorNome ?? '—'}</td>
+                      <td className="px-3 py-2">
                         <span className={cn('text-sm', row.contaAtivo ? 'text-gray-700' : 'text-gray-400 line-through')}>
                           {row.descricao}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{row.numeroDocumento ?? '—'}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{row.parcela}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataEmissao)}</td>
-                      <td className={cn('px-3 py-3 text-sm font-medium text-center', row.vencida ? 'text-red-500' : 'text-gray-700')}>
+                      <td className="px-3 py-2 text-sm text-gray-500">{row.numeroDocumento ?? '—'}</td>
+                      <td className="px-3 py-2 text-sm text-gray-500">{row.parcela}</td>
+                      <td className="px-3 py-2 text-sm text-gray-500 text-center">{fmtDate(row.dataEmissao)}</td>
+                      <td className={cn('px-3 py-2 text-sm font-medium text-center', row.vencida ? 'text-red-500' : 'text-gray-700')}>
                         {fmtDate(row.dataVencimento)}
                       </td>
-                      <td className="px-3 py-3 text-sm text-gray-700 text-right">{fmtBRL(row.valor)}</td>
-                      <td className="px-3 py-3 text-sm text-gray-700 text-right font-medium">{fmtBRL(row.valorAberto)}</td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2 text-sm text-gray-700 text-right">{fmtBRL(row.valor)}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700 text-right font-medium">{fmtBRL(row.valorAberto)}</td>
+                      <td className="px-3 py-2">
                         <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', info.cls)}>
                           {info.label}
                         </span>
@@ -490,7 +674,7 @@ export function ContasPagarPage() {
             </table>
 
             {filtered.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+              <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
                 <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
                 <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
                 <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>

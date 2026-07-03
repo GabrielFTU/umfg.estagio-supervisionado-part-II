@@ -4,7 +4,7 @@ import { Home, ChevronRight, Loader2, Printer } from 'lucide-react';
 
 function fmtDate(iso: string) {
   if (!iso) return '—';
-  return new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+  return new Date(iso).toLocaleDateString('pt-BR');
 }
 
 function fmtBRL(v: number) {

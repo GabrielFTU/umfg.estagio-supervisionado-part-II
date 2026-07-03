@@ -43,7 +43,7 @@ namespace Valisys_Production.Models
 
         public void Baixar(decimal valorPago, DateTime dataPagamento,
             FormaPagamentoEnum formaPagamento, Guid carteiraId, decimal? juros = null,
-            decimal? multa = null, string? observacoes = null)
+            decimal? multa = null, string? observacoes = null, bool pagamentoIntegralObrigatorio = false)
         {
             if (Status == StatusParcela.Pago)
                 throw new InvalidOperationException("Parcela já foi paga.");
@@ -55,6 +55,9 @@ namespace Valisys_Production.Models
             var valorAberto = Valor - (ValorPago ?? 0);
             if (principal > valorAberto)
                 throw new ArgumentException("O valor recebido não pode ser maior que o valor em aberto da parcela.");
+
+            if (pagamentoIntegralObrigatorio && principal < valorAberto)
+                throw new ArgumentException("Pagamento à vista deve quitar o valor integral da parcela.");
 
             ValorPago = (ValorPago ?? 0) + principal;
             DataPagamento = dataPagamento;

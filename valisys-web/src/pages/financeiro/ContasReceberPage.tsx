@@ -193,7 +193,7 @@ function SortHeader({ col, label, sort, setSort, align = 'left' }: {
   return (
     <th
       className={cn(
-        'py-3 px-3 text-xs font-semibold text-gray-600 cursor-pointer select-none whitespace-nowrap',
+        'py-2 px-3 text-xs font-semibold text-gray-600 cursor-pointer select-none whitespace-nowrap',
         align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left',
       )}
       onClick={() => setSort(col)}
@@ -413,7 +413,7 @@ export function ContasReceberPage() {
     <div className="flex flex-col h-full bg-white">
 
       {/* Breadcrumb */}
-      <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-100">
+      <div className="shrink-0 px-6 pt-3 pb-2 border-b border-gray-100">
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Home size={11} /><ChevronRight size={11} />
           <span>Financeiro</span><ChevronRight size={11} />
@@ -422,7 +422,7 @@ export function ContasReceberPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+      <div className="shrink-0 px-6 py-3 border-b border-gray-100 flex items-center gap-4">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -585,7 +585,7 @@ export function ContasReceberPage() {
 
       {/* Chips */}
       {(anyFilterActive || selected.size > 0) && (
-        <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2 flex-wrap">
+        <div className="px-6 py-1.5 border-b border-gray-100 flex items-center gap-2 flex-wrap">
           {statusLabel && (
             <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
               Status: {statusLabel}
@@ -627,11 +627,11 @@ export function ContasReceberPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="w-10 px-4 py-3">
+                  <th className="w-10 px-4 py-2">
                     <input type="checkbox" checked={allSelected} ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
                       onChange={toggleAll} className="rounded border-gray-300" />
                   </th>
-                  <th className="w-6 px-1 py-3" />
+                  <th className="w-6 px-1 py-2" />
                   <SortHeader col="codigo"         label="Código"       sort={sort} setSort={handleSort} />
                   <SortHeader col="pessoaNome"     label="Cliente"      sort={sort} setSort={handleSort} />
                   <SortHeader col="descricao"      label="Descrição"    sort={sort} setSort={handleSort} />
@@ -661,7 +661,7 @@ export function ContasReceberPage() {
                         isSelected && 'bg-blue-50/40',
                       )}
                     >
-                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      <td className="px-4 py-2" onClick={e => e.stopPropagation()}>
                         <input type="checkbox" checked={isSelected}
                           onChange={() => setSelected(prev => {
                             const s = new Set(prev);
@@ -670,12 +670,12 @@ export function ContasReceberPage() {
                           })}
                           className="rounded border-gray-300" />
                       </td>
-                      <td className="px-1 py-3">
+                      <td className="px-1 py-2">
                         {row.vencida && <AlertCircle size={13} className="text-red-400" />}
                       </td>
-                      <td className="px-3 py-3 text-sm text-gray-500 font-mono">{row.codigo}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{row.pessoaNome ?? '—'}</td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2 text-sm text-gray-500 font-mono">{row.codigo}</td>
+                      <td className="px-3 py-2 text-sm text-gray-500">{row.pessoaNome ?? '—'}</td>
+                      <td className="px-3 py-2">
                         <div className="flex items-center gap-1.5">
                           <span className={cn('text-sm', row.contaAtivo ? 'text-gray-700' : 'text-gray-400 line-through')}>
                             {row.descricao}
@@ -689,14 +689,14 @@ export function ContasReceberPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{row.parcela}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataEmissao)}</td>
-                      <td className={cn('px-3 py-3 text-sm font-medium text-center', row.vencida ? 'text-red-500' : 'text-gray-700')}>
+                      <td className="px-3 py-2 text-sm text-gray-500">{row.parcela}</td>
+                      <td className="px-3 py-2 text-sm text-gray-500 text-center">{fmtDate(row.dataEmissao)}</td>
+                      <td className={cn('px-3 py-2 text-sm font-medium text-center', row.vencida ? 'text-red-500' : 'text-gray-700')}>
                         {fmtDate(row.dataVencimento)}
                       </td>
-                      <td className="px-3 py-3 text-sm text-gray-700 text-right">{fmtBRL(row.valor)}</td>
-                      <td className="px-3 py-3 text-sm text-gray-700 text-right font-medium">{fmtBRL(row.valorAberto)}</td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2 text-sm text-gray-700 text-right">{fmtBRL(row.valor)}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700 text-right font-medium">{fmtBRL(row.valorAberto)}</td>
+                      <td className="px-3 py-2">
                         <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', info.cls)}>
                           {info.label}
                         </span>
@@ -740,7 +740,7 @@ export function ContasReceberPage() {
             </table>
 
             {filtered.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+              <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
                 <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
                 <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
                 <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
