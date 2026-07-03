@@ -216,85 +216,83 @@ export function FasesPage() {
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
         ) : (
-          <>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Ordem</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Tempo Padrão</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Descricao</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Status</th>
-                  <th className="w-10 pr-4" />
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Ordem</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3">Tempo Padrão</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3">Descricao</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3">Status</th>
+                <th className="w-10 pr-4" />
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
+                    Nenhum registro encontrado.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginated.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
-                      Nenhum registro encontrado.
-                    </td>
-                  </tr>
-                ) : paginated.map(f => (
-                  <tr key={f.id}
-                    onClick={() => navigate(`/cadastros/fases/${f.id}`)}
-                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                    <td className="px-6 py-3 text-sm text-gray-500">
-                      {f.ordem}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn('text-sm', f.ativo ? 'text-gray-700' : 'text-gray-400 line-through max-w-xs truncate  ')}>
-                        {f.nome.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      {f.tempoPadraoDias > 0 ? `${f.tempoPadraoDias} dia${f.tempoPadraoDias !== 1 ? 's' : ''}` : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
-                      {f.descricao}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
-                        f.ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
-                        {f.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
-                      <RowMenu
-                        ativo={f.ativo}
-                        onView={() => navigate(`/cadastros/fases/${f.id}`)}
-                        onEdit={() => navigate(`/cadastros/fases/${f.id}/editar`)}
-                        onToggleAtivo={() => handleToggleAtivo(f)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Paginação */}
-            {filtered.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
-                <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
-                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
-                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => goPage(p)}
-                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
-                    {p}
-                  </button>
-                ))}
-                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
-                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
-                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
-          </>
+              ) : paginated.map(f => (
+                <tr key={f.id}
+                  onClick={() => navigate(`/cadastros/fases/${f.id}`)}
+                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  <td className="px-6 py-3 text-sm text-gray-500">
+                    {f.ordem}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn('text-sm', f.ativo ? 'text-gray-700' : 'text-gray-400 line-through max-w-xs truncate  ')}>
+                      {f.nome.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500">
+                    {f.tempoPadraoDias > 0 ? `${f.tempoPadraoDias} dia${f.tempoPadraoDias !== 1 ? 's' : ''}` : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
+                    {f.descricao}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
+                      f.ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
+                      {f.ativo ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </td>
+                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                    <RowMenu
+                      ativo={f.ativo}
+                      onView={() => navigate(`/cadastros/fases/${f.id}`)}
+                      onEdit={() => navigate(`/cadastros/fases/${f.id}/editar`)}
+                      onToggleAtivo={() => handleToggleAtivo(f)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* Paginação */}
+      {!loading && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => goPage(p)}
+              className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       <ModalMsg
         aberto={confirmTarget !== null}

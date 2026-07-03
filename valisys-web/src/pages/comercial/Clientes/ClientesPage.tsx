@@ -309,87 +309,85 @@ export function ClientesPage() {
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
         ) : (
-          <>
-            <table className="w-full table-fixed text-xs">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-44">Documento</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome / Razão Social</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-44">Contato</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-36">Município</th>
-                  <th className="w-10 pr-4" />
+          <table className="w-full table-fixed text-xs">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left font-semibold text-gray-700 px-6 py-3 w-44">Documento</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome / Razão Social</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3 w-44">Contato</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3 w-36">Município</th>
+                <th className="w-10 pr-4" />
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
+                    Nenhum registro encontrado.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginated.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
-                      Nenhum registro encontrado.
-                    </td>
-                  </tr>
-                ) : paginated.map(p => (
-                  <tr key={p.id}
-                    onClick={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
-                    className={cn(
-                      'border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors',
-                      !p.ativo && 'opacity-50',
-                    )}>
-                    <td className="px-6 py-3 text-gray-500 tabular-nums truncate">
-                      {maskDoc(p.tipo, p.doc)}
-                    </td>
-                    <td className="px-4 py-3 truncate">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-medium">{p.nome.toUpperCase()}</span>
-                        {p.bloqueado && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600 leading-none shrink-0">
-                            Bloqueado
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 truncate">
-                      {p.email ?? maskPhone(p.telefone) ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 truncate">
-                      {p.cidade !== '—' ? `${p.cidade}${p.uf ? ` – ${p.uf}` : ''}` : '—'}
-                    </td>
-                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
-                      <RowMenu
-                        p={p}
-                        onView={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
-                        onEdit={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}/editar`)}
-                        onDesativar={() => handleDesativar(p)}
-                        onBloquear={() => handleBloquear(p)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* ── Paginação ── */}
-            {filtered.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
-                <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
-                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
-                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => goPage(p)}
-                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
-                    {p}
-                  </button>
-                ))}
-                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
-                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
-                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
-          </>
+              ) : paginated.map(p => (
+                <tr key={p.id}
+                  onClick={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
+                  className={cn(
+                    'border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors',
+                    !p.ativo && 'opacity-50',
+                  )}>
+                  <td className="px-6 py-3 text-gray-500 tabular-nums truncate">
+                    {maskDoc(p.tipo, p.doc)}
+                  </td>
+                  <td className="px-4 py-3 truncate">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700 font-medium">{p.nome.toUpperCase()}</span>
+                      {p.bloqueado && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600 leading-none shrink-0">
+                          Bloqueado
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 truncate">
+                    {p.email ?? maskPhone(p.telefone) ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 truncate">
+                    {p.cidade !== '—' ? `${p.cidade}${p.uf ? ` – ${p.uf}` : ''}` : '—'}
+                  </td>
+                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                    <RowMenu
+                      p={p}
+                      onView={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
+                      onEdit={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}/editar`)}
+                      onDesativar={() => handleDesativar(p)}
+                      onBloquear={() => handleBloquear(p)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* ── Paginação ── */}
+      {!loading && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => goPage(p)}
+              className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       <ModalMsg
         aberto={!!modal}

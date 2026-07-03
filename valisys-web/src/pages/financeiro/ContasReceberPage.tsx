@@ -623,145 +623,144 @@ export function ContasReceberPage() {
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
         ) : (
-          <>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="w-10 px-4 py-2">
-                    <input type="checkbox" checked={allSelected} ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
-                      onChange={toggleAll} className="rounded border-gray-300" />
-                  </th>
-                  <th className="w-6 px-1 py-2" />
-                  <SortHeader col="codigo"         label="Código"       sort={sort} setSort={handleSort} />
-                  <SortHeader col="pessoaNome"     label="Cliente"      sort={sort} setSort={handleSort} />
-                  <SortHeader col="descricao"      label="Descrição"    sort={sort} setSort={handleSort} />
-                  <SortHeader col="parcela"        label="Parcela"      sort={sort} setSort={handleSort} />
-                  <SortHeader col="dataEmissao"    label="Emissão"      sort={sort} setSort={handleSort} align="center" />
-                  <SortHeader col="dataVencimento" label="Vencimento"   sort={sort} setSort={handleSort} align="center" />
-                  <SortHeader col="valor"          label="Valor"        sort={sort} setSort={handleSort} align="right" />
-                  <SortHeader col="valorAberto"    label="Valor aberto" sort={sort} setSort={handleSort} align="right" />
-                  <SortHeader col="statusDisplay"  label="Status"       sort={sort} setSort={handleSort} />
-                  <th className="w-10 pr-4" />
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="w-10 px-4 py-2">
+                  <input type="checkbox" checked={allSelected} ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                    onChange={toggleAll} className="rounded border-gray-300" />
+                </th>
+                <th className="w-6 px-1 py-2" />
+                <SortHeader col="codigo"         label="Código"       sort={sort} setSort={handleSort} />
+                <SortHeader col="pessoaNome"     label="Cliente"      sort={sort} setSort={handleSort} />
+                <SortHeader col="descricao"      label="Descrição"    sort={sort} setSort={handleSort} />
+                <SortHeader col="parcela"        label="Parcela"      sort={sort} setSort={handleSort} />
+                <SortHeader col="dataEmissao"    label="Emissão"      sort={sort} setSort={handleSort} align="center" />
+                <SortHeader col="dataVencimento" label="Vencimento"   sort={sort} setSort={handleSort} align="center" />
+                <SortHeader col="valor"          label="Valor"        sort={sort} setSort={handleSort} align="right" />
+                <SortHeader col="valorAberto"    label="Valor aberto" sort={sort} setSort={handleSort} align="right" />
+                <SortHeader col="statusDisplay"  label="Status"       sort={sort} setSort={handleSort} />
+                <th className="w-10 pr-4" />
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={12} className="px-6 py-10 text-center text-sm text-gray-400">
+                    Nenhum registro encontrado.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginated.length === 0 ? (
-                  <tr>
-                    <td colSpan={12} className="px-6 py-10 text-center text-sm text-gray-400">
-                      Nenhum registro encontrado.
+              ) : paginated.map(row => {
+                const info = statusInfo(row.statusDisplay);
+                const isSelected = selected.has(row.parcelaId);
+                return (
+                  <tr key={row.parcelaId}
+                    className={cn(
+                      'border-b border-gray-100 hover:bg-gray-50 transition-colors',
+                      isSelected && 'bg-blue-50/40',
+                    )}
+                  >
+                    <td className="px-4 py-2" onClick={e => e.stopPropagation()}>
+                      <input type="checkbox" checked={isSelected}
+                        onChange={() => setSelected(prev => {
+                          const s = new Set(prev);
+                          isSelected ? s.delete(row.parcelaId) : s.add(row.parcelaId);
+                          return s;
+                        })}
+                        className="rounded border-gray-300" />
+                    </td>
+                    <td className="px-1 py-2">
+                      {row.vencida && <AlertCircle size={13} className="text-red-400" />}
+                    </td>
+                    <td className="px-3 py-2 text-sm text-gray-500 font-mono">{row.codigo}</td>
+                    <td className="px-3 py-2 text-sm text-gray-500">{row.pessoaNome ?? '—'}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn('text-sm', row.contaAtivo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                          {row.descricao}
+                        </span>
+                        {row.pedidoVendaId && (
+                          <span title={`Gerado pelo Pedido #${row.pedidoVendaCodigo}`}
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-500 border border-blue-100">
+                            <Link2 size={9} />
+                            {row.pedidoVendaCodigo ?? 'Pedido'}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-sm text-gray-500">{row.parcela}</td>
+                    <td className="px-3 py-2 text-sm text-gray-500 text-center">{fmtDate(row.dataEmissao)}</td>
+                    <td className={cn('px-3 py-2 text-sm font-medium text-center', row.vencida ? 'text-red-500' : 'text-gray-700')}>
+                      {fmtDate(row.dataVencimento)}
+                    </td>
+                    <td className="px-3 py-2 text-sm text-gray-700 text-right">{fmtBRL(row.valor)}</td>
+                    <td className="px-3 py-2 text-sm text-gray-700 text-right font-medium">{fmtBRL(row.valorAberto)}</td>
+                    <td className="px-3 py-2">
+                      <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', info.cls)}>
+                        {info.label}
+                      </span>
+                    </td>
+                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                      <RowMenu
+                        ativo={row.contaAtivo}
+                        pago={row.statusDisplay === 'PAGA'}
+                        showBoleto={(row.formaPagamentoNome ?? '').toLowerCase().includes('boleto')}
+                        onView={() => navigate(`/financeiro/contas-receber/${row.contaId}`)}
+                        onEdit={() => navigate(`/financeiro/contas-receber/${row.contaId}/editar`)}
+                        onBaixar={() => navigate(`/financeiro/contas-receber/${row.contaId}/baixar`)}
+                        onEstornar={() => setEstornarIds({ contaId: row.contaId, parcelaId: row.parcelaId })}
+                        onCancelar={() => setCancelTarget({ contaId: row.contaId, ativo: row.contaAtivo })}
+                        onPix={() => setPixTarget({
+                          contaId: row.contaId,
+                          descricao: row.descricao,
+                          valor: row.valorAberto,
+                          pagadorNome: row.pessoaNome ?? 'Cliente',
+                          pagadorDoc: '',
+                          dataVencimento: row.dataVencimento,
+                          dataEmissao: row.dataEmissao,
+                        })}
+                        onBoleto={() => setBoletoTarget({
+                          contaId: row.contaId,
+                          descricao: row.descricao,
+                          valor: row.valorAberto,
+                          pagadorNome: row.pessoaNome ?? 'Cliente',
+                          pagadorDoc: '',
+                          dataVencimento: row.dataVencimento,
+                          dataEmissao: row.dataEmissao,
+                        })}
+                        pedidoVendaId={row.pedidoVendaId}
+                        navigate={navigate}
+                      />
                     </td>
                   </tr>
-                ) : paginated.map(row => {
-                  const info = statusInfo(row.statusDisplay);
-                  const isSelected = selected.has(row.parcelaId);
-                  return (
-                    <tr key={row.parcelaId}
-                      className={cn(
-                        'border-b border-gray-100 hover:bg-gray-50 transition-colors',
-                        isSelected && 'bg-blue-50/40',
-                      )}
-                    >
-                      <td className="px-4 py-2" onClick={e => e.stopPropagation()}>
-                        <input type="checkbox" checked={isSelected}
-                          onChange={() => setSelected(prev => {
-                            const s = new Set(prev);
-                            isSelected ? s.delete(row.parcelaId) : s.add(row.parcelaId);
-                            return s;
-                          })}
-                          className="rounded border-gray-300" />
-                      </td>
-                      <td className="px-1 py-2">
-                        {row.vencida && <AlertCircle size={13} className="text-red-400" />}
-                      </td>
-                      <td className="px-3 py-2 text-sm text-gray-500 font-mono">{row.codigo}</td>
-                      <td className="px-3 py-2 text-sm text-gray-500">{row.pessoaNome ?? '—'}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className={cn('text-sm', row.contaAtivo ? 'text-gray-700' : 'text-gray-400 line-through')}>
-                            {row.descricao}
-                          </span>
-                          {row.pedidoVendaId && (
-                            <span title={`Gerado pelo Pedido #${row.pedidoVendaCodigo}`}
-                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-500 border border-blue-100">
-                              <Link2 size={9} />
-                              {row.pedidoVendaCodigo ?? 'Pedido'}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-sm text-gray-500">{row.parcela}</td>
-                      <td className="px-3 py-2 text-sm text-gray-500 text-center">{fmtDate(row.dataEmissao)}</td>
-                      <td className={cn('px-3 py-2 text-sm font-medium text-center', row.vencida ? 'text-red-500' : 'text-gray-700')}>
-                        {fmtDate(row.dataVencimento)}
-                      </td>
-                      <td className="px-3 py-2 text-sm text-gray-700 text-right">{fmtBRL(row.valor)}</td>
-                      <td className="px-3 py-2 text-sm text-gray-700 text-right font-medium">{fmtBRL(row.valorAberto)}</td>
-                      <td className="px-3 py-2">
-                        <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', info.cls)}>
-                          {info.label}
-                        </span>
-                      </td>
-                      <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
-                        <RowMenu
-                          ativo={row.contaAtivo}
-                          pago={row.statusDisplay === 'PAGA'}
-                          showBoleto={(row.formaPagamentoNome ?? '').toLowerCase().includes('boleto')}
-                          onView={() => navigate(`/financeiro/contas-receber/${row.contaId}`)}
-                          onEdit={() => navigate(`/financeiro/contas-receber/${row.contaId}/editar`)}
-                          onBaixar={() => navigate(`/financeiro/contas-receber/${row.contaId}/baixar`)}
-                          onEstornar={() => setEstornarIds({ contaId: row.contaId, parcelaId: row.parcelaId })}
-                          onCancelar={() => setCancelTarget({ contaId: row.contaId, ativo: row.contaAtivo })}
-                          onPix={() => setPixTarget({
-                            contaId: row.contaId,
-                            descricao: row.descricao,
-                            valor: row.valorAberto,
-                            pagadorNome: row.pessoaNome ?? 'Cliente',
-                            pagadorDoc: '',
-                            dataVencimento: row.dataVencimento,
-                            dataEmissao: row.dataEmissao,
-                          })}
-                          onBoleto={() => setBoletoTarget({
-                            contaId: row.contaId,
-                            descricao: row.descricao,
-                            valor: row.valorAberto,
-                            pagadorNome: row.pessoaNome ?? 'Cliente',
-                            pagadorDoc: '',
-                            dataVencimento: row.dataVencimento,
-                            dataEmissao: row.dataEmissao,
-                          })}
-                          pedidoVendaId={row.pedidoVendaId}
-                          navigate={navigate}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {filtered.length > 0 && (
-              <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
-                <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
-                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
-                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
-                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => goPage(p)}
-                    className={cn('w-7 h-7 rounded-full text-sm transition-colors',
-                      p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
-                    {p}
-                  </button>
-                ))}
-                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
-                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
-                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
-          </>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* Paginação (fixa) */}
+      {!loading && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-3 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => goPage(p)}
+              className={cn('w-7 h-7 rounded-full text-sm transition-colors',
+                p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       <ModalMsg
         aberto={!!cancelTarget}

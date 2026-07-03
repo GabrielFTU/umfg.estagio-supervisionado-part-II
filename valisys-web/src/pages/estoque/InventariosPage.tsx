@@ -296,85 +296,83 @@ export function InventariosPage() {
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
         ) : (
-          <>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <SortHeader col="numero"       label="Número"      sort={sort} setSort={handleSort} />
-                  <SortHeader col="depositoNome" label="Depósito"    sort={sort} setSort={handleSort} />
-                  <SortHeader col="tipoContagem" label="Tipo"        sort={sort} setSort={handleSort} />
-                  <SortHeader col="qtdProdutos"  label="Produtos"    sort={sort} setSort={handleSort} align="right" />
-                  <SortHeader col="dataAbertura" label="Abertura"    sort={sort} setSort={handleSort} align="center" />
-                  <th className="py-3 px-3 text-xs font-semibold text-gray-600 text-center whitespace-nowrap">Finalização</th>
-                  <th className="py-3 px-3 text-xs font-semibold text-gray-600 text-left whitespace-nowrap">Usuário</th>
-                  <SortHeader col="status"       label="Status"      sort={sort} setSort={handleSort} />
-                  <th className="w-10 pr-4" />
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <SortHeader col="numero"       label="Número"      sort={sort} setSort={handleSort} />
+                <SortHeader col="depositoNome" label="Depósito"    sort={sort} setSort={handleSort} />
+                <SortHeader col="tipoContagem" label="Tipo"        sort={sort} setSort={handleSort} />
+                <SortHeader col="qtdProdutos"  label="Produtos"    sort={sort} setSort={handleSort} align="right" />
+                <SortHeader col="dataAbertura" label="Abertura"    sort={sort} setSort={handleSort} align="center" />
+                <th className="py-3 px-3 text-xs font-semibold text-gray-600 text-center whitespace-nowrap">Finalização</th>
+                <th className="py-3 px-3 text-xs font-semibold text-gray-600 text-left whitespace-nowrap">Usuário</th>
+                <SortHeader col="status"       label="Status"      sort={sort} setSort={handleSort} />
+                <th className="w-10 pr-4" />
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-10 text-center text-sm text-gray-400">
+                    Nenhum registro encontrado.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginated.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-10 text-center text-sm text-gray-400">
-                      Nenhum registro encontrado.
+              ) : paginated.map(row => {
+                const info = statusInfo(row.status);
+                return (
+                  <tr key={row.id}
+                    onClick={() => navigate(`/estoque/inventario/${row.id}`)}
+                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <td className="px-3 py-3 text-sm font-medium text-gray-700">{row.numero}</td>
+                    <td className="px-3 py-3 text-sm text-gray-700">{row.depositoNome}</td>
+                    <td className="px-3 py-3 text-sm text-gray-500">{row.tipoContagem}</td>
+                    <td className="px-3 py-3 text-sm text-gray-700 text-right font-medium">{row.qtdProdutos}</td>
+                    <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataAbertura)}</td>
+                    <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataFinalizacao)}</td>
+                    <td className="px-3 py-3 text-sm text-gray-500">{row.usuarioNome ?? '—'}</td>
+                    <td className="px-3 py-3">
+                      <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', info.cls)}>
+                        {info.label}
+                      </span>
+                    </td>
+                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                      <RowMenu
+                        status={row.status}
+                        onView={() => navigate(`/estoque/inventario/${row.id}`)}
+                        onEdit={() => navigate(`/estoque/inventario/${row.id}/editar`)}
+                        onFinalizar={() => handleFinalizar(row.id)}
+                        onCancelar={() => handleCancelar(row.id)}
+                      />
                     </td>
                   </tr>
-                ) : paginated.map(row => {
-                  const info = statusInfo(row.status);
-                  return (
-                    <tr key={row.id}
-                      onClick={() => navigate(`/estoque/inventario/${row.id}`)}
-                      className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                    >
-                      <td className="px-3 py-3 text-sm font-medium text-gray-700">{row.numero}</td>
-                      <td className="px-3 py-3 text-sm text-gray-700">{row.depositoNome}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{row.tipoContagem}</td>
-                      <td className="px-3 py-3 text-sm text-gray-700 text-right font-medium">{row.qtdProdutos}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataAbertura)}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500 text-center">{fmtDate(row.dataFinalizacao)}</td>
-                      <td className="px-3 py-3 text-sm text-gray-500">{row.usuarioNome ?? '—'}</td>
-                      <td className="px-3 py-3">
-                        <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', info.cls)}>
-                          {info.label}
-                        </span>
-                      </td>
-                      <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
-                        <RowMenu
-                          status={row.status}
-                          onView={() => navigate(`/estoque/inventario/${row.id}`)}
-                          onEdit={() => navigate(`/estoque/inventario/${row.id}/editar`)}
-                          onFinalizar={() => handleFinalizar(row.id)}
-                          onCancelar={() => handleCancelar(row.id)}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {filtered.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
-                <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
-                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
-                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
-                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => goPage(p)}
-                    className={cn('w-7 h-7 rounded-full text-sm transition-colors',
-                      p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
-                    {p}
-                  </button>
-                ))}
-                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
-                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
-                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
-          </>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {!loading && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => goPage(p)}
+              className={cn('w-7 h-7 rounded-full text-sm transition-colors',
+                p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       <ModalMsg
         aberto={finalizarId !== null}

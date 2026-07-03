@@ -393,8 +393,7 @@ export function MovimentacoesPage() {
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
         ) : (
-          <>
-            <table className="w-full text-sm min-w-[900px]">
+          <table className="w-full text-sm min-w-[900px]">
               <thead>
                 <tr className="border-b border-gray-200">
                   <SortHeader col="dataMovimentacao" label="Data"      sort={sort} onSort={handleSort} align="center" />
@@ -469,37 +468,36 @@ export function MovimentacoesPage() {
                 })}
               </tbody>
             </table>
-
-            {filtered.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4 text-sm text-gray-500">
-                <span className="text-xs font-semibold text-gray-700">
-                  {filtered.length} movimentaç{filtered.length === 1 ? 'ão' : 'ões'}
-                </span>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
-                  <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                    return start + i;
-                  }).filter(p => p <= totalPages).map(p => (
-                    <button key={p} onClick={() => goPage(p)}
-                      className={cn('w-7 h-7 rounded-full text-sm transition-colors',
-                        p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
-                      {p}
-                    </button>
-                  ))}
-                  <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
-                  <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
-                  <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                    className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
-                    {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-            )}
-          </>
         )}
       </div>
+
+      {!loading && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4 text-sm text-gray-500">
+          <span className="text-xs font-semibold text-gray-700">
+            {filtered.length} movimentaç{filtered.length === 1 ? 'ão' : 'ões'}
+          </span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+            <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+              return start + i;
+            }).filter(p => p <= totalPages).map(p => (
+              <button key={p} onClick={() => goPage(p)}
+                className={cn('w-7 h-7 rounded-full text-sm transition-colors',
+                  p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+                {p}
+              </button>
+            ))}
+            <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+            <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+              className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+              {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
 
       <ModalMsg
         aberto={deleteTarget !== null}

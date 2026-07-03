@@ -1045,117 +1045,115 @@ export function OrdensDeProducaoPage() {
         )}
 
         {!loading && !error && (
-          <>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-36">Ordem</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Produto</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden md:table-cell">Lote</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden lg:table-cell">Fase Atual</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden lg:table-cell">Data Início</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Status</th>
-                  <th className="w-10 pr-4" />
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left font-semibold text-gray-700 px-6 py-3 w-36">Ordem</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3">Produto</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden md:table-cell">Lote</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden lg:table-cell">Fase Atual</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3 hidden lg:table-cell">Data Início</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3">Status</th>
+                <th className="w-10 pr-4" />
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
+                        <Factory size={24} className="text-[#1D4E89]" />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-700">
+                        {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhuma ordem de produção cadastrada'}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {search || filtrosAtivos ? 'Ajuste os filtros ou a busca.' : 'Clique em "Nova Ordem" para criar a primeira.'}
+                      </p>
+                      {!search && !filtrosAtivos && (
+                        <button
+                          onClick={() => navigate('/producao/ordens/novo')}
+                          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1D4E89] text-white text-sm hover:bg-[#163D6D] transition-colors mt-1"
+                        >
+                          <Plus size={14} /> Nova Ordem
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginated.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-16 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
-                          <Factory size={24} className="text-[#1D4E89]" />
-                        </div>
-                        <p className="text-sm font-semibold text-gray-700">
-                          {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhuma ordem de produção cadastrada'}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {search || filtrosAtivos ? 'Ajuste os filtros ou a busca.' : 'Clique em "Nova Ordem" para criar a primeira.'}
-                        </p>
-                        {!search && !filtrosAtivos && (
-                          <button
-                            onClick={() => navigate('/producao/ordens/novo')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1D4E89] text-white text-sm hover:bg-[#163D6D] transition-colors mt-1"
-                          >
-                            <Plus size={14} /> Nova Ordem
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ) : paginated.map(o => (
-                  <tr
-                    key={o.id}
-                    onClick={() => navigate(`/producao/ordens/${o.id}`)}
-                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-6 py-3">
-                      <span className="text-sm font-semibold text-gray-700 font-mono">{o.codigoOrdem}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm text-gray-700 truncate">{o.produtoNome}</span>
-                        {o.pedidoId && (
-                          <PedidoIndicator
-                            pedidoId={o.pedidoId}
-                            pedidoCodigo={o.pedidoCodigo}
-                            clienteNome={o.pedidoClienteNome}
-                          />
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
-                      {o.loteNumero
-                        ? <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">{o.loteNumero}</span>
-                        : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell">{o.faseAtualNome || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell tabular-nums text-center">{fmtDate(o.dataInicio)}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={o.status} />
-                    </td>
-                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
-                      <RowMenu
-                        ordem={o}
-                        onView={() => navigate(`/producao/ordens/${o.id}`)}
-                        onEdit={() => navigate(`/producao/ordens/${o.id}/editar`)}
-                        onIniciar={() => handleAvancarFase(o, 'iniciar')}
-                        onAvancar={() => handleAvancarFase(o, 'avancar')}
-                        onCancelar={() => setCancelTarget(o)}
-                        onImprimir={() => setPrintTarget(o)}
-                        onEstornar={() => setEstornarTarget(o)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {filtered.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
-                <span className="mr-4">
-                  Exibindo {filtered.length} ordem{filtered.length !== 1 ? 's' : ''}
-                  {filtrosAtivos || search ? ` (filtrado de ${ordens.length})` : ''}.
-                </span>
-                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
-                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => goPage(p)}
-                    className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
-                    {p}
-                  </button>
-                ))}
-                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
-                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
-                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
-          </>
+              ) : paginated.map(o => (
+                <tr
+                  key={o.id}
+                  onClick={() => navigate(`/producao/ordens/${o.id}`)}
+                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <td className="px-6 py-3">
+                    <span className="text-sm font-semibold text-gray-700 font-mono">{o.codigoOrdem}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm text-gray-700 truncate">{o.produtoNome}</span>
+                      {o.pedidoId && (
+                        <PedidoIndicator
+                          pedidoId={o.pedidoId}
+                          pedidoCodigo={o.pedidoCodigo}
+                          clienteNome={o.pedidoClienteNome}
+                        />
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
+                    {o.loteNumero
+                      ? <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">{o.loteNumero}</span>
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell">{o.faseAtualNome || '—'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell tabular-nums text-center">{fmtDate(o.dataInicio)}</td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={o.status} />
+                  </td>
+                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                    <RowMenu
+                      ordem={o}
+                      onView={() => navigate(`/producao/ordens/${o.id}`)}
+                      onEdit={() => navigate(`/producao/ordens/${o.id}/editar`)}
+                      onIniciar={() => handleAvancarFase(o, 'iniciar')}
+                      onAvancar={() => handleAvancarFase(o, 'avancar')}
+                      onCancelar={() => setCancelTarget(o)}
+                      onImprimir={() => setPrintTarget(o)}
+                      onEstornar={() => setEstornarTarget(o)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {!loading && !error && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">
+            Exibindo {filtered.length} ordem{filtered.length !== 1 ? 's' : ''}
+            {filtrosAtivos || search ? ` (filtrado de ${ordens.length})` : ''}.
+          </span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => goPage(p)}
+              className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       {/* ── Modais ── */}
       {cancelTarget && (

@@ -219,99 +219,97 @@ export function RoteiroProducaoPage() {
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
         ) : (
-          <>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left font-semibold text-gray-700 px-6 py-3">Código</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Produto</th>
-                  <th className="text-center font-semibold text-gray-700 px-4 py-3 w-36">Tempo Total</th>
-                  <th className="text-center font-semibold text-gray-700 px-4 py-3 w-24">Etapas</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3 w-28">Status</th>
-                  <th className="w-10 pr-4" />
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left font-semibold text-gray-700 px-6 py-3">Código</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3">Produto</th>
+                <th className="text-center font-semibold text-gray-700 px-4 py-3 w-36">Tempo Total</th>
+                <th className="text-center font-semibold text-gray-700 px-4 py-3 w-24">Etapas</th>
+                <th className="text-left font-semibold text-gray-700 px-4 py-3 w-28">Status</th>
+                <th className="w-10 pr-4" />
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-400">
+                    {search || statusFiltro !== 'todos'
+                      ? 'Nenhum roteiro encontrado com os filtros aplicados.'
+                      : 'Nenhum roteiro de produção cadastrado.'}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {paginated.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-400">
-                      {search || statusFiltro !== 'todos'
-                        ? 'Nenhum roteiro encontrado com os filtros aplicados.'
-                        : 'Nenhum roteiro de produção cadastrado.'}
-                    </td>
-                  </tr>
-                ) : paginated.map(item => (
-                  <tr
-                    key={item.id}
-                    onClick={() => navigate(`/producao/roteiros/${item.id}/editar`)}
-                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-6 py-3 font-medium text-gray-700">{item.codigo}</td>
-                    <td className="px-4 py-3 text-gray-600">{item.produtoNome}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 text-gray-600 font-medium">
-                        <Clock size={13} className="text-gray-400" />
-                        {item.tempoTotal} dias
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center text-gray-600">
-                      {item.etapas ? item.etapas.length : 0}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn(
-                        'text-[11px] px-2 py-0.5 rounded-full font-medium border',
-                        item.ativo
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-gray-100 text-gray-500 border-gray-200',
-                      )}>
-                        {item.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
-                      <RowMenu
-                        onEdit={() => navigate(`/producao/roteiros/${item.id}/editar`)}
-                        onDelete={() => handleDelete(item)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Paginação */}
-            {filtered.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
-                <span className="mr-4">
-                  Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.
-                </span>
-                <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
-                <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                  <button
-                    key={p}
-                    onClick={() => goPage(p)}
-                    className={cn(
-                      'w-7 h-7 rounded-full text-sm transition-colors',
-                      p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100',
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
-                <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
-                <select
-                  value={pageSize}
-                  onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]"
+              ) : paginated.map(item => (
+                <tr
+                  key={item.id}
+                  onClick={() => navigate(`/producao/roteiros/${item.id}/editar`)}
+                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
-          </>
+                  <td className="px-6 py-3 font-medium text-gray-700">{item.codigo}</td>
+                  <td className="px-4 py-3 text-gray-600">{item.produtoNome}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex items-center gap-1 text-gray-600 font-medium">
+                      <Clock size={13} className="text-gray-400" />
+                      {item.tempoTotal} dias
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center text-gray-600">
+                    {item.etapas ? item.etapas.length : 0}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn(
+                      'text-[11px] px-2 py-0.5 rounded-full font-medium border',
+                      item.ativo
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-gray-100 text-gray-500 border-gray-200',
+                    )}>
+                      {item.ativo ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </td>
+                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                    <RowMenu
+                      onEdit={() => navigate(`/producao/roteiros/${item.id}/editar`)}
+                      onDelete={() => handleDelete(item)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* Paginação */}
+      {!loading && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">
+            Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.
+          </span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button
+              key={p}
+              onClick={() => goPage(p)}
+              className={cn(
+                'w-7 h-7 rounded-full text-sm transition-colors',
+                p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100',
+              )}
+            >
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select
+            value={pageSize}
+            onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]"
+          >
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
       <ModalMsg
         aberto={confirmTarget !== null}
         titulo="Excluir roteiro"
