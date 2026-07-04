@@ -44,14 +44,15 @@ function Toggle({ checked, onChange, disabled }: {
   );
 }
 
-function ToggleRow({ label, checked, onChange, disabled }: {
+function ToggleRow({ label, checked, onChange, disabled, compact }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between py-4 border-b border-gray-100">
+    <div className={cn('flex items-center py-4 border-b border-gray-100', compact ? 'gap-2' : 'justify-between')}>
       <span className="text-sm text-gray-700">{label}</span>
       <Toggle checked={checked} onChange={onChange} disabled={disabled} />
     </div>
@@ -318,7 +319,7 @@ export function DepositoFormPage() {
 
           {/* Status toggle — apenas no modo editar */}
           {modo === 'editar' && (
-            <ToggleRow label="Ativo?" checked={ativo} onChange={setAtivo} />
+            <ToggleRow label="Ativo?" checked={ativo} onChange={setAtivo} compact />
           )}
         </div>
 

@@ -200,22 +200,25 @@ export function FinalidadesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Nome</th>
+                <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Código</th>
+                <th className="text-left text-sm font-semibold text-gray-700 px-4 py-3">Nome</th>
                 <th className="w-10 pr-4" />
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={2} className="px-6 py-10 text-center text-sm text-gray-400">
+                  <td colSpan={3} className="px-6 py-10 text-center text-sm text-gray-400">
                     Nenhum registro encontrado.
                   </td>
                 </tr>
               ) : paginated.map(item => (
                 <tr key={item.id}
-                  onClick={() => navigate(`/cadastros/finalidades/${item.id}`)}
-                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                  <td className="px-6 py-3">
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-3 text-sm text-gray-500">
+                    {item.codigo != null ? String(item.codigo).padStart(3, '0') : '—'}
+                  </td>
+                  <td className="px-4 py-3">
                     <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
                       {item.nome}
                     </span>
@@ -223,7 +226,7 @@ export function FinalidadesPage() {
                       <p className="text-xs text-gray-400 mt-0.5">{item.descricao}</p>
                     )}
                   </td>
-                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                  <td className="pr-4 text-right">
                     <RowMenu id={item.id} ativo={item.ativo}
                       onView={() => navigate(`/cadastros/finalidades/${item.id}`)}
                       onEdit={() => navigate(`/cadastros/finalidades/${item.id}/editar`)}

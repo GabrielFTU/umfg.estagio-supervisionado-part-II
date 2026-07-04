@@ -324,7 +324,7 @@ export function FaseFormPage() {
           </div>
 
           {modo === 'editar' && (
-            <div className="flex items-center justify-between py-4 border-b border-gray-100">
+            <div className="flex items-center gap-2 py-4 border-b border-gray-100">
               <span className="text-sm text-gray-700">Ativo?</span>
               <Toggle checked={ativo} onChange={setAtivo} />
             </div>

@@ -245,8 +245,7 @@ export function CategoriasPage() {
                 </tr>
               ) : paginated.map(c => (
                 <tr key={c.id}
-                  onClick={() => navigate(`/cadastros/categorias/${c.id}`)}
-                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-sm text-gray-500">
                     {c.codigo !== '—' ? String(c.codigo).padStart(3, '0') : '—'}
                   </td>
@@ -256,7 +255,7 @@ export function CategoriasPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{c.descricao ?? '—'}</td>
-                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                  <td className="pr-4 text-right">
                     <RowMenu ativo={c.ativo}
                       onView={() => navigate(`/cadastros/categorias/${c.id}`)}
                       onEdit={() => navigate(`/cadastros/categorias/${c.id}/editar`)}

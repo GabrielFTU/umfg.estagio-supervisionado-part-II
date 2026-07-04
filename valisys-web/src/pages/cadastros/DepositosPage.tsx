@@ -220,8 +220,7 @@ export function DepositosPage() {
                 </tr>
               ) : paginated.map(item => (
                 <tr key={item.id}
-                  onClick={() => navigate(`/cadastros/depositos/${item.id}`)}
-                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-sm text-gray-500">{item.codigoIdentificador}</td>
                   <td className="px-4 py-3">
                     <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
@@ -232,7 +231,7 @@ export function DepositosPage() {
                   <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaQualidade2a} /></td>
                   <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaLote} /></td>
                   <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaMultiplosLocais} /></td>
-                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                  <td className="pr-4 text-right">
                     <RowMenu ativo={item.ativo}
                       onView={() => navigate(`/cadastros/depositos/${item.id}`)}
                       onEdit={() => navigate(`/cadastros/depositos/${item.id}/editar`)}

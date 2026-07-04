@@ -245,8 +245,7 @@ export function TiposDeOrdemPage() {
                 </tr>
               ) : paginated.map(t => (
                 <tr key={t.id}
-                  onClick={() => navigate(`/cadastros/tipos-ordem/${t.id}`)}
-                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-sm text-gray-500">
                     {t.codigo !== '—' ? String(t.codigo).padStart(3, '0') : '—'}
                   </td>
@@ -256,7 +255,7 @@ export function TiposDeOrdemPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{t.descricao ?? '—'}</td>
-                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                  <td className="pr-4 text-right">
                     <RowMenu ativo={t.ativo}
                       onView={() => navigate(`/cadastros/tipos-ordem/${t.id}`)}
                       onEdit={() => navigate(`/cadastros/tipos-ordem/${t.id}/editar`)}

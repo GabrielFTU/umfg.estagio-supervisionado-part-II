@@ -353,9 +353,8 @@ export function FormasPagamentoPage() {
                   {filtered.map(f => (
                     <tr
                       key={f.id}
-                      onClick={() => navigate(`/cadastros/formas-pagamento/${f.id}`)}
                       className={cn(
-                        'border-b border-gray-50 hover:bg-blue-50/40 transition-colors cursor-pointer',
+                        'border-b border-gray-50 hover:bg-blue-50/40 transition-colors',
                         !f.ativo && 'opacity-50',
                       )}
                     >
@@ -400,7 +399,7 @@ export function FormasPagamentoPage() {
                           {f.ativo ? 'Ativo' : 'Inativo'}
                         </span>
                       </td>
-                      <td className="py-3 pr-3 text-right" onClick={e => e.stopPropagation()}>
+                      <td className="py-3 pr-3 text-right">
                         <RowMenu
                           item={f}
                           onView={() => navigate(`/cadastros/formas-pagamento/${f.id}`)}

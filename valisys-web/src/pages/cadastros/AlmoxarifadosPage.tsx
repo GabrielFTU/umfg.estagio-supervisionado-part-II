@@ -221,8 +221,7 @@ export function AlmoxarifadosPage() {
                 </tr>
               ) : paginated.map(item => (
                 <tr key={item.id}
-                  onClick={() => navigate(`/cadastros/almoxarifados/${item.id}`)}
-                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-sm text-gray-500">
                     {item.codigo != null ? String(item.codigo).padStart(3, '0') : '—'}
                   </td>
@@ -233,7 +232,7 @@ export function AlmoxarifadosPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">{item.localizacao}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">{item.responsavel}</td>
-                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                  <td className="pr-4 text-right">
                     <RowMenu ativo={item.ativo}
                       onView={() => navigate(`/cadastros/almoxarifados/${item.id}`)}
                       onEdit={() => navigate(`/cadastros/almoxarifados/${item.id}/editar`)}

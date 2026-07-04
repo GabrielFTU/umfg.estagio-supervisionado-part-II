@@ -236,8 +236,7 @@ export function FasesPage() {
                 </tr>
               ) : paginated.map(f => (
                 <tr key={f.id}
-                  onClick={() => navigate(`/cadastros/fases/${f.id}`)}
-                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-sm text-gray-500">
                     {f.ordem}
                   </td>
@@ -258,7 +257,7 @@ export function FasesPage() {
                       {f.ativo ? 'Ativo' : 'Inativo'}
                     </span>
                   </td>
-                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                  <td className="pr-4 text-right">
                     <RowMenu
                       ativo={f.ativo}
                       onView={() => navigate(`/cadastros/fases/${f.id}`)}

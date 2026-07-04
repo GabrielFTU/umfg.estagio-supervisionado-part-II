@@ -386,9 +386,8 @@ export function PessoasPage() {
                 </tr>
               ) : paginated.map(p => (
                 <tr key={p.id}
-                  onClick={() => navigate(`/cadastros/pessoas/${p.tipo}/${p.id}`)}
                   className={cn(
-                    'border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors',
+                    'border-b border-gray-100 hover:bg-gray-50 transition-colors',
                     !p.ativo && 'opacity-50',
                   )}>
                   <td className="px-6 py-3 text-gray-500 tabular-nums truncate">
@@ -423,7 +422,7 @@ export function PessoasPage() {
                   <td className="px-4 py-3 text-gray-500 truncate">
                     {p.cidade !== '—' ? `${p.cidade}${p.uf ? ` – ${p.uf}` : ''}` : '—'}
                   </td>
-                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                  <td className="pr-4 text-right">
                     <RowMenu
                       p={p}
                       onView={() => navigate(`/cadastros/pessoas/${p.tipo}/${p.id}`)}

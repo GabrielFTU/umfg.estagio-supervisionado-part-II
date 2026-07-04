@@ -257,7 +257,9 @@ export function AlmoxarifadoFormPage() {
 
           {/* Descrição */}
           <div className="mb-6">
-            <label className="block text-xs text-gray-500 mb-1">Descrição<span className="text-red-400">*</span></label>
+            <label className="block text-xs text-gray-500 mb-1">
+              Descrição {!readonly && <span className="text-red-400">*</span>}
+            </label>
             <textarea
               disabled={readonly}
               value={descricao}
@@ -305,7 +307,7 @@ export function AlmoxarifadoFormPage() {
           </div>
 
           {modo === 'editar' && (
-            <div className="flex items-center justify-between py-4 border-b border-gray-100">
+            <div className="flex items-center gap-2 py-4 border-b border-gray-100">
               <span className="text-sm text-gray-700">Ativo?</span>
               <Toggle checked={ativo} onChange={setAtivo} />
             </div>

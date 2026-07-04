@@ -21,6 +21,7 @@ namespace Valisys_Production.Services
 
             var almoxarifado = new Almoxarifado(dto.Nome, dto.Descricao, dto.Localizacao,
                 dto.Responsavel, dto.Contato, dto.Email);
+            almoxarifado.DefinirCodigo(await GerarProximoCodigoAsync());
 
             return await _repository.AddAsync(almoxarifado);
         }
@@ -61,6 +62,12 @@ namespace Valisys_Production.Services
 
             existing.Desativar();
             return await _repository.UpdateAsync(existing);
+        }
+
+        private async Task<int> GerarProximoCodigoAsync()
+        {
+            var almoxarifados = await _repository.GetAllAsync();
+            return almoxarifados.Any() ? almoxarifados.Max(a => a.Codigo) + 1 : 1;
         }
     }
 }
