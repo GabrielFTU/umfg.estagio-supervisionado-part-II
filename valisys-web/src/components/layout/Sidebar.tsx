@@ -77,7 +77,7 @@ const NAV_ITEMS: NavItemDef[] = [
     label: 'Engenharia',
     href: '/engenharia',
     children: [
-      { label: 'Ficha Técnica', href: '/producao/fichas-tecnicas', permissions: ['FichasTecnicas.Visualizar'] },
+      { label: 'Ficha Técnica', href: '/engenharia/fichas-tecnicas', permissions: ['FichasTecnicas.Visualizar'] },
     ],
   },
   {

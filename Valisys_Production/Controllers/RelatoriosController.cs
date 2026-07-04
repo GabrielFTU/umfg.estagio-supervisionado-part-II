@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using Valisys_Production.Data;
 using Valisys_Production.DTOs;
 using Valisys_Production.Models;
@@ -201,6 +202,252 @@ namespace Valisys_Production.Controllers
                     Saldo            = kv.Value.saldo,
                 })
                 .OrderBy(r => r.DepositoNome).ThenBy(r => r.ProdutoNome)
+                .ToList();
+
+            return Ok(result);
+        }
+
+        // ─── Financeiro: JSON endpoints ───────────────────────────────────────────
+
+        [HttpGet("financeiro/contas-pagar")]
+        public async Task<IActionResult> FinanceiroContasPagar(
+            [FromQuery] StatusConta? status,
+            [FromQuery] Guid? fornecedorId,
+            [FromQuery] DateTime? dataInicio,
+            [FromQuery] DateTime? dataFim)
+        {
+            var query = _context.ContasPagar
+                .AsNoTracking()
+                .Include(c => c.Fornecedor)
+                .AsQueryable();
+
+            if (status.HasValue)
+                query = query.Where(c => c.Status == status.Value);
+            if (fornecedorId.HasValue)
+                query = query.Where(c => c.FornecedorId == fornecedorId.Value);
+            if (dataInicio.HasValue)
+                query = query.Where(c => c.DataVencimento.Date >= dataInicio.Value.Date);
+            if (dataFim.HasValue)
+                query = query.Where(c => c.DataVencimento.Date <= dataFim.Value.Date);
+
+            var contas = await query.OrderByDescending(c => c.DataVencimento).ToListAsync();
+
+            var result = contas.Select(c => new RelContaPagarDto
+            {
+                Id             = c.Id,
+                Codigo         = c.Codigo,
+                Descricao      = c.Descricao,
+                FornecedorNome = c.Fornecedor?.Nome,
+                DataEmissao    = c.DataEmissao,
+                DataVencimento = c.DataVencimento,
+                ValorTotal     = c.ValorTotal,
+                ValorPago      = c.ValorPago,
+                ValorAberto    = c.ValorAberto,
+                Status         = c.Status.ToString(),
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        [HttpGet("financeiro/contas-receber")]
+        public async Task<IActionResult> FinanceiroContasReceber(
+            [FromQuery] StatusConta? status,
+            [FromQuery] Guid? clienteId,
+            [FromQuery] DateTime? dataInicio,
+            [FromQuery] DateTime? dataFim)
+        {
+            var query = _context.ContasReceber
+                .AsNoTracking()
+                .Include(c => c.Pessoa)
+                .AsQueryable();
+
+            if (status.HasValue)
+                query = query.Where(c => c.Status == status.Value);
+            if (clienteId.HasValue)
+                query = query.Where(c => c.PessoaId == clienteId.Value);
+            if (dataInicio.HasValue)
+                query = query.Where(c => c.DataVencimento.Date >= dataInicio.Value.Date);
+            if (dataFim.HasValue)
+                query = query.Where(c => c.DataVencimento.Date <= dataFim.Value.Date);
+
+            var contas = await query.OrderByDescending(c => c.DataVencimento).ToListAsync();
+
+            var result = contas.Select(c => new RelContaReceberDto
+            {
+                Id             = c.Id,
+                Codigo         = c.Codigo,
+                Descricao      = c.Descricao,
+                ClienteNome    = c.Pessoa?.Nome,
+                DataEmissao    = c.DataEmissao,
+                DataVencimento = c.DataVencimento,
+                ValorTotal     = c.ValorTotal,
+                ValorPago      = c.ValorPago,
+                ValorAberto    = c.ValorAberto,
+                Status         = c.Status.ToString(),
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        [HttpGet("financeiro/fluxo-caixa")]
+        public async Task<IActionResult> FinanceiroFluxoCaixa(
+            [FromQuery] DateTime? dataInicio,
+            [FromQuery] DateTime? dataFim)
+        {
+            var ptBr  = new CultureInfo("pt-BR");
+            var hoje  = DateTime.UtcNow;
+            var inicio = dataInicio ?? new DateTime(hoje.Year, hoje.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-5);
+            var fim    = dataFim ?? hoje;
+
+            var pagarPorMes = await _context.ParcelasPagar
+                .Where(p => p.DataVencimento >= inicio && p.DataVencimento <= fim)
+                .GroupBy(p => new { p.DataVencimento.Year, p.DataVencimento.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(p => p.Valor) })
+                .ToListAsync();
+
+            var receberPorMes = await _context.ParcelasReceber
+                .Where(p => p.DataVencimento >= inicio && p.DataVencimento <= fim)
+                .GroupBy(p => new { p.DataVencimento.Year, p.DataVencimento.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(p => p.Valor) })
+                .ToListAsync();
+
+            var meses = pagarPorMes.Select(x => (x.Year, x.Month))
+                .Union(receberPorMes.Select(x => (x.Year, x.Month)))
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToList();
+
+            var result = meses.Select(m =>
+            {
+                var pagar   = pagarPorMes.FirstOrDefault(x => x.Year == m.Year && x.Month == m.Month)?.Total ?? 0;
+                var receber = receberPorMes.FirstOrDefault(x => x.Year == m.Year && x.Month == m.Month)?.Total ?? 0;
+                return new RelFluxoCaixaDto
+                {
+                    Periodo       = $"{ptBr.DateTimeFormat.GetAbbreviatedMonthName(m.Month)}/{m.Year}",
+                    TotalAPagar   = pagar,
+                    TotalAReceber = receber,
+                    Saldo         = receber - pagar,
+                };
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        // ─── Comercial: JSON endpoints ────────────────────────────────────────────
+
+        [HttpGet("comercial/pedidos")]
+        public async Task<IActionResult> ComercialPedidos(
+            [FromQuery] StatusPedido? status,
+            [FromQuery] Guid? clienteId,
+            [FromQuery] DateTime? dataInicio,
+            [FromQuery] DateTime? dataFim)
+        {
+            var query = _context.PedidosVenda
+                .AsNoTracking()
+                .Include(p => p.Cliente)
+                .Include(p => p.Itens)
+                .AsQueryable();
+
+            if (status.HasValue)
+                query = query.Where(p => p.Status == status.Value);
+            if (clienteId.HasValue)
+                query = query.Where(p => p.ClienteId == clienteId.Value);
+            if (dataInicio.HasValue)
+                query = query.Where(p => p.DataEmissao.Date >= dataInicio.Value.Date);
+            if (dataFim.HasValue)
+                query = query.Where(p => p.DataEmissao.Date <= dataFim.Value.Date);
+
+            var pedidos = await query.OrderByDescending(p => p.DataEmissao).ToListAsync();
+
+            var result = pedidos.Select(p => new RelPedidoVendaDto
+            {
+                Id              = p.Id,
+                Codigo          = p.Codigo,
+                ClienteNome     = p.Cliente.Nome,
+                DataEmissao     = p.DataEmissao,
+                QuantidadeItens = p.Itens.Count,
+                Total           = p.Total,
+                Status          = p.Status.ToString(),
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        [HttpGet("comercial/vendas-por-produto")]
+        public async Task<IActionResult> ComercialVendasPorProduto(
+            [FromQuery] DateTime? dataInicio,
+            [FromQuery] DateTime? dataFim,
+            [FromQuery] Guid? categoriaId)
+        {
+            var vendasRaw = await (
+                from item in _context.ItensPedido
+                join pedido in _context.PedidosVenda on item.PedidoVendaId equals pedido.Id
+                join produto in _context.Produtos on item.ProdutoId equals produto.Id
+                where pedido.Status != StatusPedido.Cancelado
+                   && (!dataInicio.HasValue || pedido.DataEmissao.Date >= dataInicio.Value.Date)
+                   && (!dataFim.HasValue || pedido.DataEmissao.Date <= dataFim.Value.Date)
+                   && (!categoriaId.HasValue || produto.CategoriaProdutoId == categoriaId.Value)
+                group item by new { produto.Id, produto.Nome, produto.CodigoInternoProduto, produto.CategoriaProdutoId } into g
+                select new
+                {
+                    g.Key.Id,
+                    g.Key.Nome,
+                    g.Key.CodigoInternoProduto,
+                    g.Key.CategoriaProdutoId,
+                    Quantidade = g.Sum(i => i.Quantidade),
+                    ValorTotal = g.Sum(i => (i.ValorUnitario - i.DescontoUnitario) * i.Quantidade),
+                }
+            ).ToListAsync();
+
+            var categoriaIds = vendasRaw.Select(x => x.CategoriaProdutoId).Distinct().ToList();
+            var categorias = await _context.CategoriasProduto
+                .Where(c => categoriaIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Nome);
+
+            var result = vendasRaw.Select(x => new RelVendaPorProdutoDto
+            {
+                ProdutoId     = x.Id,
+                ProdutoNome   = x.Nome,
+                ProdutoCodigo = x.CodigoInternoProduto.ToString(),
+                CategoriaNome = categorias.TryGetValue(x.CategoriaProdutoId, out var nome) ? nome : null,
+                Quantidade    = x.Quantidade,
+                ValorTotal    = x.ValorTotal,
+            })
+            .OrderByDescending(x => x.ValorTotal)
+            .ToList();
+
+            return Ok(result);
+        }
+
+        [HttpGet("comercial/vendas-por-cliente")]
+        public async Task<IActionResult> ComercialVendasPorCliente(
+            [FromQuery] DateTime? dataInicio,
+            [FromQuery] DateTime? dataFim)
+        {
+            var query = _context.PedidosVenda
+                .AsNoTracking()
+                .Include(p => p.Cliente)
+                .Include(p => p.Itens)
+                .Where(p => p.Status != StatusPedido.Cancelado)
+                .AsQueryable();
+
+            if (dataInicio.HasValue)
+                query = query.Where(p => p.DataEmissao.Date >= dataInicio.Value.Date);
+            if (dataFim.HasValue)
+                query = query.Where(p => p.DataEmissao.Date <= dataFim.Value.Date);
+
+            var pedidos = await query.ToListAsync();
+
+            var result = pedidos
+                .GroupBy(p => new { p.ClienteId, Nome = p.Cliente.Nome })
+                .Select(g => new RelVendaPorClienteDto
+                {
+                    ClienteId         = g.Key.ClienteId,
+                    ClienteNome       = g.Key.Nome,
+                    QuantidadePedidos = g.Count(),
+                    ValorTotal        = g.Sum(p => p.Total),
+                    TicketMedio       = g.Sum(p => p.Total) / g.Count(),
+                })
+                .OrderByDescending(x => x.ValorTotal)
                 .ToList();
 
             return Ok(result);

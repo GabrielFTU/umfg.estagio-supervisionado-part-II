@@ -41,9 +41,9 @@ import { MovimentacoesPage } from './pages/estoque/MovimentacoesPage';
 import { MovimentacaoFormPage } from './pages/estoque/MovimentacaoFormPage';
 import { OrdensDeProducaoPage } from './pages/producao/OrdensDeProducaoPage';
 import { OrdemDeProducaoFormPage } from './pages/producao/OrdemDeProducaoFormPage';
-import { FichaTecnicasPage } from './pages/producao/FichaTecnicasPage';
+import { FichaTecnicasPage } from './pages/engenharia/FichaTecnicasPage';
 import { ProdutosSemFichaPage } from './pages/producao/ProdutosSemFichaPage';
-import { FichaTecnicaPainelPage } from './pages/producao/FichaTecnicaPainelPage';
+import { FichaTecnicaPainelPage } from './pages/engenharia/FichaTecnicaPainelPage';
 import { FichaConsumoPage } from './pages/producao/FichaConsumoPage';
 import { SequenciaOperacionalPage } from './pages/producao/SequenciaOperacionalPage';
 import { KanbanPage } from './pages/producao/KanbanPage';
@@ -53,6 +53,8 @@ import { LoteFormPage } from './pages/producao/LoteFormPage';
 import { RoteiroProducaoPage } from './pages/producao/RoteiroProducaoPage';
 import { RoteiroProducaoFormPage } from './pages/producao/RoteiroProducaoFormPage';
 import { RelatorioEstoquePage } from './pages/relatorios/RelatorioEstoquePage';
+import { RelatorioFinanceiroPage } from './pages/relatorios/RelatorioFinanceiroPage';
+import { RelatorioVendasPage } from './pages/relatorios/RelatorioVendasPage';
 import { CarteirasPage } from './pages/financeiro/CarteirasPage';
 import { CarteiraFormPage } from './pages/financeiro/CarteiraFormPage';
 import { CarteiraExtratoPage } from './pages/financeiro/CarteiraExtratoPage';
@@ -235,13 +237,15 @@ const App = () => (
       <Route path="/producao/roteiros/novo" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/roteiros/:id/editar" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/producao/roteiros/:id" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/fichas-tecnicas" element={<PrivateRoute><AppLayout><FichaTecnicasPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/fichas-tecnicas/novo" element={<PrivateRoute><AppLayout><ProdutosSemFichaPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/fichas-tecnicas/:id" element={<PrivateRoute><AppLayout><FichaTecnicaPainelPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/fichas-tecnicas/:id/consumo" element={<PrivateRoute><AppLayout><FichaConsumoPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/fichas-tecnicas/:id/sequencia-operacional" element={<PrivateRoute><AppLayout><SequenciaOperacionalPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas" element={<PrivateRoute><AppLayout><FichaTecnicasPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas/novo" element={<PrivateRoute><AppLayout><ProdutosSemFichaPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas/:id" element={<PrivateRoute><AppLayout><FichaTecnicaPainelPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas/:id/consumo" element={<PrivateRoute><AppLayout><FichaConsumoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas/:id/sequencia-operacional" element={<PrivateRoute><AppLayout><SequenciaOperacionalPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/relatorios/estoque" element={<PrivateRoute><AppLayout><RelatorioEstoquePage /></AppLayout></PrivateRoute>} />
+      <Route path="/relatorios/financeiro" element={<PrivateRoute><AppLayout><RelatorioFinanceiroPage /></AppLayout></PrivateRoute>} />
+      <Route path="/relatorios/vendas" element={<PrivateRoute><AppLayout><RelatorioVendasPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/financeiro/carteira" element={<PrivateRoute><AppLayout><CarteirasPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/nova" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
