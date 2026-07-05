@@ -545,6 +545,7 @@ function PanelWrapper({
       onDrop={(e) => { e.preventDefault(); onDrop(e); }}
       className={cn(
         'bg-[#EAF1FB] border rounded-xl transition-all duration-150 min-w-0 overflow-hidden',
+        'h-full flex flex-col',
         editMode ? 'border-dashed border-blue-200 shadow-sm' : 'border-blue-100 shadow-sm',
         isDragging && 'opacity-30',
         isDragOver && editMode && 'border-[#1D4E89] border-solid ring-2 ring-[#1D4E89]/20',
@@ -553,7 +554,7 @@ function PanelWrapper({
       )}
     >
       <div className={cn(
-        'flex items-center justify-between px-5 pt-4 pb-1',
+        'flex items-center justify-between px-5 pt-4 pb-1 shrink-0',
         editMode && 'pb-3 border-b border-dashed border-gray-200',
       )}>
         <div className="flex items-center gap-2 min-w-0">
@@ -608,7 +609,9 @@ function PanelWrapper({
         )}
       </div>
 
-      {children}
+      <div className="flex-1 flex flex-col justify-center min-h-0">
+        {children}
+      </div>
     </div>
   );
 }
@@ -773,7 +776,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {visible.map(panel => {
           const Content = PANEL_CONTENT[panel.id];
           return (

@@ -61,6 +61,8 @@ import { CarteiraExtratoPage } from './pages/financeiro/CarteiraExtratoPage';
 import { BaixaContaPagarPage } from './pages/financeiro/BaixaContaPagarPage';
 import { BaixaContaReceberPage } from './pages/financeiro/BaixaContaReceberPage';
 import { ContaPagarComprovantePage } from './pages/financeiro/ContaPagarComprovantePage';
+import { FluxoCaixaPage } from './pages/financeiro/FluxoCaixaPage';
+import { LogsPage } from './pages/configuracoes/LogsPage';
 import { PerfisPage } from './pages/configuracoes/PerfisPage';
 import { PerfilFormPage } from './pages/configuracoes/PerfilForm';
 import { UsuariosPage } from './pages/configuracoes/UsuariosPage';
@@ -247,11 +249,15 @@ const App = () => (
       <Route path="/relatorios/financeiro" element={<PrivateRoute><AppLayout><RelatorioFinanceiroPage /></AppLayout></PrivateRoute>} />
       <Route path="/relatorios/vendas" element={<PrivateRoute><AppLayout><RelatorioVendasPage /></AppLayout></PrivateRoute>} />
 
+      <Route path="/financeiro/fluxo-caixa" element={<PrivateRoute><AppLayout><FluxoCaixaPage /></AppLayout></PrivateRoute>} />
+
       <Route path="/financeiro/carteira" element={<PrivateRoute><AppLayout><CarteirasPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/nova" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/:id/editar" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/:id/extrato" element={<PrivateRoute><AppLayout><CarteiraExtratoPage /></AppLayout></PrivateRoute>} />
       <Route path="/financeiro/carteira/:id" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
+
+      <Route path="/configuracoes/Logs" element={<PrivateRoute><AppLayout><LogsPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/configuracoes/perfis" element={<PrivateRoute><AppLayout><PerfisPage /></AppLayout></PrivateRoute>} />
       <Route path="/configuracoes/perfis/novo" element={<PrivateRoute><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />

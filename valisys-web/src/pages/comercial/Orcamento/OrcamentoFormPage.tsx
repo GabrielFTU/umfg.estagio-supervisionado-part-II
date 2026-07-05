@@ -49,13 +49,13 @@ function toDateInput(iso: string | null | undefined): string {
 
 // ─── Campo underline base ─────────────────────────────────────────────────────
 
-function UField({ label, required, error, children }: {
-  label: string; required?: boolean; error?: string; children: React.ReactNode;
+function UField({ label, required, error, multiline, children }: {
+  label: string; required?: boolean; error?: string; multiline?: boolean; children: React.ReactNode;
 }) {
   return (
     <div className={cn(
-      'border-b py-3 transition-colors focus-within:border-[#1D4E89]',
-      error ? 'border-red-400' : 'border-gray-200',
+      'py-3',
+      !multiline && cn('border-b transition-colors focus-within:border-[#1D4E89]', error ? 'border-red-400' : 'border-gray-200'),
     )}>
       <label className="block text-xs text-gray-400 mb-0.5">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
@@ -67,6 +67,11 @@ function UField({ label, required, error, children }: {
 }
 
 const uCls = 'w-full bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-300';
+
+const textareaCls = (error?: string) => cn(
+  'w-full text-sm border rounded-md px-3 py-2 transition-colors focus:outline-none placeholder:text-gray-300 resize-none',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
+);
 
 // ─── SelectField ──────────────────────────────────────────────────────────────
 
@@ -720,19 +725,19 @@ export function OrcamentoFormPage() {
               }
             </UField>
 
-            <UField label="Observação Interna">
+            <UField label="Observação Interna" multiline={!readOnly}>
               {readOnly
                 ? <p className="text-sm text-gray-700 whitespace-pre-wrap">{form.observacaoInterna || '—'}</p>
-                : <textarea rows={2} className={cn(uCls, 'resize-none')} value={form.observacaoInterna}
+                : <textarea rows={2} className={textareaCls()} value={form.observacaoInterna}
                     placeholder="Visível apenas internamente…"
                     onChange={e => setF('observacaoInterna')(e.target.value)} />
               }
             </UField>
 
-            <UField label="Observação para o Cliente">
+            <UField label="Observação para o Cliente" multiline={!readOnly}>
               {readOnly
                 ? <p className="text-sm text-gray-700 whitespace-pre-wrap">{form.observacaoExterna || '—'}</p>
-                : <textarea rows={2} className={cn(uCls, 'resize-none')} value={form.observacaoExterna}
+                : <textarea rows={2} className={textareaCls()} value={form.observacaoExterna}
                     placeholder="Pode ser incluída no documento enviado ao cliente…"
                     onChange={e => setF('observacaoExterna')(e.target.value)} />
               }

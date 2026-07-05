@@ -12,5 +12,9 @@ namespace Valisys_Production.Repositories
         public async Task<bool> HasActiveProdutosAsync(Guid categoriaId)
             => await _context.Produtos
                 .AnyAsync(p => p.CategoriaProdutoId == categoriaId && p.Ativo);
+
+        public async Task<bool> ExistsByCodigoAsync(string codigo, Guid? excludeId = null)
+            => await _context.CategoriasProduto
+                .AnyAsync(c => c.CodigoInterno == codigo && (excludeId == null || c.Id != excludeId));
     }
 }

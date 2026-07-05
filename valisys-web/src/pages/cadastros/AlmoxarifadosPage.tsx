@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { useToast } from '@/contexts/ToastContext';
 
 interface AlmoxarifadoItem {
   id: string;
@@ -72,6 +73,7 @@ function RowMenu({ ativo, onEdit, onView, onToggle }: {
 
 export function AlmoxarifadosPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [items, setItems]       = useState<AlmoxarifadoItem[]>([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
@@ -113,11 +115,12 @@ export function AlmoxarifadosPage() {
       const res = await fetch(`/api/almoxarifados/${item.id}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
-        await fetch(`/api/almoxarifados/${item.id}`, {
+        const putRes = await fetch(`/api/almoxarifados/${item.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ ...data, ativo: true }),
         });
+        if (putRes.ok) showToast('Almoxarifado reativado com sucesso.');
       }
     }
     load();
@@ -137,6 +140,10 @@ export function AlmoxarifadosPage() {
   const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
   const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
   const statusLabel = statusFiltro === 'ativo' ? 'ATIVO' : statusFiltro === 'inativo' ? 'INATIVO' : null;
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -202,46 +209,48 @@ export function AlmoxarifadosPage() {
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Código</th>
-                <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
-                <th className="text-left font-semibold text-gray-700 px-4 py-3">Localização</th>
-                <th className="text-left font-semibold text-gray-700 px-4 py-3">Responsável</th>
-                <th className="w-10 pr-4" />
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
-                    Nenhum registro encontrado.
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Código</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Localização</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Responsável</th>
+                  <th className="w-10 pr-4" />
                 </tr>
-              ) : paginated.map(item => (
-                <tr key={item.id}
-                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-3 text-sm text-gray-500">
-                    {item.codigo != null ? String(item.codigo).padStart(3, '0') : '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
-                      {item.nome.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{item.localizacao}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{item.responsavel}</td>
-                  <td className="pr-4 text-right">
-                    <RowMenu ativo={item.ativo}
-                      onView={() => navigate(`/cadastros/almoxarifados/${item.id}`)}
-                      onEdit={() => navigate(`/cadastros/almoxarifados/${item.id}/editar`)}
-                      onToggle={() => handleToggle(item)} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
+                      Nenhum registro encontrado.
+                    </td>
+                  </tr>
+                ) : paginated.map(item => (
+                  <tr key={item.id}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-3 text-sm text-gray-500">
+                      {item.codigo != null ? String(item.codigo).padStart(3, '0') : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                        {item.nome.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{item.localizacao}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{item.responsavel}</td>
+                    <td className="pr-4 text-right">
+                      <RowMenu ativo={item.ativo}
+                        onView={() => navigate(`/cadastros/almoxarifados/${item.id}`)}
+                        onEdit={() => navigate(`/cadastros/almoxarifados/${item.id}/editar`)}
+                        onToggle={() => handleToggle(item)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

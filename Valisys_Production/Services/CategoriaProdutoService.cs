@@ -48,6 +48,10 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(dto.Id)
                 ?? throw new KeyNotFoundException("Categoria não encontrada.");
 
+            if (!string.IsNullOrWhiteSpace(dto.Codigo) &&
+                await _repository.ExistsByCodigoAsync(dto.Codigo, dto.Id))
+                throw new InvalidOperationException($"Já existe uma categoria com o código '{dto.Codigo}'.");
+
             existing.Atualizar(dto.Nome, dto.Descricao, dto.Codigo, dto.Ativo);
 
             var result = await _repository.UpdateAsync(existing);

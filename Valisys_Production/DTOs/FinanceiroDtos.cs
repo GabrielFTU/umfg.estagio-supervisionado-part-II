@@ -158,6 +158,7 @@ namespace Valisys_Production.DTOs
     {
         public Guid Id { get; set; }
         public Guid CarteiraId { get; set; }
+        public string? CarteiraNome { get; set; }
         public string Tipo { get; set; } = string.Empty;
         public string Origem { get; set; } = string.Empty;
         public decimal Valor { get; set; }

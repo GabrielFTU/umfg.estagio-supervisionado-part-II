@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronRight, Home, Loader2, Save, X, Pencil } from 'lucide-react';
+import { ChevronRight, Home, Loader2, Save, Pencil } from 'lucide-react';
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
@@ -48,6 +48,20 @@ const underline = (error?: string) => cn(
   error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
 );
 
+const textareaCls = (error?: string, disabled?: boolean) => cn(
+  'w-full text-sm border rounded-md px-3 py-2 transition-colors focus:outline-none placeholder:text-gray-300 resize-none',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
+  disabled && 'opacity-60 cursor-default bg-gray-50',
+);
+
+function CharCounter({ value, max }: { value: string; max: number }) {
+  return (
+    <span className="text-[10px] text-gray-400 tabular-nums shrink-0">
+      {value.length}/{max}
+    </span>
+  );
+}
+
 export function AlmoxarifadoFormPage() {
   const { id }   = useParams<{ id: string }>();
   const location = useLocation();
@@ -72,6 +86,7 @@ export function AlmoxarifadoFormPage() {
   const [contato, setContato]         = useState('');
   const [email, setEmail]             = useState('');
   const [ativo, setAtivo]             = useState(true);
+  const [ativoOriginal, setAtivoOriginal] = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
@@ -92,6 +107,7 @@ export function AlmoxarifadoFormPage() {
         setContato(data.contato ?? '');
         setEmail(data.email ?? '');
         setAtivo(data.ativo);
+        setAtivoOriginal(data.ativo);
       } catch {
         setError('Não foi possível carregar o almoxarifado.');
       } finally {
@@ -109,7 +125,7 @@ export function AlmoxarifadoFormPage() {
     else if (nome.trim().length > 100) erros.nome = 'Máximo de 100 caracteres.';
     if (!localizacao.trim()) erros.localizacao = 'A localização é obrigatória.';
     else if (localizacao.trim().length > 100) erros.localizacao = 'Máximo de 100 caracteres.';
-    if (!descricao.trim()) erros.descricao = 'A Descrição é obrigatória.';
+    if (!descricao.trim()) erros.descricao = 'A descrição é obrigatória.';
     else if (descricao.trim().length > 255) erros.descricao = 'Máximo de 255 caracteres.';
     if (!responsavel.trim()) erros.responsavel = 'O responsável é obrigatório.';
     else if (responsavel.trim().length > 100) erros.responsavel = 'Máximo de 100 caracteres.';
@@ -147,7 +163,7 @@ export function AlmoxarifadoFormPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? 'Erro ao salvar almoxarifado.');
       }
-      showToast();
+      showToast(modo === 'editar' && ativo && !ativoOriginal ? 'Almoxarifado reativado com sucesso.' : undefined);
       navigate('/cadastros/almoxarifados');
     } catch (err: any) {
       setError(err.message ?? 'Erro inesperado. Tente novamente.');
@@ -205,9 +221,12 @@ export function AlmoxarifadoFormPage() {
           {/* Localização + Responsável */}
           <div className="grid grid-cols-2 gap-8 mb-6">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Localização {!readonly && <span className="text-red-400">*</span>}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs text-gray-500">
+                  Localização {!readonly && <span className="text-red-400">*</span>}
+                </label>
+                {!readonly && <CharCounter value={localizacao} max={100} />}
+              </div>
               <input
                 disabled={readonly}
                 value={localizacao}
@@ -221,9 +240,12 @@ export function AlmoxarifadoFormPage() {
               )}
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Responsável {!readonly && <span className="text-red-400">*</span>}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs text-gray-500">
+                  Responsável {!readonly && <span className="text-red-400">*</span>}
+                </label>
+                {!readonly && <CharCounter value={responsavel} max={100} />}
+              </div>
               <input
                 disabled={readonly}
                 value={responsavel}
@@ -240,9 +262,12 @@ export function AlmoxarifadoFormPage() {
 
           {/* Nome */}
           <div className="mb-6">
-            <label className="block text-xs text-gray-500 mb-1">
-              Nome {!readonly && <span className="text-red-400">*</span>}
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs text-gray-500">
+                Nome {!readonly && <span className="text-red-400">*</span>}
+              </label>
+              {!readonly && <CharCounter value={nome} max={100} />}
+            </div>
             <input
               disabled={readonly}
               value={nome}
@@ -257,27 +282,33 @@ export function AlmoxarifadoFormPage() {
 
           {/* Descrição */}
           <div className="mb-6">
-            <label className="block text-xs text-gray-500 mb-1">
-              Descrição {!readonly && <span className="text-red-400">*</span>}
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs text-gray-500">
+                Descrição {!readonly && <span className="text-red-400">*</span>}
+              </label>
+              {!readonly && <CharCounter value={descricao} max={255} />}
+            </div>
             <textarea
               disabled={readonly}
               value={descricao}
-              onChange={e => setDescricao(e.target.value)}
+              onChange={e => { setDescricao(e.target.value); clearErr('descricao'); }}
               placeholder={readonly ? '—' : 'Descreva brevemente o proposito deste almoxarifado…'}
               rows={3}
               maxLength={255}
-              className={cn(
-                'w-full bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none pt-1',
-                'border-gray-300 focus:border-[#1D4E89]',
-                readonly && 'opacity-60 cursor-default',
-              )}/>
+              className={textareaCls(fieldErrors.descricao, readonly)}
+            />
+            {fieldErrors.descricao && (
+              <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.descricao}</p>
+            )}
           </div>
 
           {/* Contato + E-mail */}
           <div className="grid grid-cols-2 gap-8 mb-6">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Contato</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs text-gray-500">Contato</label>
+                {!readonly && <CharCounter value={contato} max={20} />}
+              </div>
               <IMaskInput
                 mask={[{ mask: '(00) 0000-0000' }, { mask: '(00) 00000-0000' }]}
                 value={contato}
@@ -291,7 +322,10 @@ export function AlmoxarifadoFormPage() {
               )}
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">E-mail</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs text-gray-500">E-mail</label>
+                {!readonly && <CharCounter value={email} max={100} />}
+              </div>
               <input
                 type="email"
                 disabled={readonly}
@@ -307,7 +341,7 @@ export function AlmoxarifadoFormPage() {
           </div>
 
           {modo === 'editar' && (
-            <div className="flex items-center gap-2 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-1.5 py-4 border-b border-gray-100">
               <span className="text-sm text-gray-700">Ativo?</span>
               <Toggle checked={ativo} onChange={setAtivo} />
             </div>

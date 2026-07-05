@@ -292,7 +292,7 @@ export function MovimentacaoFormPage() {
                 rows={3}
                 placeholder="Descreva o motivo da movimentação…"
                 className={cn(
-                  'w-full text-sm border-b pt-1 resize-none bg-transparent focus:outline-none placeholder:text-gray-300 transition-colors',
+                  'w-full text-sm border rounded-md px-3 py-2 resize-none focus:outline-none placeholder:text-gray-300 transition-colors',
                   errors.justificativa ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
                 )}
               />

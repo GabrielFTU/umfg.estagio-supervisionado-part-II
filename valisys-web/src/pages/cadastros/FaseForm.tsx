@@ -316,9 +316,9 @@ export function FaseFormPage() {
               placeholder={readonly ? '—' : 'Descreva as atividades desta fase…'}
               rows={3}
               className={cn(
-                'w-full bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none pt-1',
+                'w-full text-sm border rounded-md px-3 py-2 transition-colors focus:outline-none placeholder:text-gray-300 resize-none',
                 'border-gray-300 focus:border-[#1D4E89]',
-                readonly && 'opacity-60 cursor-default',
+                readonly && 'opacity-60 cursor-default bg-gray-50',
               )}
             />
           </div>

@@ -199,7 +199,9 @@ namespace Valisys_Production.Helpers
 
             CreateMap<MovimentacaoCarteira, MovimentacaoCarteiraReadDto>()
                 .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()))
-                .ForMember(dest => dest.Origem, opt => opt.MapFrom(src => src.Origem.ToString()));
+                .ForMember(dest => dest.Origem, opt => opt.MapFrom(src => src.Origem.ToString()))
+                .ForMember(dest => dest.CarteiraNome, opt => opt.MapFrom(src =>
+                    src.Carteira != null ? $"{src.Carteira.CodigoBanco} - {src.Carteira.NomeBanco}" : null));
         }
     }
 }

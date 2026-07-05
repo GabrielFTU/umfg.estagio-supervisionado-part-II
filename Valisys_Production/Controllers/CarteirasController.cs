@@ -1,13 +1,14 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Valisys_Production.DTOs;
+using Valisys_Production.Infrastructure.Authorization;
+using Valisys_Production.Models.Enums;
 using Valisys_Production.Services.Interfaces;
 
 namespace Valisys_Production.Controllers
 {
-    [ApiController]
     [Route("api/carteiras")]
-    public class CarteirasController : ControllerBase
+    public class CarteirasController : BaseController
     {
         private readonly ICarteiraService _service;
         private readonly IMovimentacaoCarteiraService _movimentacaoService;
@@ -21,6 +22,7 @@ namespace Valisys_Production.Controllers
         }
 
         [HttpGet]
+        [HasPermission(Permissions.Financeiro.Visualizar)]
         [ProducesResponseType(typeof(IEnumerable<CarteiraReadDto>), 200)]
         public async Task<IActionResult> GetAll()
         {
@@ -28,7 +30,34 @@ namespace Valisys_Production.Controllers
             return Ok(_mapper.Map<IEnumerable<CarteiraReadDto>>(carteiras));
         }
 
+        [HttpGet("movimentacoes")]
+        [HasPermission(Permissions.Financeiro.Visualizar)]
+        [ProducesResponseType(typeof(IEnumerable<MovimentacaoCarteiraReadDto>), 200)]
+        public async Task<IActionResult> GetMovimentacoesConsolidadas(
+            [FromQuery] Guid? carteiraId = null,
+            [FromQuery] string? tipo = null,
+            [FromQuery] DateTime? de = null,
+            [FromQuery] DateTime? ate = null)
+        {
+            var movimentacoes = await _movimentacaoService.ListarTodasAsync();
+
+            if (carteiraId.HasValue)
+                movimentacoes = movimentacoes.Where(m => m.CarteiraId == carteiraId.Value);
+
+            if (!string.IsNullOrEmpty(tipo) && Enum.TryParse<TipoMovimentacaoCarteira>(tipo, true, out var tipoEnum))
+                movimentacoes = movimentacoes.Where(m => m.Tipo == tipoEnum);
+
+            if (de.HasValue)
+                movimentacoes = movimentacoes.Where(m => m.DataMovimentacao >= de.Value.ToUniversalTime());
+
+            if (ate.HasValue)
+                movimentacoes = movimentacoes.Where(m => m.DataMovimentacao <= ate.Value.ToUniversalTime().AddDays(1).AddSeconds(-1));
+
+            return Ok(_mapper.Map<IEnumerable<MovimentacaoCarteiraReadDto>>(movimentacoes));
+        }
+
         [HttpGet("{id:guid}")]
+        [HasPermission(Permissions.Financeiro.Visualizar)]
         [ProducesResponseType(typeof(CarteiraReadDto), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetById(Guid id)
@@ -97,6 +126,7 @@ namespace Valisys_Production.Controllers
         }
 
         [HttpGet("{id:guid}/movimentacoes")]
+        [HasPermission(Permissions.Financeiro.Visualizar)]
         [ProducesResponseType(typeof(IEnumerable<MovimentacaoCarteiraReadDto>), 200)]
         public async Task<IActionResult> GetMovimentacoes(Guid id)
         {

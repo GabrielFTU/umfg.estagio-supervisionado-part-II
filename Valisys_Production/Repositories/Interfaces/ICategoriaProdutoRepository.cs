@@ -5,5 +5,6 @@ namespace Valisys_Production.Repositories.Interfaces
     public interface ICategoriaProdutoRepository : IRepository<CategoriaProduto>
     {
         Task<bool> HasActiveProdutosAsync(Guid categoriaId);
+        Task<bool> ExistsByCodigoAsync(string codigo, Guid? excludeId = null);
     }
 }

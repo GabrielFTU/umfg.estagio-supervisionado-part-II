@@ -137,6 +137,38 @@ public class CategoriaProdutoServiceTests
         await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateAsync(dto));
     }
 
+    [Fact]
+    public async Task UpdateAsync_WithCodigoAlreadyUsedByAnotherCategoria_ThrowsInvalidOperationException()
+    {
+        var id        = Guid.NewGuid();
+        var categoria = new CategoriaProduto("Existente");
+        var dto = new CategoriaProdutoUpdateDto { Id = id, Nome = "Existente", Codigo = "002", Ativo = true };
+
+        _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(categoria);
+        _repoMock.Setup(r => r.ExistsByCodigoAsync("002", id)).ReturnsAsync(true);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.UpdateAsync(dto));
+
+        Assert.Contains("002", ex.Message);
+        _repoMock.Verify(r => r.UpdateAsync(It.IsAny<CategoriaProduto>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithCodigoNotUsedByAnyoneElse_ReturnsTrue()
+    {
+        var id        = Guid.NewGuid();
+        var categoria = new CategoriaProduto("Existente");
+        var dto = new CategoriaProdutoUpdateDto { Id = id, Nome = "Existente", Codigo = "002", Ativo = true };
+
+        _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(categoria);
+        _repoMock.Setup(r => r.ExistsByCodigoAsync("002", id)).ReturnsAsync(false);
+        _repoMock.Setup(r => r.UpdateAsync(It.IsAny<CategoriaProduto>())).ReturnsAsync(true);
+
+        var result = await _service.UpdateAsync(dto);
+
+        Assert.True(result);
+    }
+
     // ── DeleteAsync ───────────────────────────────────────────────────────────
 
     [Fact]

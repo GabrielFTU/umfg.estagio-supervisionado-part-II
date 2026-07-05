@@ -356,7 +356,7 @@ export function LoteFormPage() {
                   placeholder="Descrição do lote (opcional)"
                   maxLength={500}
                   rows={2}
-                  className="w-full bg-transparent text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
+                  className="w-full text-sm border rounded-md px-3 py-2 border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
                 />
               </div>
               <div className="mb-6">
@@ -367,7 +367,7 @@ export function LoteFormPage() {
                   placeholder="Observações (opcional)"
                   maxLength={500}
                   rows={2}
-                  className="w-full bg-transparent text-sm border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
+                  className="w-full text-sm border rounded-md px-3 py-2 border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
                 />
               </div>
             </>

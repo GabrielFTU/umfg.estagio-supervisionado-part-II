@@ -163,6 +163,10 @@ export function CategoriasPage() {
   const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
   const statusLabel = statusFiltro === 'ativo' ? 'ATIVO' : statusFiltro === 'inativo' ? 'INATIVO' : null;
 
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
     <div className="flex flex-col h-full bg-white">
 

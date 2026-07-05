@@ -228,9 +228,9 @@ export function TiposDeOrdemFormPage() {
               rows={3}
               maxLength={500}
               className={cn(
-                'w-full bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none pt-1',
+                'w-full text-sm border rounded-md px-3 py-2 transition-colors focus:outline-none placeholder:text-gray-300 resize-none',
                 fieldErrors.descricao ? 'border-red-400' : 'border-gray-300 focus:border-[#3B82F6]',
-                readonly && 'opacity-60 cursor-default',
+                readonly && 'opacity-60 cursor-default bg-gray-50',
               )}
             />
             {fieldErrors.descricao && (

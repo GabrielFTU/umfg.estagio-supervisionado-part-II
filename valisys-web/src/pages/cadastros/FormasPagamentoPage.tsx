@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus, Search, SlidersHorizontal, CreditCard,
-  ChevronRight, Home, Loader2, MoreHorizontal, Users, Lock,
-} from 'lucide-react';
+import { Plus, Search, SlidersHorizontal, MoreHorizontal, Loader2, X, Users, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
 
@@ -20,6 +17,8 @@ type FormaItem = {
   totalVendedores: number;
 };
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
+
 // ─── Menu de ações ────────────────────────────────────────────────────────────
 
 function RowMenu({ item, onView, onEdit, onToggle }: {
@@ -33,7 +32,7 @@ function RowMenu({ item, onView, onEdit, onToggle }: {
   const btnRef  = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleToggle = () => {
+  const toggle = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
@@ -44,55 +43,32 @@ function RowMenu({ item, onView, onEdit, onToggle }: {
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
-    const onDown = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current  && !btnRef.current.contains(e.target as Node)
-      ) close();
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          btnRef.current  && !btnRef.current.contains(e.target as Node)) close();
     };
-    document.addEventListener('mousedown', onDown);
+    document.addEventListener('mousedown', h);
     document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('scroll', close, true);
-    };
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('scroll', close, true); };
   }, [open]);
 
   return (
     <>
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        className={cn(
-          'p-1.5 rounded-md transition-colors',
-          open ? 'bg-gray-100 text-gray-700' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100',
-        )}
-      >
+      <button ref={btnRef} onClick={toggle}
+        className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
         <MoreHorizontal size={15} />
       </button>
-
       {open && (
-        <div
-          ref={menuRef}
+        <div ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-40 bg-white border border-gray-200 rounded-lg shadow-lg shadow-black/[0.07] py-0.5 text-[13px]"
-        >
+          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
           <button onClick={() => { setOpen(false); onView(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-            Visualizar
-          </button>
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Visualizar</button>
           <button onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-            Editar
-          </button>
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
           <div className="my-0.5 mx-2 border-t border-gray-100" />
           <button onClick={() => { setOpen(false); onToggle(); }}
-            className={cn(
-              'w-full text-left px-3 py-1.5 transition-colors',
-              item.ativo
-                ? 'text-red-500 hover:bg-red-50'
-                : 'text-emerald-600 hover:bg-emerald-50',
-            )}>
+            className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', item.ativo ? 'text-red-500' : 'text-emerald-600')}>
             {item.ativo ? 'Desativar' : 'Reativar'}
           </button>
         </div>
@@ -105,33 +81,31 @@ function RowMenu({ item, onView, onEdit, onToggle }: {
 
 export function FormasPagamentoPage() {
   const navigate = useNavigate();
-  const [search, setSearch]         = useState('');
-  const [formas, setFormas]         = useState<FormaItem[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState('');
-  const [filtroStatus, setFiltroStatus] = useState('');
-  const [filtroRestrita, setFiltroRestrita] = useState('');
+  const [search, setSearch]     = useState('');
+  const [formas, setFormas]     = useState<FormaItem[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
+  const [statusFiltro, setStatusFiltro]   = useState<'todos' | 'ativo' | 'inativo'>('todos');
+  const [acessoFiltro, setAcessoFiltro]   = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [page, setPage]         = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
   const [confirmTarget, setConfirmTarget] = useState<FormaItem | null>(null);
 
   useEffect(() => {
-    const fn = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node))
-        setFilterOpen(false);
-    };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
-  }, []);
+    if (!filterOpen) return;
+    const h = (e: MouseEvent) => { if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [filterOpen]);
 
   const load = async () => {
     setLoading(true);
     setError('');
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/formas-pagamento', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch('/api/formas-pagamento', { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error();
       const data: any[] = await res.json();
       setFormas(data.map(f => ({
@@ -169,8 +143,7 @@ export function FormasPagamentoPage() {
     load();
   };
 
-  const filtrosAtivos = !!(filtroStatus || filtroRestrita);
-  const filtrosCount  = [filtroStatus, filtroRestrita].filter(Boolean).length;
+  const filtrosAtivos = statusFiltro !== 'todos' || acessoFiltro !== '';
 
   const filtered = formas.filter(f => {
     if (search) {
@@ -178,249 +151,195 @@ export function FormasPagamentoPage() {
       const codeMatch = String(f.codigo).padStart(3, '0').includes(search);
       if (!f.nome.toLowerCase().includes(q) && !codeMatch) return false;
     }
-    if (filtroStatus === 'ativo'   && !f.ativo) return false;
-    if (filtroStatus === 'inativo' &&  f.ativo) return false;
-    if (filtroRestrita === 'restrita'     && !f.restritaAVendedores) return false;
-    if (filtroRestrita === 'livre'        &&  f.restritaAVendedores) return false;
+    if (statusFiltro === 'ativo'   && !f.ativo) return false;
+    if (statusFiltro === 'inativo' &&  f.ativo) return false;
+    if (acessoFiltro === 'restrita' && !f.restritaAVendedores) return false;
+    if (acessoFiltro === 'livre'    &&  f.restritaAVendedores) return false;
     return true;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
+  const statusLabel = statusFiltro === 'ativo' ? 'ATIVO' : statusFiltro === 'inativo' ? 'INATIVO' : null;
+  const acessoLabel = acessoFiltro === 'restrita' ? 'RESTRITA' : acessoFiltro === 'livre' ? 'LIVRE' : null;
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
 
-      {/* ── Breadcrumb ── */}
-      <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200/70">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Home size={11} /><ChevronRight size={11} />
-          <span>Cadastros</span><ChevronRight size={11} />
-          <span className="text-gray-600 font-medium">Formas de Pagamento</span>
+      {/* ── Toolbar ── */}
+      <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            placeholder="Informe o código ou nome"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+          />
         </div>
-      </div>
 
-      {/* ── Subheader ── */}
-      <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-gray-200/50 bg-white">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <button onClick={() => navigate('/cadastros/formas-pagamento/novo')}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors shrink-0">
+          <Plus size={14} /> Nova Forma
+        </button>
 
-          <div className="relative flex-1 min-w-0 sm:max-w-md">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89] transition-all placeholder:text-gray-400"
-              placeholder="Buscar por código ou nome…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div ref={filterRef} className="relative shrink-0">
-            <button
-              onMouseDown={e => e.stopPropagation()}
-              onClick={() => setFilterOpen(v => !v)}
-              className={cn(
-                'flex items-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors',
-                filtrosAtivos
-                  ? 'bg-blue-50 border-[#1D4E89] text-[#1D4E89]'
-                  : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50',
-              )}
-            >
-              <SlidersHorizontal size={13} /> Filtros
-              {filtrosAtivos && (
-                <span className="w-4 h-4 rounded-full bg-[#1D4E89] text-white text-[10px] font-bold flex items-center justify-center">
-                  {filtrosCount}
-                </span>
-              )}
-            </button>
-
-            {filterOpen && (
-              <div
-                onMouseDown={e => e.stopPropagation()}
-                className="absolute z-30 top-full right-0 mt-1.5 w-60 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-600">Filtros</span>
-                  {filtrosAtivos && (
-                    <button
-                      onClick={() => { setFiltroStatus(''); setFiltroRestrita(''); }}
-                      className="text-[11px] text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      Limpar tudo
-                    </button>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Status</p>
-                  <div className="flex gap-1.5">
-                    {(['', 'ativo', 'inativo'] as const).map(v => (
-                      <button key={v}
-                        onClick={() => setFiltroStatus(v === filtroStatus ? '' : v)}
-                        className={cn('flex-1 text-xs py-1.5 rounded-md border transition-colors',
-                          filtroStatus === v
-                            ? 'bg-[#1D4E89] border-[#1D4E89] text-white'
-                            : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
-                        {v === '' ? 'Todos' : v === 'ativo' ? 'Ativo' : 'Inativo'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-medium text-gray-400 mb-1.5">Acesso de vendedor</p>
-                  <div className="flex gap-1.5">
-                    {(['', 'livre', 'restrita'] as const).map(v => (
-                      <button key={v}
-                        onClick={() => setFiltroRestrita(v === filtroRestrita ? '' : v)}
-                        className={cn('flex-1 text-xs py-1.5 rounded-md border transition-colors',
-                          filtroRestrita === v
-                            ? 'bg-[#1D4E89] border-[#1D4E89] text-white'
-                            : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
-                        {v === '' ? 'Todos' : v === 'livre' ? 'Livre' : 'Restrita'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={() => navigate('/cadastros/formas-pagamento/novo')}
-            className="flex items-center gap-2 h-9 px-4 rounded-md bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] shadow-sm shadow-blue-200 transition-colors sm:ml-auto shrink-0"
-          >
-            <Plus size={15} /> Nova Forma
+        <div ref={filterRef} className="relative shrink-0">
+          <button onClick={() => setFilterOpen(v => !v)}
+            className={cn(
+              'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
+              filtrosAtivos
+                ? 'border-[#1D4E89] bg-blue-50 text-[#1D4E89]'
+                : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
+            )}>
+            <SlidersHorizontal size={15} />
           </button>
+
+          {filterOpen && (
+            <div onMouseDown={e => e.stopPropagation()}
+              className="absolute z-30 right-0 top-full mt-1.5 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-3 space-y-3">
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status</p>
+                {(['todos', 'ativo', 'inativo'] as const).map(v => (
+                  <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
+                    className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                      statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                    {v === 'todos' ? 'Todos' : v === 'ativo' ? 'Ativo' : 'Inativo'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-100 pt-3">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Acesso de vendedor</p>
+                {(['', 'livre', 'restrita'] as const).map(v => (
+                  <button key={v} onClick={() => { setAcessoFiltro(v); setPage(1); setFilterOpen(false); }}
+                    className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                      acessoFiltro === v ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                    {v === '' ? 'Todos' : v === 'livre' ? 'Livre' : 'Restrita'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Conteúdo ── */}
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-4">
+      {/* ── Chip filtro ativo ── */}
+      {filtrosAtivos && (
+        <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2">
+          {statusLabel && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Status : {statusLabel}
+              <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {acessoLabel && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Acesso : {acessoLabel}
+              <button onClick={() => setAcessoFiltro('')} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+        </div>
+      )}
 
-        {loading && (
+      {/* ── Tabela ── */}
+      <div className="flex-1 overflow-auto">
+        {loading ? (
           <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
-            <Loader2 size={16} className="animate-spin" /> Carregando formas de pagamento…
+            <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
-        )}
-
-        {!loading && error && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-center pb-16">
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
             <p className="text-sm font-semibold text-red-500">{error}</p>
-            <button onClick={load} className="text-xs text-[#1D4E89] hover:underline">
-              Tentar novamente
-            </button>
+            <button onClick={load} className="text-xs text-[#1D4E89] hover:underline">Tentar novamente</button>
           </div>
-        )}
-
-        {!loading && !error && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-              <CreditCard size={28} className="text-[#1D4E89]" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-700">
-                {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhuma forma de pagamento cadastrada'}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {search || filtrosAtivos
-                  ? 'Ajuste os filtros ou a busca.'
-                  : 'Clique em "Nova Forma" para começar.'}
-              </p>
-            </div>
-            {!search && !filtrosAtivos && (
-              <button
-                onClick={() => navigate('/cadastros/formas-pagamento/novo')}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#1D4E89] text-white text-sm hover:bg-[#163D6D] transition-colors"
-              >
-                <Plus size={14} /> Nova forma de pagamento
-              </button>
-            )}
-          </div>
-        )}
-
-        {!loading && !error && filtered.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[600px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pl-4 pr-3 w-20">Código</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Nome</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Prazo</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Acesso</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-4">Status</th>
-                    <th className="w-10 pr-3" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Código</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Prazo</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Acesso</th>
+                  <th className="w-10 pr-4" />
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
+                      Nenhum registro encontrado.
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(f => (
-                    <tr
-                      key={f.id}
-                      className={cn(
-                        'border-b border-gray-50 hover:bg-blue-50/40 transition-colors',
-                        !f.ativo && 'opacity-50',
+                ) : paginated.map(f => (
+                  <tr key={f.id}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-3 text-sm text-gray-500">{String(f.codigo).padStart(3, '0')}</td>
+                    <td className="px-4 py-3">
+                      <span className={cn('text-sm', f.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                        {f.nome}
+                      </span>
+                      {f.descricao && (
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-xs">{f.descricao}</p>
                       )}
-                    >
-                      <td className="py-3 pl-4 pr-3">
-                        <span className="text-xs font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                          {String(f.codigo).padStart(3, '0')}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {f.prazoDias != null ? (f.prazoDias === 0 ? 'À vista' : `${f.prazoDias} dias`) : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {f.restritaAVendedores ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-600">
+                          <Lock size={10} />
+                          Restrita · {f.totalVendedores} {f.totalVendedores === 1 ? 'vendedor' : 'vendedores'}
                         </span>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <p className="font-medium text-gray-700">{f.nome}</p>
-                        {f.descricao && (
-                          <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-xs">{f.descricao}</p>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4">
-                        {f.prazoDias != null ? (
-                          <span className="text-xs text-gray-600">
-                            {f.prazoDias === 0 ? 'À vista' : `${f.prazoDias} dias`}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-300">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4">
-                        {f.restritaAVendedores ? (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-600">
-                            <Lock size={10} />
-                            Restrita · {f.totalVendedores} {f.totalVendedores === 1 ? 'vendedor' : 'vendedores'}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600">
-                            <Users size={10} />
-                            Todos os vendedores
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className={cn(
-                          'text-xs px-2 py-0.5 rounded-full font-medium',
-                          f.ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500',
-                        )}>
-                          {f.ativo ? 'Ativo' : 'Inativo'}
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600">
+                          <Users size={10} />
+                          Todos os vendedores
                         </span>
-                      </td>
-                      <td className="py-3 pr-3 text-right">
-                        <RowMenu
-                          item={f}
-                          onView={() => navigate(`/cadastros/formas-pagamento/${f.id}`)}
-                          onEdit={() => navigate(`/cadastros/formas-pagamento/${f.id}/editar`)}
-                          onToggle={() => handleToggle(f)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="px-4 py-2 border-t border-gray-100 bg-gray-50/40">
-              <span className="text-xs text-gray-400">
-                {filtered.length} {filtered.length === 1 ? 'forma' : 'formas'}
-                {filtered.length !== formas.length && ` de ${formas.length}`}
-              </span>
-            </div>
+                      )}
+                    </td>
+                    <td className="pr-4 text-right">
+                      <RowMenu
+                        item={f}
+                        onView={() => navigate(`/cadastros/formas-pagamento/${f.id}`)}
+                        onEdit={() => navigate(`/cadastros/formas-pagamento/${f.id}/editar`)}
+                        onToggle={() => handleToggle(f)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+
+      {/* ── Paginação ── */}
+      {!loading && !error && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => goPage(p)}
+              className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       <ModalMsg
         aberto={confirmTarget !== null}

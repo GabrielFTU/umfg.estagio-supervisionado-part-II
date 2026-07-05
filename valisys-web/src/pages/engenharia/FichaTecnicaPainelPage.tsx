@@ -85,7 +85,7 @@ export function FichaTecnicaPainelPage() {
   if (error || !ficha) return (
     <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
       <p className="text-sm text-red-600 font-medium">{error || 'Ficha técnica não encontrada.'}</p>
-      <button onClick={() => navigate('/producao/fichas-tecnicas')}
+      <button onClick={() => navigate('/engenharia/fichas-tecnicas')}
         className="text-xs text-blue-600 hover:underline font-medium">Voltar</button>
     </div>
   );
@@ -106,9 +106,8 @@ export function FichaTecnicaPainelPage() {
       <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-200">
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Home size={11} /><ChevronRight size={11} />
-          <span>Produção</span><ChevronRight size={11} />
-          <button onClick={() => navigate('/producao/fichas-tecnicas')}
-            className="hover:text-gray-700 transition-colors">Ficha Técnica</button>
+          <span>Engenharia</span><ChevronRight size={11} />
+          <a href="/engenharia/fichas-tecnicas" className="hover:text-[#1D4E89] transition-colors">Ficha Técnica</a>
           <ChevronRight size={11} />
           <span className="text-gray-800 font-semibold">Painel</span>
         </div>
@@ -130,7 +129,7 @@ export function FichaTecnicaPainelPage() {
                 icon={s.icon}
                 label={s.label}
                 disabled={s.disabled}
-                onClick={s.disabled ? undefined : () => navigate(`/producao/fichas-tecnicas/${id}/${s.path}`)}
+                onClick={s.disabled ? undefined : () => navigate(`/engenharia/fichas-tecnicas/${id}/${s.path}`)}
               />
             ))}
           </div>

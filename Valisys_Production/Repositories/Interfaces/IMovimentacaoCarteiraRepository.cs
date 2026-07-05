@@ -5,5 +5,6 @@ namespace Valisys_Production.Repositories.Interfaces
     public interface IMovimentacaoCarteiraRepository
     {
         Task<IEnumerable<MovimentacaoCarteira>> GetByCarteiraIdAsync(Guid carteiraId);
+        Task<IEnumerable<MovimentacaoCarteira>> GetAllAsync();
     }
 }

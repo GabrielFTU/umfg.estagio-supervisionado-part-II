@@ -69,6 +69,7 @@ namespace Valisys_Production.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> PutCategoriaProduto(Guid id, [FromBody] CategoriaProdutoUpdateDto categoriaProdutoDto)
         {
             if (categoriaProdutoDto == null)
@@ -104,6 +105,10 @@ namespace Valisys_Production.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
             }
         }
 

@@ -486,9 +486,9 @@ export function ContaPagarFormPage() {
                     rows={4}
                     placeholder={readonly ? '—' : 'Observações sobre esta conta…'}
                     className={cn(
-                      'w-full text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300 resize-none py-2 bg-transparent',
+                      'w-full text-sm border rounded-md px-3 py-2 transition-colors focus:outline-none placeholder:text-gray-300 resize-none',
                       'border-gray-300 focus:border-[#1D4E89]',
-                      readonly && 'cursor-default',
+                      readonly && 'cursor-default bg-gray-50',
                     )}
                   />
                   {!readonly && (

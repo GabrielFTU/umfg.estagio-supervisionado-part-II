@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus, Search, SlidersHorizontal, Ruler,
-  ChevronRight, Home, Loader2, MoreHorizontal,
-} from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
 
@@ -16,6 +13,8 @@ const GRANDEZA_LABEL: Record<number, string> = {
   5: 'Área',
 };
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
+
 type UnidadeItem = {
   id: string;
   nome: string;
@@ -26,18 +25,15 @@ type UnidadeItem = {
   ativo: boolean;
 };
 
-function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
-  ativo: boolean;
-  onEdit: () => void;
-  onView: () => void;
-  onToggleAtivo: () => void;
+function RowMenu({ ativo, onEdit, onView, onToggle }: {
+  ativo: boolean; onEdit: () => void; onView: () => void; onToggle: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos]   = useState({ top: 0, right: 0 });
   const btnRef  = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleToggle = () => {
+  const toggle = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
@@ -48,56 +44,32 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
-    const onDown = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current  && !btnRef.current.contains(e.target as Node)
-      ) close();
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          btnRef.current  && !btnRef.current.contains(e.target as Node)) close();
     };
-    document.addEventListener('mousedown', onDown);
+    document.addEventListener('mousedown', h);
     document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('scroll', close, true);
-    };
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('scroll', close, true); };
   }, [open]);
 
   return (
     <>
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        className={cn(
-          'p-1.5 rounded-md transition-colors',
-          open ? 'bg-gray-100 text-gray-700' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100',
-        )}
-      >
+      <button ref={btnRef} onClick={toggle}
+        className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
         <MoreHorizontal size={15} />
       </button>
-
       {open && (
-        <div
-          ref={menuRef}
+        <div ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg shadow-black/[0.07] py-0.5 text-[13px]"
-        >
-          <button
-            onClick={() => { setOpen(false); onView(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            Visualizar
-          </button>
-          <button
-            onClick={() => { setOpen(false); onEdit(); }}
-            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            Editar
-          </button>
+          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
+          <button onClick={() => { setOpen(false); onView(); }}
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Visualizar</button>
+          <button onClick={() => { setOpen(false); onEdit(); }}
+            className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
           <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button
-            onClick={() => { setOpen(false); onToggleAtivo(); }}
-            className="w-full text-left px-3 py-1.5 text-red-500 hover:bg-red-50 transition-colors"
-          >
+          <button onClick={() => { setOpen(false); onToggle(); }}
+            className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', ativo ? 'text-red-500' : 'text-emerald-600')}>
             {ativo ? 'Desativar' : 'Reativar'}
           </button>
         </div>
@@ -108,47 +80,35 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
 
 export function UnidadesMedidaPage() {
   const navigate = useNavigate();
-  const [search, setSearch]         = useState('');
-  const [unidades, setUnidades]     = useState<UnidadeItem[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [filtroStatus, setFiltroStatus]   = useState('');
-  const [filtroGrandeza, setFiltroGrandeza] = useState('');
+  const [items, setItems]       = useState<UnidadeItem[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
+  const [search, setSearch]     = useState('');
+  const [statusFiltro, setStatusFiltro]     = useState<'todos' | 'ativo' | 'inativo'>('todos');
+  const [grandezaFiltro, setGrandezaFiltro] = useState('');
+  const [filterOpen, setFilterOpen]         = useState(false);
+  const [page, setPage]         = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
   const [confirmTarget, setConfirmTarget] = useState<UnidadeItem | null>(null);
 
   useEffect(() => {
-    const fn = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node))
-        setFilterOpen(false);
-    };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
-  }, []);
+    if (!filterOpen) return;
+    const h = (e: MouseEvent) => { if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [filterOpen]);
 
   const load = async () => {
     setLoading(true);
     setError('');
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/UnidadesMedida', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.status === 403) { setUnidades([]); return; }
+      const res = await fetch('/api/UnidadesMedida', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 403) { setItems([]); return; }
       if (!res.ok) throw new Error();
-      const data: any[] = await res.json();
-      const lista: UnidadeItem[] = data.map(u => ({
-        id:              u.id,
-        nome:            u.nome,
-        sigla:           u.sigla,
-        grandeza:        u.grandeza,
-        fatorConversao:  u.fatorConversao,
-        ehUnidadeBase:   u.ehUnidadeBase,
-        ativo:           u.ativo,
-      }));
-      lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-      setUnidades(lista);
+      const data: UnidadeItem[] = await res.json();
+      setItems(data);
     } catch {
       setError('Não foi possível carregar as unidades de medida.');
     } finally {
@@ -158,265 +118,227 @@ export function UnidadesMedidaPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = (u: UnidadeItem) => {
-    setConfirmTarget(u);
+  const handleToggle = (item: UnidadeItem) => {
+    setConfirmTarget(item);
   };
 
-  const execToggleAtivo = async () => {
+  const execToggle = async () => {
     if (!confirmTarget) return;
-    const u = confirmTarget;
+    const item = confirmTarget;
     setConfirmTarget(null);
     const token = localStorage.getItem('token');
-    const res = await fetch(`/api/UnidadesMedida/${u.id}`, {
+    const res = await fetch(`/api/UnidadesMedida/${item.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
-
     if (res.status === 409) {
       const body = await res.json().catch(() => ({}));
       alert(body.message ?? 'Esta unidade de medida possui produtos ativos e não pode ser desativada.');
       return;
     }
-
     load();
   };
 
-  const filtrosAtivos = !!(filtroStatus || filtroGrandeza);
-  const filtrosCount  = [filtroStatus, filtroGrandeza].filter(Boolean).length;
+  const filtrosAtivos = statusFiltro !== 'todos' || grandezaFiltro !== '';
 
-  const filtered = unidades.filter(u => {
+  const filtered = items.filter(i => {
     if (search) {
       const q = search.toLowerCase();
-      if (!u.nome.toLowerCase().includes(q) && !u.sigla.toLowerCase().includes(q)) return false;
+      if (!i.nome.toLowerCase().includes(q) && !i.sigla.toLowerCase().includes(q)) return false;
     }
-    if (filtroStatus === 'ativo'   && !u.ativo) return false;
-    if (filtroStatus === 'inativo' &&  u.ativo) return false;
-    if (filtroGrandeza !== '' && u.grandeza !== Number(filtroGrandeza)) return false;
+    if (statusFiltro === 'ativo'   && !i.ativo) return false;
+    if (statusFiltro === 'inativo' &&  i.ativo) return false;
+    if (grandezaFiltro !== '' && i.grandeza !== Number(grandezaFiltro)) return false;
     return true;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
+  const statusLabel   = statusFiltro === 'ativo' ? 'ATIVO' : statusFiltro === 'inativo' ? 'INATIVO' : null;
+  const grandezaLabel = grandezaFiltro !== '' ? GRANDEZA_LABEL[Number(grandezaFiltro)]?.toUpperCase() ?? null : null;
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
 
-      <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200/70">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Home size={11} /><ChevronRight size={11} />
-          <span>Cadastros</span><ChevronRight size={11} />
-          <span className="text-gray-600 font-medium">Unidades de Medida</span>
+      {/* ── Toolbar ── */}
+      <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-300 focus:border-[#1D4E89] focus:outline-none transition-colors placeholder:text-gray-300 text-gray-700"
+            placeholder="Informe o nome ou sigla"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+          />
         </div>
-      </div>
 
-      <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-gray-200/50">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <button onClick={() => navigate('/cadastros/unidades/novo')}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors shrink-0">
+          <Plus size={14} /> Nova Unidade
+        </button>
 
-          <div className="relative flex-1 min-w-0 sm:max-w-md">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              className="w-full h-9 pl-9 pr-3 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89] transition-all placeholder:text-gray-400"
-              placeholder="Buscar por nome ou sigla…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div ref={filterRef} className="relative shrink-0">
-            <button
-              onMouseDown={e => e.stopPropagation()}
-              onClick={() => setFilterOpen(v => !v)}
-              className={cn(
-                'flex items-center gap-1.5 h-9 px-3 rounded-md border text-xs font-medium transition-colors',
-                filtrosAtivos
-                  ? 'bg-blue-50 border-[#1D4E89] text-[#1D4E89]'
-                  : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400',
-              )}
-            >
-              <SlidersHorizontal size={13} /> Filtros
-              {filtrosAtivos && (
-                <span className="w-4 h-4 rounded-full bg-[#1D4E89] text-white text-[10px] font-bold flex items-center justify-center">
-                  {filtrosCount}
-                </span>
-              )}
-            </button>
-
-            {filterOpen && (
-              <div
-                onMouseDown={e => e.stopPropagation()}
-                className="absolute z-30 top-full right-0 mt-1.5 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-4 space-y-4"
-              >
-                {/* Status */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-600">Status</span>
-                    {filtroStatus && (
-                      <button onClick={() => setFiltroStatus('')} className="text-[11px] text-red-400 hover:text-red-600">Limpar</button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {(['ativo', 'inativo'] as const).map(k => (
-                      <button
-                        key={k}
-                        onClick={() => setFiltroStatus(k === filtroStatus ? '' : k)}
-                        className={cn('text-xs py-1.5 px-3 rounded-md border text-left transition-colors',
-                          filtroStatus === k
-                            ? 'bg-[#1D4E89] border-[#1D4E89] text-white'
-                            : 'border-gray-200 text-gray-500 hover:border-gray-300')}
-                      >
-                        {k.charAt(0).toUpperCase() + k.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-100" />
-
-                {/* Grandeza */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-600">Grandeza</span>
-                    {filtroGrandeza !== '' && (
-                      <button onClick={() => setFiltroGrandeza('')} className="text-[11px] text-red-400 hover:text-red-600">Limpar</button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {Object.entries(GRANDEZA_LABEL).map(([k, label]) => (
-                      <button
-                        key={k}
-                        onClick={() => setFiltroGrandeza(filtroGrandeza === k ? '' : k)}
-                        className={cn('text-xs py-1.5 px-3 rounded-md border text-left transition-colors',
-                          filtroGrandeza === k
-                            ? 'bg-[#1D4E89] border-[#1D4E89] text-white'
-                            : 'border-gray-200 text-gray-500 hover:border-gray-300')}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={() => navigate('/cadastros/unidades/novo')}
-            className="flex items-center gap-2 h-9 px-4 rounded-md bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] shadow-sm shadow-blue-200 transition-colors sm:ml-auto shrink-0"
-          >
-            <Plus size={15} /> Nova Unidade
+        <div ref={filterRef} className="relative shrink-0">
+          <button onClick={() => setFilterOpen(v => !v)}
+            className={cn(
+              'flex items-center justify-center w-9 h-9 rounded-full border transition-colors',
+              filtrosAtivos
+                ? 'border-[#1D4E89] bg-blue-50 text-[#1D4E89]'
+                : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
+            )}>
+            <SlidersHorizontal size={15} />
           </button>
+
+          {filterOpen && (
+            <div onMouseDown={e => e.stopPropagation()}
+              className="absolute z-30 right-0 top-full mt-1.5 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-3 space-y-3">
+              <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Status</p>
+                {(['todos', 'ativo', 'inativo'] as const).map(v => (
+                  <button key={v} onClick={() => { setStatusFiltro(v); setPage(1); setFilterOpen(false); }}
+                    className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                      statusFiltro === v ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                    {v === 'todos' ? 'Todos' : v === 'ativo' ? 'Ativo' : 'Inativo'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-100 pt-3">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Grandeza</p>
+                <button onClick={() => { setGrandezaFiltro(''); setPage(1); setFilterOpen(false); }}
+                  className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                    grandezaFiltro === '' ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                  Todas
+                </button>
+                {Object.entries(GRANDEZA_LABEL).map(([k, label]) => (
+                  <button key={k} onClick={() => { setGrandezaFiltro(k); setPage(1); setFilterOpen(false); }}
+                    className={cn('w-full text-left text-sm px-2 py-1.5 rounded-md transition-colors',
+                      grandezaFiltro === k ? 'bg-[#1D4E89] text-white' : 'text-gray-600 hover:bg-gray-50')}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-4">
-        {loading && (
-          <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
-            <Loader2 size={16} className="animate-spin" /> Carregando unidades de medida…
-          </div>
-        )}
+      {/* ── Chips de filtro ativos ── */}
+      {filtrosAtivos && (
+        <div className="px-6 py-2 border-b border-gray-100 flex items-center gap-2">
+          {statusLabel && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Status : {statusLabel}
+              <button onClick={() => setStatusFiltro('todos')} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+          {grandezaLabel && (
+            <span className="flex items-center gap-1.5 text-xs bg-blue-50 text-[#1D4E89] border border-blue-200 px-2.5 py-1 rounded-full font-medium">
+              Grandeza : {grandezaLabel}
+              <button onClick={() => setGrandezaFiltro('')} className="hover:text-blue-800"><X size={11} /></button>
+            </span>
+          )}
+        </div>
+      )}
 
-        {!loading && error && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 pb-16">
+      {/* ── Tabela ── */}
+      <div className="flex-1 overflow-auto">
+        {loading ? (
+          <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
+            <Loader2 size={16} className="animate-spin" /> Carregando…
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
             <p className="text-sm font-semibold text-red-500">{error}</p>
             <button onClick={load} className="text-xs text-[#1D4E89] hover:underline">Tentar novamente</button>
           </div>
-        )}
-
-        {!loading && !error && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center pb-16">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-              <Ruler size={28} className="text-[#1D4E89]" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-700">
-                {search || filtrosAtivos ? 'Nenhum resultado encontrado' : 'Nenhuma unidade de medida cadastrada'}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {search || filtrosAtivos ? 'Ajuste os filtros ou a busca.' : 'Clique em "Nova Unidade" para começar.'}
-              </p>
-            </div>
-            {!search && !filtrosAtivos && (
-              <button
-                onClick={() => navigate('/cadastros/unidades/novo')}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#1D4E89] text-white text-sm hover:bg-[#163D6D] transition-colors"
-              >
-                <Plus size={14} /> Cadastrar unidade
-              </button>
-            )}
-          </div>
-        )}
-
-        {!loading && !error && filtered.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[620px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pl-4 w-20">Sigla</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Nome</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Grandeza</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Fator Conv.</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Base</th>
-                    <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide py-2.5 pr-6">Status</th>
-                    <th className="w-10 pr-3" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Sigla</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Grandeza</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Fator Conv.</th>
+                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Base</th>
+                  <th className="w-10 pr-4" />
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-400">
+                      Nenhum registro encontrado.
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(u => (
-                    <tr
-                      key={u.id}
-                      className={cn(
-                        'border-b border-gray-50 hover:bg-blue-50/40 transition-colors',
-                        !u.ativo && 'opacity-50',
+                ) : paginated.map(item => (
+                  <tr key={item.id}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-3">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-[#1D4E89] text-xs font-mono font-semibold">
+                        {item.sigla}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                        {item.nome}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{GRANDEZA_LABEL[item.grandeza] ?? item.grandeza}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-gray-500">{item.fatorConversao}</td>
+                    <td className="px-4 py-3">
+                      {item.ehUnidadeBase ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 font-medium">Sim</span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
                       )}
-                    >
-                      <td className="py-3 pl-4 pr-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-[#1D4E89] text-xs font-mono font-semibold">
-                          {u.sigla}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-6">
-                        <p className="text-gray-700 font-medium">{u.nome}</p>
-                      </td>
-                      <td className="py-3 pr-6">
-                        <span className="text-xs text-gray-500">{GRANDEZA_LABEL[u.grandeza] ?? u.grandeza}</span>
-                      </td>
-                      <td className="py-3 pr-6 text-right">
-                        <span className="text-xs font-mono text-gray-500">{u.fatorConversao}</span>
-                      </td>
-                      <td className="py-3 pr-6">
-                        {u.ehUnidadeBase ? (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 font-medium">Sim</span>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-6">
-                        <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
-                          u.ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
-                          {u.ativo ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-3 text-right">
-                        <RowMenu
-                          ativo={u.ativo}
-                          onView={() => navigate(`/cadastros/unidades/${u.id}`)}
-                          onEdit={() => navigate(`/cadastros/unidades/${u.id}/editar`)}
-                          onToggleAtivo={() => handleToggleAtivo(u)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </td>
+                    <td className="pr-4 text-right">
+                      <RowMenu ativo={item.ativo}
+                        onView={() => navigate(`/cadastros/unidades/${item.id}`)}
+                        onEdit={() => navigate(`/cadastros/unidades/${item.id}/editar`)}
+                        onToggle={() => handleToggle(item)} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+
+      {/* ── Paginação ── */}
+      {!loading && !error && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => goPage(p)}
+              className={cn('w-7 h-7 rounded-full text-sm transition-colors', p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       <ModalMsg
         aberto={confirmTarget !== null}
         titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} unidade de medida` : ''}
         descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a unidade de medida "${confirmTarget.nome} (${confirmTarget.sigla})"?` : ''}
         variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggleAtivo}
+        onConfirmar={execToggle}
         onCancelar={() => setConfirmTarget(null)}
       />
     </div>

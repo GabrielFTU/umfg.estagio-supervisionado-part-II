@@ -144,7 +144,7 @@ export function FichaTecnicasPage() {
       <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-200">
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Home size={11} /><ChevronRight size={11} />
-          <span>Produção</span><ChevronRight size={11} />
+          <span>Engenharia</span><ChevronRight size={11} />
           <span className="text-gray-800 font-semibold">Ficha Técnica</span>
         </div>
       </div>
@@ -161,7 +161,7 @@ export function FichaTecnicasPage() {
           />
         </div>
 
-        <button onClick={() => navigate('/producao/fichas-tecnicas/novo')}
+        <button onClick={() => navigate('/engenharia/fichas-tecnicas/novo')}
           className="flex items-center gap-1.5 h-9 px-5 rounded-full bg-[#F59E0B] text-white text-sm font-semibold hover:bg-amber-500 transition-colors shrink-0">
           <Plus size={14} /> Novo
         </button>
@@ -252,7 +252,7 @@ export function FichaTecnicasPage() {
             <tbody>
               {filtered.map(f => (
                 <tr key={f.id}
-                  onClick={() => navigate(`/producao/fichas-tecnicas/${f.id}`)}
+                  onClick={() => navigate(`/engenharia/fichas-tecnicas/${f.id}`)}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer">
                   <td className="py-3 pl-6 pr-4 text-sm font-mono text-gray-700">{f.produtoCodigo}</td>
                   <td className="py-3 pr-4 text-sm text-gray-800">{f.produtoNome}</td>
@@ -261,7 +261,7 @@ export function FichaTecnicasPage() {
                   </td>
                   <td className="py-3 pr-4 text-right" onClick={e => e.stopPropagation()}>
                     <RowMenu ativa={f.ativa}
-                      onView={() => navigate(`/producao/fichas-tecnicas/${f.id}`)}
+                      onView={() => navigate(`/engenharia/fichas-tecnicas/${f.id}`)}
                       onInativar={() => handleInativar(f)} />
                   </td>
                 </tr>

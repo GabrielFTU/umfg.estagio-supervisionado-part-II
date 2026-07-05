@@ -13,5 +13,8 @@ namespace Valisys_Production.Services
 
         public async Task<IEnumerable<MovimentacaoCarteira>> ListarPorCarteiraAsync(Guid carteiraId)
             => await _repository.GetByCarteiraIdAsync(carteiraId);
+
+        public async Task<IEnumerable<MovimentacaoCarteira>> ListarTodasAsync()
+            => await _repository.GetAllAsync();
     }
 }

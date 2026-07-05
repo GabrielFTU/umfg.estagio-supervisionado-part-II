@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
-  ChevronRight, Home, Loader2, CreditCard, Save, X, Pencil,
+  ChevronRight, Home, Loader2, Save, Pencil,
   Plus, Trash2, Search, Users, Lock, Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,27 +26,46 @@ interface VendedorOption {
 
 // ─── Componentes base ─────────────────────────────────────────────────────────
 
-function Field({ label, required, hint, error, children }: {
-  label: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode;
+function Toggle({ checked, onChange, disabled }: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
-    <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1.5">
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
-      {children}
-      {hint && !error && <p className="mt-1 text-[11px] text-gray-400">{hint}</p>}
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-    </div>
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={cn(
+        'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200 shrink-0',
+        checked ? 'bg-[#1D4E89]' : 'bg-gray-200',
+        disabled && 'opacity-60 cursor-default',
+      )}
+    >
+      <span className={cn(
+        'absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+        checked ? 'translate-x-[17px]' : 'translate-x-0',
+      )} />
+    </button>
   );
 }
 
-const inputCls = (error?: string, disabled?: boolean) => cn(
+const underline = (error?: string) => cn(
+  'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
+  error ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
+);
+
+const textareaCls = (disabled?: boolean) => cn(
+  'w-full text-sm border rounded-md px-3 py-2 transition-colors focus:outline-none placeholder:text-gray-300 resize-none',
+  'border-gray-300 focus:border-[#1D4E89]',
+  disabled && 'opacity-60 cursor-default bg-gray-50',
+);
+
+// input com borda usado apenas na busca de vendedores (autocomplete)
+const searchInputCls = () => cn(
   'w-full h-9 px-3 text-sm border rounded-md transition-all',
   'focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89]',
-  'placeholder:text-gray-400',
-  disabled && 'bg-gray-50 text-gray-600 cursor-default',
-  error && !disabled ? 'border-red-400' : 'border-gray-300',
+  'placeholder:text-gray-400 border-gray-300',
 );
 
 // ─── Busca de vendedores ──────────────────────────────────────────────────────
@@ -102,7 +121,7 @@ function VendedorSearch({ onSelect, existingIds }: {
       <div className="relative">
         <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
-          className={cn(inputCls(), 'pl-8')}
+          className={cn(searchInputCls(), 'pl-8')}
           placeholder="Buscar vendedor por nome ou documento…"
           value={query}
           onFocus={() => setOpen(true)}
@@ -298,15 +317,14 @@ export function FormaPagamentoFormPage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
 
-      {/* ── Breadcrumb ── */}
-      <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3 bg-white border-b border-gray-200/70">
+      {/* Breadcrumb */}
+      <div className="shrink-0 px-6 pt-4 pb-3 border-b border-gray-100">
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
-          <Home size={11} /><ChevronRight size={11} />
-          <span>Cadastros</span><ChevronRight size={11} />
-          <button onClick={() => navigate('/cadastros/formas-pagamento')}
-            className="hover:text-gray-600 transition-colors">
+          <Home size={11} />
+          <ChevronRight size={11} />
+          <button onClick={() => navigate('/cadastros/formas-pagamento')} className="hover:text-gray-600 transition-colors">
             Formas de Pagamento
           </button>
           <ChevronRight size={11} />
@@ -314,153 +332,92 @@ export function FormaPagamentoFormPage() {
         </div>
       </div>
 
-      {/* ── Conteúdo ── */}
-      <div className="flex-1 overflow-auto px-4 sm:px-6 py-6 bg-[#eef1f6]">
-        <div className="max-w-2xl mx-auto space-y-4">
-
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-              <CreditCard size={20} className="text-[#1D4E89]" />
-            </div>
-            <h1 className="text-base font-semibold text-gray-800">{titulo[modo]}</h1>
-          </div>
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-auto px-6 py-6">
 
           {globalError && (
-            <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+            <div className="mb-5 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
               {globalError}
             </div>
           )}
 
-          {/* Card principal */}
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-              <div className="p-5 space-y-5">
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Dados</h2>
+          {/* Nome */}
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">
+              Nome {!readonly && <span className="text-red-400">*</span>}
+            </label>
+            <input
+              disabled={readonly}
+              value={nome}
+              onChange={e => { setNome(e.target.value); clearError('nome'); }}
+              placeholder="Ex: Boleto 30/60/90, PIX, Cartão de Crédito…"
+              maxLength={100}
+              className={underline(fieldErrors.nome)}
+            />
+            {fieldErrors.nome && (
+              <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.nome}</p>
+            )}
+          </div>
 
-                <Field label="Nome" required={!readonly} error={fieldErrors.nome}>
-                  <input
-                    disabled={readonly}
-                    value={nome}
-                    onChange={e => { setNome(e.target.value); clearError('nome'); }}
-                    placeholder="Ex: Boleto 30/60/90, PIX, Cartão de Crédito…"
-                    maxLength={100}
-                    className={inputCls(fieldErrors.nome, readonly)}
-                  />
-                </Field>
+          {/* Descrição */}
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">Descrição</label>
+            <textarea
+              disabled={readonly}
+              value={descricao}
+              onChange={e => setDescricao(e.target.value)}
+              placeholder={readonly ? '—' : 'Condições, observações, restrições…'}
+              rows={2}
+              maxLength={500}
+              className={textareaCls(readonly)}
+            />
+            <p className="text-[11px] text-gray-400 mt-0.5">Detalhes adicionais visíveis internamente</p>
+          </div>
 
-                <Field label="Descrição" hint="Detalhes adicionais visíveis internamente">
-                  {readonly ? (
-                    <div className={cn(inputCls(), 'flex items-center min-h-[60px] py-2 h-auto')}>
-                      <span className={descricao ? 'text-gray-700' : 'text-gray-300 italic'}>
-                        {descricao || 'Sem descrição'}
-                      </span>
-                    </div>
-                  ) : (
-                    <textarea
-                      rows={2}
-                      value={descricao}
-                      onChange={e => setDescricao(e.target.value)}
-                      placeholder="Condições, observações, restrições…"
-                      maxLength={500}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/25 focus:border-[#1D4E89] placeholder:text-gray-400 resize-none"
-                    />
-                  )}
-                </Field>
+          {/* Prazo (dias) */}
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">Prazo (dias)</label>
+            {readonly ? (
+              <p className="h-9 flex items-center text-sm text-gray-700">
+                {prazoDias === '' ? '—' : prazoDias === '0' ? 'À vista' : `${prazoDias} dias`}
+              </p>
+            ) : (
+              <input
+                type="number"
+                min={0}
+                max={3650}
+                value={prazoDias}
+                onChange={e => { setPrazoDias(e.target.value); clearError('prazoDias'); }}
+                placeholder="Ex: 30"
+                className={cn(underline(fieldErrors.prazoDias), 'max-w-[180px]')}
+              />
+            )}
+            {fieldErrors.prazoDias
+              ? <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.prazoDias}</p>
+              : !readonly && <p className="text-[11px] text-gray-400 mt-0.5">Use 0 para pagamento à vista. Deixe vazio se não aplicável.</p>
+            }
+          </div>
 
-                <Field
-                  label="Prazo (dias)"
-                  hint="Use 0 para pagamento à vista. Deixe vazio se não aplicável."
-                  error={fieldErrors.prazoDias}
-                >
-                  {readonly ? (
-                    <div className={cn(inputCls(), 'flex items-center')}>
-                      <span className="text-gray-700">
-                        {prazoDias === '' ? '—' : prazoDias === '0' ? 'À vista' : `${prazoDias} dias`}
-                      </span>
-                    </div>
-                  ) : (
-                    <input
-                      type="number"
-                      min={0}
-                      max={3650}
-                      value={prazoDias}
-                      onChange={e => { setPrazoDias(e.target.value); clearError('prazoDias'); }}
-                      placeholder="Ex: 30"
-                      className={cn(inputCls(fieldErrors.prazoDias), 'max-w-[180px]')}
-                    />
-                  )}
-                </Field>
-
-                {/* Toggle ativo — modo editar */}
-                {modo === 'editar' && (
-                  <div className="flex items-center justify-between py-1">
-                    <div>
-                      <p className="text-xs font-medium text-gray-600">Status</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">
-                        {ativo ? 'Ativa e disponível para uso' : 'Inativa'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAtivo(v => !v)}
-                      className={cn(
-                        'relative overflow-hidden w-10 h-[22px] rounded-full transition-colors duration-200',
-                        ativo ? 'bg-[#1D4E89]' : 'bg-gray-200',
-                      )}
-                    >
-                      <span className={cn(
-                        'absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
-                        ativo ? 'translate-x-[17px]' : 'translate-x-0',
-                      )} />
-                    </button>
-                  </div>
-                )}
-
-                {modo === 'visualizar' && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-600">Status:</span>
-                    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
-                      ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
-                      {ativo ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer do form */}
-              <div className="flex items-center justify-end gap-2 px-5 py-3 bg-gray-50 border-t border-gray-100">
-                {readonly ? (
-                  <>
-                    <button type="button" onClick={() => navigate('/cadastros/formas-pagamento')}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md border border-gray-300 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-                      Voltar
-                    </button>
-                    <button type="button" onClick={() => navigate(`/cadastros/formas-pagamento/${id}/editar`)}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md bg-[#1D4E89] text-white text-xs font-medium hover:bg-[#163D6D] transition-colors">
-                      <Pencil size={12} /> Editar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button type="button" onClick={() => navigate('/cadastros/formas-pagamento')}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md border border-gray-300 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-                      <X size={13} /> Cancelar
-                    </button>
-                    <button type="submit" disabled={saving}
-                      className="flex items-center gap-1.5 h-8 px-4 rounded-md bg-[#1D4E89] text-white text-xs font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70">
-                      {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                      {saving ? 'Salvando…' : 'Salvar'}
-                    </button>
-                  </>
-                )}
-              </div>
+          {modo === 'editar' && (
+            <div className="flex items-center gap-1.5 py-4 border-b border-gray-100">
+              <span className="text-sm text-gray-700">Ativo?</span>
+              <Toggle checked={ativo} onChange={setAtivo} />
             </div>
-          </form>
+          )}
 
-          {/* ── Card de Vendedores (só aparece no modo visualizar/editar) ── */}
+          {modo === 'visualizar' && (
+            <div className="flex items-center gap-2 py-2">
+              <span className="text-xs text-gray-500">Status:</span>
+              <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium',
+                ativo ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-500')}>
+                {ativo ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+          )}
+
+          {/* Vendedores autorizados (só aparece no modo visualizar/editar) */}
           {id && (
-            <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
+            <div className="mt-6 rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users size={15} className="text-gray-400" />
@@ -524,9 +481,40 @@ export function FormaPagamentoFormPage() {
               </div>
             </div>
           )}
-
         </div>
-      </div>
+
+        {/* Bottom bar */}
+        <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate('/cadastros/formas-pagamento')}
+            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            {readonly ? 'Voltar' : 'Cancelar'}
+          </button>
+
+          {readonly ? (
+            <button
+              type="button"
+              onClick={() => navigate(`/cadastros/formas-pagamento/${id}/editar`)}
+              className="flex items-center gap-1.5 h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
+            >
+              <Pencil size={13} /> Editar
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={saving}
+              className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {saving
+                ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>
+                : <span className="flex items-center gap-1.5"><Save size={13} /> Salvar</span>
+              }
+            </button>
+          )}
+        </div>
+      </form>
 
       <ModalMsg
         aberto={confirmOpen}

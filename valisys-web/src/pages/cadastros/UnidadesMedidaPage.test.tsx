@@ -41,7 +41,7 @@ describe('UnidadesMedidaPage — carregamento', () => {
   it('exibe spinner enquanto carrega', () => {
     global.fetch = vi.fn(() => new Promise(() => {})) as any;
     renderPage();
-    expect(screen.getByText(/carregando unidades de medida/i)).toBeInTheDocument();
+    expect(screen.getByText(/carregando/i)).toBeInTheDocument();
   });
 
   it('exibe unidades após carregamento bem-sucedido', async () => {
@@ -76,7 +76,7 @@ describe('UnidadesMedidaPage — carregamento', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByText(/nenhuma unidade de medida cadastrada/i)).toBeInTheDocument();
+      expect(screen.getByText(/nenhum registro encontrado/i)).toBeInTheDocument();
     });
   });
 });
@@ -97,14 +97,12 @@ describe('UnidadesMedidaPage — exibição de dados', () => {
     expect(screen.getByText('m')).toBeInTheDocument();
   });
 
-  it('exibe badges de status corretos', async () => {
+  it('destaca unidades inativas com risco no nome', async () => {
     renderPage();
     await waitFor(() => screen.getByText('Quilograma'));
 
-    const ativos   = screen.getAllByText('Ativo');
-    const inativos = screen.getAllByText('Inativo');
-    expect(ativos.length).toBe(2);
-    expect(inativos.length).toBe(1);
+    expect(screen.getByText('Metro')).toHaveClass('line-through');
+    expect(screen.getByText('Quilograma')).not.toHaveClass('line-through');
   });
 
   it('marca unidades base corretamente', async () => {
@@ -127,7 +125,7 @@ describe('UnidadesMedidaPage — busca', () => {
     renderPage();
     await waitFor(() => screen.getByText('Quilograma'));
 
-    fireEvent.change(screen.getByPlaceholderText(/buscar por nome/i), {
+    fireEvent.change(screen.getByPlaceholderText(/informe o nome/i), {
       target: { value: 'Metro' },
     });
 
@@ -140,7 +138,7 @@ describe('UnidadesMedidaPage — busca', () => {
     renderPage();
     await waitFor(() => screen.getByText('Quilograma'));
 
-    fireEvent.change(screen.getByPlaceholderText(/buscar por nome/i), {
+    fireEvent.change(screen.getByPlaceholderText(/informe o nome/i), {
       target: { value: 'kg' },
     });
 
@@ -153,11 +151,11 @@ describe('UnidadesMedidaPage — busca', () => {
     renderPage();
     await waitFor(() => screen.getByText('Quilograma'));
 
-    fireEvent.change(screen.getByPlaceholderText(/buscar por nome/i), {
+    fireEvent.change(screen.getByPlaceholderText(/informe o nome/i), {
       target: { value: 'Inexistente' },
     });
 
-    expect(screen.getByText(/nenhum resultado encontrado/i)).toBeInTheDocument();
+    expect(screen.getByText(/nenhum registro encontrado/i)).toBeInTheDocument();
   });
 });
 

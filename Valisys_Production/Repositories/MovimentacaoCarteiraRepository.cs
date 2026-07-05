@@ -14,7 +14,16 @@ namespace Valisys_Production.Repositories
         public async Task<IEnumerable<MovimentacaoCarteira>> GetByCarteiraIdAsync(Guid carteiraId)
             => await _context.MovimentacoesCarteira
                 .AsNoTracking()
+                .Include(m => m.Carteira)
                 .Where(m => m.CarteiraId == carteiraId)
+                .OrderByDescending(m => m.DataMovimentacao)
+                .ThenByDescending(m => m.CriadoEm)
+                .ToListAsync();
+
+        public async Task<IEnumerable<MovimentacaoCarteira>> GetAllAsync()
+            => await _context.MovimentacoesCarteira
+                .AsNoTracking()
+                .Include(m => m.Carteira)
                 .OrderByDescending(m => m.DataMovimentacao)
                 .ThenByDescending(m => m.CriadoEm)
                 .ToListAsync();
