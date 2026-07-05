@@ -22,7 +22,7 @@ namespace Valisys_Production.Services
 
             var codigo = await _repository.GetProximoCodigoAsync();
 
-            var forma = new FormaPagamento(codigo, dto.Nome.Trim(), dto.Descricao?.Trim(), dto.PrazoDias);
+            var forma = new FormaPagamento(codigo, dto.Nome.Trim(), dto.Descricao?.Trim());
             var criada = await _repository.AddAsync(forma);
 
             await _log.RegistrarAsync("Criação", "FormasPagamento",
@@ -44,7 +44,7 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdWithVendedoresAsync(dto.Id)
                 ?? throw new KeyNotFoundException("Forma de pagamento não encontrada.");
 
-            existing.Atualizar(dto.Nome.Trim(), dto.Descricao?.Trim(), dto.PrazoDias, dto.Ativo);
+            existing.Atualizar(dto.Nome.Trim(), dto.Descricao?.Trim(), dto.Ativo);
 
             var ok = await _repository.UpdateAsync(existing);
 

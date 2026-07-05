@@ -13,6 +13,9 @@ namespace Valisys_Production.Services
                 throw new InvalidOperationException($"Já existe uma finalidade com o nome '{dto.Nome}'.");
 
             var codigo = await repo.GetProximoCodigoAsync();
+            if (codigo > 99)
+                throw new InvalidOperationException("Limite de 99 finalidades de pedido (código de 2 dígitos) atingido.");
+
             var finalidade = new Finalidade(codigo, dto.Nome, dto.Descricao);
             await repo.AddAsync(finalidade);
             await repo.SaveChangesAsync();

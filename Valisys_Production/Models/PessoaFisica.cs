@@ -1,3 +1,4 @@
+using Valisys_Production.Helpers;
 using Valisys_Production.Models.Common;
 using Valisys_Production.Models.Enums;
 
@@ -34,6 +35,8 @@ namespace Valisys_Production.Models
             : base(nome, papel, nomeFantasia, email, telefone, celular, endereco, observacoes)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(cpf);
+            if (!DocumentoValidator.EhCpfValido(cpf))
+                throw new ArgumentException("CPF inválido.");
 
             Cpf             = cpf;
             Rg              = rg;
@@ -58,6 +61,8 @@ namespace Valisys_Production.Models
             string? observacoes)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(cpf);
+            if (!DocumentoValidator.EhCpfValido(cpf))
+                throw new ArgumentException("CPF inválido.");
 
             Cpf            = cpf;
             Rg             = rg;

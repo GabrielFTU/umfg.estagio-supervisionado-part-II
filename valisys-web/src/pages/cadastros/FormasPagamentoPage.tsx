@@ -11,7 +11,6 @@ type FormaItem = {
   codigo: number;
   nome: string;
   descricao: string | null;
-  prazoDias: number | null;
   ativo: boolean;
   restritaAVendedores: boolean;
   totalVendedores: number;
@@ -113,7 +112,6 @@ export function FormasPagamentoPage() {
         codigo:              f.codigo,
         nome:                f.nome,
         descricao:           f.descricao ?? null,
-        prazoDias:           f.prazoDias ?? null,
         ativo:               f.ativo,
         restritaAVendedores: f.restritaAVendedores,
         totalVendedores:     (f.vendedores ?? []).length,
@@ -264,7 +262,6 @@ export function FormasPagamentoPage() {
                 <tr className="border-b border-gray-200">
                   <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Código</th>
                   <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
-                  <th className="text-left font-semibold text-gray-700 px-4 py-3">Prazo</th>
                   <th className="text-left font-semibold text-gray-700 px-4 py-3">Acesso</th>
                   <th className="w-10 pr-4" />
                 </tr>
@@ -272,7 +269,7 @@ export function FormasPagamentoPage() {
               <tbody>
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
+                    <td colSpan={4} className="px-6 py-10 text-center text-sm text-gray-400">
                       Nenhum registro encontrado.
                     </td>
                   </tr>
@@ -287,9 +284,6 @@ export function FormasPagamentoPage() {
                       {f.descricao && (
                         <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-xs">{f.descricao}</p>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      {f.prazoDias != null ? (f.prazoDias === 0 ? 'À vista' : `${f.prazoDias} dias`) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       {f.restritaAVendedores ? (

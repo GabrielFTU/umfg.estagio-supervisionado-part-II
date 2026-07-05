@@ -216,7 +216,7 @@ export function FinalidadesPage() {
                 <tr key={item.id}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-sm text-gray-500">
-                    {item.codigo != null ? String(item.codigo).padStart(3, '0') : '—'}
+                    {item.codigo != null ? String(item.codigo).padStart(2, '0') : '—'}
                   </td>
                   <td className="px-4 py-3">
                     <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>

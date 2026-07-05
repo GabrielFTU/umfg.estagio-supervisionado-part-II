@@ -48,7 +48,7 @@ const ICON_CFG: Record<number, string> = {
   5: 'bg-violet-100 text-violet-700',
 };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 const DEFAULT_STATUSES = [0, 1, 2];
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
@@ -365,7 +365,7 @@ function FiltersPanel({ filters, onChange, onClose, clientes, vendedores, produt
 
 
   return (
-    <div className="absolute z-40 right-0 top-full mt-1.5 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="absolute z-40 right-0 top-full mt-1.5 w-80 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
         <span className="text-sm font-semibold text-gray-800">Filtros</span>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
@@ -471,6 +471,7 @@ export function OrcamentosPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selected, setSelected]     = useState<Set<string>>(new Set());
   const [page, setPage]             = useState(1);
+  const [pageSize, setPageSize]     = useState(20);
   const [converting, setConverting] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const [enviarTarget, setEnviarTarget]     = useState<OrcamentoItem | null>(null);
@@ -519,8 +520,8 @@ export function OrcamentosPage() {
     return true;
   }), [orcamentos, search, filters]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated  = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = useMemo(() => filtered.slice((page - 1) * pageSize, page * pageSize), [filtered, page, pageSize]);
 
   const pageIds     = paginated.map(o => o.id);
   const allChecked  = pageIds.length > 0 && pageIds.every(id => selected.has(id));
@@ -546,7 +547,13 @@ export function OrcamentosPage() {
     const o = enviarTarget;
     setEnviarTarget(null);
     const token = localStorage.getItem('token');
-    await fetch(`/api/orcamentos/${o.id}/enviar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/orcamentos/${o.id}/enviar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.detail ?? data.message ?? 'Não foi possível enviar o orçamento.');
+      return;
+    }
+    showToast('Orçamento enviado com sucesso.');
     load();
   };
 
@@ -557,7 +564,13 @@ export function OrcamentosPage() {
     const o = cancelarTarget;
     setCancelarTarget(null);
     const token = localStorage.getItem('token');
-    await fetch(`/api/orcamentos/${o.id}/cancelar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/orcamentos/${o.id}/cancelar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.detail ?? data.message ?? 'Não foi possível cancelar o orçamento.');
+      return;
+    }
+    showToast('Orçamento cancelado com sucesso.');
     load();
   };
 
@@ -572,16 +585,16 @@ export function OrcamentosPage() {
       const res = await fetch(`/api/orcamentos/${o.id}/converter-em-pedido`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) { const err = await res.json(); alert(err.detail ?? 'Erro ao converter.'); return; }
+      if (!res.ok) { const err = await res.json().catch(() => ({})); showToast(err.detail ?? 'Erro ao converter.'); return; }
       const data = await res.json();
-      showToast();
+      showToast('Orçamento convertido em pedido com sucesso.');
       navigate(`/comercial/pedidos/${data.pedidoVendaId}`);
-    } catch { alert('Erro inesperado ao converter o orçamento.'); }
+    } catch { showToast('Erro inesperado ao converter o orçamento.'); }
   };
 
   const handleConverterEmLote = () => {
     const convertible = orcamentos.filter(o => selected.has(o.id) && o.status !== 4 && o.status !== 5);
-    if (convertible.length === 0) { alert('Nenhum orçamento selecionado pode ser convertido.'); return; }
+    if (convertible.length === 0) { showToast('Nenhum orçamento selecionado pode ser convertido.'); return; }
     setConverterLoteConfirm(true);
   };
 
@@ -601,8 +614,11 @@ export function OrcamentosPage() {
     }
     setConverting(false);
     setSelected(new Set());
-    showToast();
-    if (success < convertible.length) alert(`${success} de ${convertible.length} orçamentos convertidos. Os demais podem já ter sido convertidos.`);
+    if (success < convertible.length) {
+      showToast(`${success} de ${convertible.length} orçamentos convertidos. Os demais podem já ter sido convertidos.`);
+    } else {
+      showToast(`${success} orçamento(s) convertido(s) em pedido com sucesso.`);
+    }
     load();
   };
 
@@ -645,8 +661,8 @@ export function OrcamentosPage() {
       )}
 
       {/* ── Toolbar ── */}
-      <div className="shrink-0 px-6 py-3 border-b border-gray-200 flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="shrink-0 px-6 py-3 border-b border-gray-200 flex items-center flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search size={14} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             className="w-full h-9 pl-6 pr-3 text-sm bg-transparent border-b border-gray-400 focus:border-blue-600 focus:outline-none transition-colors placeholder:text-gray-400 text-gray-800"
@@ -663,7 +679,7 @@ export function OrcamentosPage() {
 
         <AcoesMenu selectedCount={selectedCount} onConverterLote={handleConverterEmLote} converting={converting} />
 
-        <div className="ml-auto">
+        <div className="sm:ml-auto">
           <div ref={filterRef} className="relative">
             <button onClick={() => setFilterOpen(v => !v)}
               className={cn(
@@ -813,27 +829,33 @@ export function OrcamentosPage() {
             )}
           </span>
 
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="w-7 h-7 flex items-center justify-center rounded text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                <ChevronLeft size={13} />
-              </button>
-              {pageButtons().map(p => (
-                <button key={p} onClick={() => setPage(p)}
-                  className={cn(
-                    'w-7 h-7 flex items-center justify-center rounded text-xs font-semibold transition-colors',
-                    p === page ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200',
-                  )}>
-                  {p}
+          <div className="flex items-center gap-3">
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="w-7 h-7 flex items-center justify-center rounded text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={13} />
                 </button>
-              ))}
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="w-7 h-7 flex items-center justify-center rounded text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                <ChevronRight size={13} />
-              </button>
-            </div>
-          )}
+                {pageButtons().map(p => (
+                  <button key={p} onClick={() => setPage(p)}
+                    className={cn(
+                      'w-7 h-7 flex items-center justify-center rounded text-xs font-semibold transition-colors',
+                      p === page ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200',
+                    )}>
+                    {p}
+                  </button>
+                ))}
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="w-7 h-7 flex items-center justify-center rounded text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronRight size={13} />
+                </button>
+              </div>
+            )}
+            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+              className="border border-gray-300 rounded text-xs px-1 py-1 outline-none focus:border-blue-600 text-gray-700">
+              {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s} / página</option>)}
+            </select>
+          </div>
         </div>
       )}
 

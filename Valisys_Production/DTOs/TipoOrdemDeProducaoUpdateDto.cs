@@ -12,10 +12,6 @@ namespace Valisys_Production.DTOs
         [StringLength(100)]
         public string Nome { get; set; }
 
-        [Required(ErrorMessage = "O código é obrigatório.")]
-        [StringLength(10)]
-        public string Codigo { get; set; }
-
         [StringLength(500)]
         public string? Descricao { get; set; } 
 

@@ -50,5 +50,20 @@ namespace Valisys_Production.Models
         public void LimparParcelas() => _parcelas.Clear();
 
         public void AdicionarParcela(ParcelaCondicao parcela) => _parcelas.Add(parcela);
+
+        /// <summary>
+        /// Calcula o vencimento de uma parcela a partir da data base. Quando o vencimento é em
+        /// dia fixo, o dia do mês da data base é preservado e as parcelas avançam em meses inteiros
+        /// (em vez de um deslocamento fixo em dias, que faz o dia do vencimento variar conforme o
+        /// tamanho do mês).
+        /// </summary>
+        public DateTime CalcularVencimentoParcela(DateTime dataBase, int numeroDias)
+        {
+            if (!VencimentoDiaFixo)
+                return dataBase.AddDays(numeroDias);
+
+            var meses = (int)Math.Round(numeroDias / 30.0, MidpointRounding.AwayFromZero);
+            return dataBase.AddMonths(meses);
+        }
     }
 }

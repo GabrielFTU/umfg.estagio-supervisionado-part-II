@@ -12,14 +12,17 @@ namespace Valisys_Production.Services
         private readonly ILogSistemaService _log;
         private readonly IContaReceberService _contaReceberService;
         private readonly ICondicaoPagamentoRepository _condicaoPagamentoRepository;
+        private readonly IFormaPagamentoRepository _formaPagamentoRepository;
 
         public PedidoVendaService(IPedidoVendaRepository repository, ILogSistemaService log,
-            IContaReceberService contaReceberService, ICondicaoPagamentoRepository condicaoPagamentoRepository)
+            IContaReceberService contaReceberService, ICondicaoPagamentoRepository condicaoPagamentoRepository,
+            IFormaPagamentoRepository formaPagamentoRepository)
         {
             _repository = repository;
             _log = log;
             _contaReceberService = contaReceberService;
             _condicaoPagamentoRepository = condicaoPagamentoRepository;
+            _formaPagamentoRepository = formaPagamentoRepository;
         }
 
         public async Task<PedidoVenda> CreateAsync(PedidoVendaCreateDto dto, Guid usuarioId)
@@ -32,6 +35,8 @@ namespace Valisys_Production.Services
 
             var codigo = await _repository.GetProximoCodigoAsync();
             var representanteId = dto.RepresentanteId ?? usuarioId;
+
+            await ValidarFormaPagamentoAsync(dto.FormaPagamento, representanteId);
 
             var pedido = new PedidoVenda(
                 codigo,
@@ -81,6 +86,8 @@ namespace Valisys_Production.Services
                 throw new InvalidOperationException("Pedidos cancelados ou concluídos não podem ser editados.");
 
             var representanteId = dto.RepresentanteId ?? usuarioId;
+
+            await ValidarFormaPagamentoAsync(dto.FormaPagamento, representanteId);
 
             existente.Atualizar(
                 dto.ClienteId,
@@ -175,6 +182,19 @@ namespace Valisys_Production.Services
             };
 
             await _contaReceberService.CreateAsync(dto);
+        }
+
+        private async Task ValidarFormaPagamentoAsync(string? formaPagamento, Guid representanteId)
+        {
+            if (string.IsNullOrWhiteSpace(formaPagamento)) return;
+
+            var formas = await _formaPagamentoRepository.GetAllWithVendedoresAsync();
+            var forma = formas.FirstOrDefault(f => f.Ativo &&
+                f.Nome.Equals(formaPagamento, StringComparison.OrdinalIgnoreCase));
+
+            if (forma != null && !forma.VendedorPodeUsar(representanteId))
+                throw new ArgumentException(
+                    $"O representante selecionado não está autorizado a usar a forma de pagamento '{forma.Nome}'.");
         }
 
         private static string? ExtrairTag(string? obs, string tag)

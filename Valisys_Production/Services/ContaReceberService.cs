@@ -51,7 +51,7 @@ namespace Valisys_Production.Services
                     : Math.Round(dto.ValorTotal * pc.Percentual / 100m, 2);
                 valorAcumulado += valor;
 
-                var vencimentoParcela = dto.DataVencimento.AddDays(pc.NumeroDias);
+                var vencimentoParcela = condicao.CalcularVencimentoParcela(dto.DataVencimento, pc.NumeroDias);
                 var parcela = new ParcelaReceber(pc.Numero, valor, vencimentoParcela);
                 parcela.DefinirCodigo($"{codigo}/{pc.Numero}");
                 conta.AdicionarParcela(parcela);

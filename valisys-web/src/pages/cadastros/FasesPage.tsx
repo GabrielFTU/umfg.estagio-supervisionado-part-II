@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { useToast } from '@/contexts/ToastContext';
 
 type FaseItem = {
   id: string;
@@ -73,8 +74,10 @@ function RowMenu({ ativo, onEdit, onView, onToggleAtivo }: {
 
 export function FasesPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [items, setItems]       = useState<FaseItem[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
   const [search, setSearch]     = useState('');
   const [statusFiltro, setStatusFiltro] = useState<'todos' | 'ativo' | 'inativo'>('ativo');
   const [filterOpen, setFilterOpen]     = useState(false);
@@ -94,6 +97,7 @@ export function FasesPage() {
 
   const load = async () => {
     setLoading(true);
+    setError('');
     const token = localStorage.getItem('token');
     try {
       const res = await fetch('/api/fases-producao', {
@@ -112,6 +116,7 @@ export function FasesPage() {
       })));
     } catch {
       setItems([]);
+      setError('Não foi possível carregar as fases de produção.');
     } finally {
       setLoading(false);
     }
@@ -137,6 +142,11 @@ export function FasesPage() {
       alert(body.detail ?? body.message ?? 'Esta fase está em uso e não pode ser desativada.');
       return;
     }
+    if (!res.ok) {
+      alert('Erro inesperado ao alterar o status da fase. Tente novamente.');
+      return;
+    }
+    showToast(f.ativo ? 'Fase desativada com sucesso.' : 'Fase reativada com sucesso.');
     load();
   };
 
@@ -151,6 +161,10 @@ export function FasesPage() {
   const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
   const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
   const statusLabel = statusFiltro === 'ativo' ? 'ATIVO' : statusFiltro === 'inativo' ? 'INATIVO' : null;
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -215,6 +229,11 @@ export function FasesPage() {
           <div className="flex items-center justify-center h-full gap-2 text-gray-400 text-sm">
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <p className="text-sm font-semibold text-red-500">{error}</p>
+            <button onClick={load} className="text-xs text-[#1D4E89] hover:underline">Tentar novamente</button>
+          </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -273,7 +292,7 @@ export function FasesPage() {
       </div>
 
       {/* Paginação */}
-      {!loading && filtered.length > 0 && (
+      {!loading && !error && filtered.length > 0 && (
         <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
           <span className="mr-4">Exibindo {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.</span>
           <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>

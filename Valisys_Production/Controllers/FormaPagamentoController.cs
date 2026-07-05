@@ -117,7 +117,6 @@ namespace Valisys_Production.Controllers
             Codigo              = f.Codigo,
             Nome                = f.Nome,
             Descricao           = f.Descricao,
-            PrazoDias           = f.PrazoDias,
             Ativo               = f.Ativo,
             RestritaAVendedores = f.Vendedores.Any(),
             CriadoEm           = f.CriadoEm,

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { useToast } from '@/contexts/ToastContext';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -116,6 +117,7 @@ function RowMenu({ p, onView, onEdit, onDesativar, onBloquear }: {
 
 export function ClientesPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [pessoas, setPessoas] = useState<PessoaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
@@ -190,14 +192,24 @@ export function ClientesPage() {
     if (acao === 'desativar') {
       const method = p.ativo ? 'DELETE' : 'PATCH';
       const url = p.ativo ? `${base}/${p.id}` : `${base}/${p.id}/reativar`;
-      await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.message ?? `Não foi possível ${p.ativo ? 'desativar' : 'reativar'} o cliente.`);
+        return;
+      }
+      showToast(`Cliente ${p.ativo ? 'desativado' : 'reativado'} com sucesso.`);
       load();
     } else {
       const endpoint = p.bloqueado ? 'desbloquear' : 'bloquear';
       const res = await fetch(`${base}/${p.id}/${endpoint}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        setPessoas(prev => prev.map(item => item.id === p.id ? { ...item, bloqueado: !p.bloqueado } : item));
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.message ?? `Não foi possível ${p.bloqueado ? 'desbloquear' : 'bloquear'} o crédito do cliente.`);
+        return;
       }
+      setPessoas(prev => prev.map(item => item.id === p.id ? { ...item, bloqueado: !p.bloqueado } : item));
+      showToast(`Crédito ${p.bloqueado ? 'desbloqueado' : 'bloqueado'} com sucesso.`);
     }
   };
 

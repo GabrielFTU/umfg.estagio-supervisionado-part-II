@@ -168,7 +168,6 @@ export function FormaPagamentoFormPage() {
   // campos do formulário
   const [nome, setNome]           = useState('');
   const [descricao, setDescricao] = useState('');
-  const [prazoDias, setPrazoDias] = useState('');
   const [ativo, setAtivo]         = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [removerVendedorTarget, setRemoverVendedorTarget] = useState<VendedorVinculo | null>(null);
@@ -190,7 +189,6 @@ export function FormaPagamentoFormPage() {
       const data: any = await res.json();
       setNome(data.nome);
       setDescricao(data.descricao ?? '');
-      setPrazoDias(data.prazoDias != null ? String(data.prazoDias) : '');
       setAtivo(data.ativo);
       setVendedores((data.vendedores ?? []).map((v: any) => ({
         id:           v.id,
@@ -208,10 +206,6 @@ export function FormaPagamentoFormPage() {
     const e: Record<string, string> = {};
     if (!nome.trim()) e.nome = 'O nome é obrigatório.';
     if (nome.trim().length > 100) e.nome = 'Máximo 100 caracteres.';
-    if (prazoDias !== '') {
-      const n = Number(prazoDias);
-      if (!Number.isInteger(n) || n < 0 || n > 3650) e.prazoDias = 'Prazo deve ser entre 0 e 3650 dias.';
-    }
     setFieldErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -228,7 +222,6 @@ export function FormaPagamentoFormPage() {
     const body = {
       nome:      nome.trim(),
       descricao: descricao.trim() || undefined,
-      prazoDias: prazoDias !== '' ? Number(prazoDias) : undefined,
     };
     try {
       const res = modo === 'criar'
@@ -350,7 +343,7 @@ export function FormaPagamentoFormPage() {
               disabled={readonly}
               value={nome}
               onChange={e => { setNome(e.target.value); clearError('nome'); }}
-              placeholder="Ex: Boleto 30/60/90, PIX, Cartão de Crédito…"
+              placeholder="Ex: Boleto, PIX, Cartão de Crédito…"
               maxLength={100}
               className={underline(fieldErrors.nome)}
             />
@@ -372,30 +365,6 @@ export function FormaPagamentoFormPage() {
               className={textareaCls(readonly)}
             />
             <p className="text-[11px] text-gray-400 mt-0.5">Detalhes adicionais visíveis internamente</p>
-          </div>
-
-          {/* Prazo (dias) */}
-          <div className="mb-6">
-            <label className="block text-xs text-gray-500 mb-1">Prazo (dias)</label>
-            {readonly ? (
-              <p className="h-9 flex items-center text-sm text-gray-700">
-                {prazoDias === '' ? '—' : prazoDias === '0' ? 'À vista' : `${prazoDias} dias`}
-              </p>
-            ) : (
-              <input
-                type="number"
-                min={0}
-                max={3650}
-                value={prazoDias}
-                onChange={e => { setPrazoDias(e.target.value); clearError('prazoDias'); }}
-                placeholder="Ex: 30"
-                className={cn(underline(fieldErrors.prazoDias), 'max-w-[180px]')}
-              />
-            )}
-            {fieldErrors.prazoDias
-              ? <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.prazoDias}</p>
-              : !readonly && <p className="text-[11px] text-gray-400 mt-0.5">Use 0 para pagamento à vista. Deixe vazio se não aplicável.</p>
-            }
           </div>
 
           {modo === 'editar' && (

@@ -689,7 +689,8 @@ namespace Valisys_Production.Data
             }).ToArray();
             modelBuilder.Entity<UnidadeMedida>().HasData(unidadesSeeded);
 
-            var tipoOrdem = new TipoOrdemDeProducao("Normal", "NOR", "Ordem de Produção Padrão");
+            var tipoOrdem = new TipoOrdemDeProducao("Normal", "Ordem de Produção Padrão");
+            tipoOrdem.DefinirCodigo(1);
             tipoOrdem.InicializarParaSeed(SampleTipoOrdemDeProducaoId, seedDate);
             modelBuilder.Entity<TipoOrdemDeProducao>().HasData(tipoOrdem);
         }

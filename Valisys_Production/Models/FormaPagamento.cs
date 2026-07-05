@@ -9,27 +9,24 @@ namespace Valisys_Production.Models
         public int Codigo { get; private set; }
         public string Nome { get; private set; } = string.Empty;
         public string? Descricao { get; private set; }
-        public int? PrazoDias { get; private set; }
 
         public IReadOnlyCollection<FormaPagamentoVendedor> Vendedores => _vendedores.AsReadOnly();
 
         protected FormaPagamento() { }
 
-        public FormaPagamento(int codigo, string nome, string? descricao, int? prazoDias)
+        public FormaPagamento(int codigo, string nome, string? descricao)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(nome);
             Codigo     = codigo;
             Nome       = nome;
             Descricao  = descricao;
-            PrazoDias  = prazoDias;
         }
 
-        public void Atualizar(string nome, string? descricao, int? prazoDias, bool ativo)
+        public void Atualizar(string nome, string? descricao, bool ativo)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(nome);
             Nome      = nome;
             Descricao = descricao;
-            PrazoDias = prazoDias;
             DefinirAtivo(ativo);
             RegistrarAtualizacao();
         }

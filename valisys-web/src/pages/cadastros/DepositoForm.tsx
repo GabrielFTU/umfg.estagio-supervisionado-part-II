@@ -13,10 +13,7 @@ type DepositoData = {
   almoxarifadoId: string;
   codigoIdentificador: number;
   nome: string;
-  depositoPadraoRequisicoes: boolean;
-  controlaQualidade2a: boolean;
   controlaLote: boolean;
-  controlaMultiplosLocais: boolean;
   ativo: boolean;
 };
 
@@ -86,10 +83,7 @@ export function DepositoFormPage() {
   const [nome, setNome]                               = useState('');
   const [ativo, setAtivo]                             = useState(true);
   const [confirmOpen, setConfirmOpen]                 = useState(false);
-  const [depositoPadraoRequisicoes, setDepositoPadraoRequisicoes] = useState(false);
-  const [controlaQualidade2a, setControlaQualidade2a]             = useState(false);
-  const [controlaLote, setControlaLote]                           = useState(false);
-  const [controlaMultiplosLocais, setControlaMultiplosLocais]     = useState(false);
+  const [controlaLote, setControlaLote]               = useState(false);
 
   useEffect(() => {
     const fetchAlmox = async () => {
@@ -118,10 +112,7 @@ export function DepositoFormPage() {
         setCodigoIdentificador(String(data.codigoIdentificador));
         setNome(data.nome);
         setAtivo(data.ativo);
-        setDepositoPadraoRequisicoes(data.depositoPadraoRequisicoes ?? false);
-        setControlaQualidade2a(data.controlaQualidade2a ?? false);
         setControlaLote(data.controlaLote ?? false);
-        setControlaMultiplosLocais(data.controlaMultiplosLocais ?? false);
 
         if (readonly) {
           const r2 = await fetch('/api/almoxarifados', { headers: { Authorization: `Bearer ${token}` } });
@@ -157,10 +148,7 @@ export function DepositoFormPage() {
         almoxarifadoId,
         codigoIdentificador: Number(codigoIdentificador),
         nome: nome.trim(),
-        depositoPadraoRequisicoes,
-        controlaQualidade2a,
         controlaLote,
-        controlaMultiplosLocais,
       };
       const res = modo === 'criar'
         ? await fetch('/api/Deposito', {
@@ -291,29 +279,10 @@ export function DepositoFormPage() {
             )}
           </div>
 
-          {/* 4 toggles */}
-          <ToggleRow
-            label="Depósito padrão para requisições?"
-            checked={depositoPadraoRequisicoes}
-            onChange={setDepositoPadraoRequisicoes}
-            disabled={readonly}
-          />
-          <ToggleRow
-            label="Controla produto acabado de 2ª qualidade?"
-            checked={controlaQualidade2a}
-            onChange={setControlaQualidade2a}
-            disabled={readonly}
-          />
           <ToggleRow
             label="Controla lote?"
             checked={controlaLote}
             onChange={setControlaLote}
-            disabled={readonly}
-          />
-          <ToggleRow
-            label="Controla múltiplos locais?"
-            checked={controlaMultiplosLocais}
-            onChange={setControlaMultiplosLocais}
             disabled={readonly}
           />
 

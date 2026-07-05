@@ -376,7 +376,8 @@ function ProdutoModal({ onSelect, onClose }: { onSelect: (p: ProdutoOption) => v
 // ─── Página ───────────────────────────────────────────────────────────────────
 
 interface FormState {
-  clienteId: string; formaPagamentoId: string; condicaoPagamentoId: string;
+  clienteId: string; representanteId: string; finalidadeId: string;
+  formaPagamentoId: string; condicaoPagamentoId: string;
   dataValidade: string; desconto: string;
   observacaoInterna: string; observacaoExterna: string;
 }
@@ -403,11 +404,14 @@ export function OrcamentoFormPage() {
   const [converterConfirm, setConverterConfirm] = useState(false);
   const [formasPagamento, setFormasPagamento]     = useState<SelectOption[]>([]);
   const [condicoesPagamento, setCondicoesPagamento] = useState<SelectOption[]>([]);
+  const [representantes, setRepresentantes]       = useState<SelectOption[]>([]);
+  const [finalidades, setFinalidades]             = useState<SelectOption[]>([]);
   const [convertendo, setConvertendo]             = useState(false);
 
   const [cliente, setCliente] = useState<{ id: string; nome: string } | null>(null);
   const [form, setForm] = useState<FormState>({
-    clienteId: '', formaPagamentoId: '', condicaoPagamentoId: '',
+    clienteId: '', representanteId: '', finalidadeId: '',
+    formaPagamentoId: '', condicaoPagamentoId: '',
     dataValidade: '', desconto: '',
     observacaoInterna: '', observacaoExterna: '',
   });
@@ -422,6 +426,12 @@ export function OrcamentoFormPage() {
     fetch('/api/condicoes-pagamento', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((data: any[]) => setCondicoesPagamento(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
+    fetch('/api/finalidades', { headers: h })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setFinalidades(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
+    fetch('/api/Usuarios', { headers: h })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setRepresentantes(data.filter(u => u.ativo).map(u => ({ value: u.id, label: u.nome }))));
   }, []);
 
   useEffect(() => {
@@ -438,6 +448,8 @@ export function OrcamentoFormPage() {
       setCliente({ id: data.clienteId, nome: data.clienteNome });
       setForm({
         clienteId: data.clienteId,
+        representanteId: data.representanteId ?? '',
+        finalidadeId: data.finalidade ?? '',
         formaPagamentoId: data.formaPagamento ?? '',
         condicaoPagamentoId: data.condicaoPagamento ?? '',
         dataValidade: toDateInput(data.dataValidade),
@@ -485,8 +497,15 @@ export function OrcamentoFormPage() {
   const validar = () => {
     const e: Record<string, string> = {};
     if (!form.clienteId)       e.clienteId       = 'Selecione um cliente.';
+    if (!form.finalidadeId)    e.finalidadeId    = 'Selecione a finalidade.';
     if (!form.formaPagamentoId) e.formaPagamentoId = 'Selecione a forma de pagamento.';
     if (itens.length === 0)    e.itens            = 'Adicione ao menos um item.';
+    if (parseCurrency(form.desconto) > subtotal) e.desconto = 'O desconto não pode ser maior que o subtotal.';
+    if (form.dataValidade) {
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      const validade = new Date(form.dataValidade + 'T00:00:00');
+      if (validade < hoje) e.dataValidade = 'A data de validade não pode estar no passado.';
+    }
     setErros(e);
     return Object.keys(e).length === 0;
   };
@@ -498,6 +517,8 @@ export function OrcamentoFormPage() {
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
     const payload = {
       clienteId: form.clienteId,
+      representanteId: form.representanteId || undefined,
+      finalidade: form.finalidadeId,
       formaPagamento: form.formaPagamentoId || undefined,
       condicaoPagamento: form.condicaoPagamentoId || undefined,
       dataValidade: form.dataValidade || undefined,
@@ -533,13 +554,25 @@ export function OrcamentoFormPage() {
     setMudarStatusAcao(acao);
   };
 
+  const STATUS_APOS_ACAO: Record<'enviar' | 'aprovar' | 'cancelar', number> = { enviar: 1, aprovar: 2, cancelar: 4 };
+
   const execMudarStatus = async () => {
     if (!mudarStatusAcao) return;
     const acao = mudarStatusAcao;
     setMudarStatusAcao(null);
     const token = localStorage.getItem('token');
-    await fetch(`/api/orcamentos/${orcamentoId}/${acao}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
-    window.location.reload();
+    const res = await fetch(`/api/orcamentos/${orcamentoId}/${acao}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.detail ?? data.message ?? 'Não foi possível concluir a ação.');
+      return;
+    }
+    setStatusOrcamento(STATUS_APOS_ACAO[acao]);
+    showToast(
+      acao === 'enviar'  ? 'Orçamento enviado com sucesso.' :
+      acao === 'aprovar' ? 'Orçamento aprovado com sucesso.' :
+      'Orçamento cancelado com sucesso.'
+    );
   };
 
   const handleConverter = () => { setConverterConfirm(true); };
@@ -670,9 +703,9 @@ export function OrcamentoFormPage() {
 
           <div className="mt-1">
 
-            {/* Finalidade: sempre Orçamento, não editável */}
+            {/* Tipo de documento: sempre Orçamento, não editável */}
             <div className="border-b border-gray-200 py-3">
-              <label className="block text-xs text-gray-400 mb-0.5">Finalidade</label>
+              <label className="block text-xs text-gray-400 mb-0.5">Tipo de Documento</label>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">Orçamento</span>
                 <span className="text-[11px] text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full font-medium">fixo</span>
@@ -686,6 +719,26 @@ export function OrcamentoFormPage() {
                 readOnly={readOnly}
               />
             </UField>
+
+            <SelectWrap
+              label="Representante"
+              value={form.representanteId}
+              onChange={setF('representanteId')}
+              options={representantes}
+              placeholder="Selecione o representante"
+              readOnly={readOnly}
+            />
+
+            <SelectWrap
+              label="Finalidade de pedido"
+              required
+              value={form.finalidadeId}
+              onChange={setF('finalidadeId')}
+              options={finalidades}
+              placeholder="Selecione a finalidade"
+              readOnly={readOnly}
+              error={erros.finalidadeId}
+            />
 
             <SelectWrap
               label="Forma de Pagamento"
@@ -707,7 +760,7 @@ export function OrcamentoFormPage() {
               readOnly={readOnly}
             />
 
-            <UField label="Data de Validade">
+            <UField label="Data de Validade" error={erros.dataValidade}>
               {readOnly
                 ? <p className="text-sm text-gray-700">{form.dataValidade ? new Date(form.dataValidade + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
                 : <DatePicker

@@ -105,6 +105,7 @@ namespace Valisys_Production.Controllers
                 ClienteNome             = clientes.TryGetValue(orcamento.ClienteId, out var cn) ? cn : "—",
                 RepresentanteId         = orcamento.RepresentanteId,
                 RepresentanteNome       = orcamento.RepresentanteId != Guid.Empty && usuarios.TryGetValue(orcamento.RepresentanteId, out var rn) ? rn : null,
+                Finalidade              = ExtrairTag(orcamento.ObservacaoInterna, "Finalidade"),
                 FormaPagamento          = ExtrairTag(orcamento.ObservacaoInterna, "Pagamento"),
                 CondicaoPagamento       = ExtrairTag(orcamento.ObservacaoInterna, "Condicao"),
                 DataEmissao             = orcamento.DataEmissao,

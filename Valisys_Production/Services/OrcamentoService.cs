@@ -31,6 +31,9 @@ namespace Valisys_Production.Services
             if (!dto.Itens.Any())
                 throw new ArgumentException("O orçamento deve conter ao menos um item.");
 
+            ValidarDesconto(dto.Desconto, dto.Itens.Select(i => (i.ValorUnitario, i.DescontoUnitario, i.Quantidade)));
+            ValidarDataValidade(dto.DataValidade);
+
             var codigo          = await _repository.GetProximoCodigoAsync();
             var representanteId = dto.RepresentanteId ?? usuarioId;
 
@@ -41,7 +44,7 @@ namespace Valisys_Production.Services
                 representanteId,
                 dto.DataValidade,
                 dto.Desconto,
-                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento),
+                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento, dto.Finalidade),
                 dto.ObservacaoExterna);
 
             foreach (var item in dto.Itens)
@@ -79,6 +82,9 @@ namespace Valisys_Production.Services
             if (existente.Status == StatusOrcamento.Cancelado || existente.Status == StatusOrcamento.ConvertidoEmPedido)
                 throw new InvalidOperationException("Orçamentos cancelados ou convertidos não podem ser editados.");
 
+            ValidarDesconto(dto.Desconto, dto.Itens.Select(i => (i.ValorUnitario, i.DescontoUnitario, i.Quantidade)));
+            ValidarDataValidade(dto.DataValidade);
+
             var representanteId = dto.RepresentanteId ?? usuarioId;
 
             existente.Atualizar(
@@ -86,7 +92,7 @@ namespace Valisys_Production.Services
                 representanteId,
                 dto.DataValidade,
                 dto.Desconto,
-                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento),
+                CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento, dto.Finalidade),
                 dto.ObservacaoExterna);
 
             var novosItens = dto.Itens.Select(i =>
@@ -146,6 +152,7 @@ namespace Valisys_Production.Services
                 RepresentanteId     = orcamento.RepresentanteId,
                 FormaPagamento      = ExtrairTag(orcamento.ObservacaoInterna, "Pagamento"),
                 CondicaoPagamento   = ExtrairTag(orcamento.ObservacaoInterna, "Condicao"),
+                Finalidade          = ExtrairTag(orcamento.ObservacaoInterna, "Finalidade"),
                 DataPrevisaoEntrega = null,
                 Desconto            = descontoConvertido,
                 ObservacaoInterna   = LimparObservacaoInterna(orcamento.ObservacaoInterna),
@@ -184,13 +191,27 @@ namespace Valisys_Production.Services
             }
         }
 
-        private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento, string? condicaoPagamento)
+        private static string? CombinarObservacaoInterna(string? obs, string? formaPagamento, string? condicaoPagamento, string? finalidade)
         {
             var partes = new List<string>();
+            if (!string.IsNullOrWhiteSpace(finalidade))        partes.Add($"[Finalidade: {finalidade}]");
             if (!string.IsNullOrWhiteSpace(formaPagamento))    partes.Add($"[Pagamento: {formaPagamento}]");
             if (!string.IsNullOrWhiteSpace(condicaoPagamento)) partes.Add($"[Condicao: {condicaoPagamento}]");
             if (!string.IsNullOrWhiteSpace(obs))               partes.Add(obs);
             return partes.Count > 0 ? string.Join(" | ", partes) : null;
+        }
+
+        private static void ValidarDesconto(decimal desconto, IEnumerable<(decimal ValorUnitario, decimal DescontoUnitario, int Quantidade)> itens)
+        {
+            var subtotal = itens.Sum(i => (i.ValorUnitario - i.DescontoUnitario) * i.Quantidade);
+            if (desconto > subtotal)
+                throw new ArgumentException("O desconto não pode ser maior que o subtotal.");
+        }
+
+        private static void ValidarDataValidade(DateTime? dataValidade)
+        {
+            if (dataValidade.HasValue && dataValidade.Value.Date < DateTime.UtcNow.Date)
+                throw new ArgumentException("A data de validade não pode estar no passado.");
         }
 
         private static string? ExtrairTag(string? obs, string tag)

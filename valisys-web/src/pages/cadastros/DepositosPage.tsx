@@ -10,10 +10,7 @@ interface DepositoItem {
   nome: string;
   descricao?: string;
   almoxarifadoNome: string;
-  depositoPadraoRequisicoes: boolean;
-  controlaQualidade2a: boolean;
   controlaLote: boolean;
-  controlaMultiplosLocais: boolean;
   ativo: boolean;
 }
 
@@ -204,17 +201,14 @@ export function DepositosPage() {
               <tr className="border-b border-gray-200">
                 <th className="text-left font-semibold text-gray-700 px-6 py-3 w-20">Código</th>
                 <th className="text-left font-semibold text-gray-700 px-4 py-3">Nome</th>
-                <th className="text-center font-semibold text-gray-700 px-3 py-3 w-44 leading-tight">Depósito padrão para requisições?</th>
-                <th className="text-center font-semibold text-gray-700 px-3 py-3 w-44 leading-tight">Controla produto acabado de 2ª qualidade?</th>
                 <th className="text-center font-semibold text-gray-700 px-3 py-3 w-32">Controla lote?</th>
-                <th className="text-center font-semibold text-gray-700 px-3 py-3 w-36 leading-tight">Controla múltiplos locais?</th>
                 <th className="w-10 pr-4" />
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-400">
+                  <td colSpan={4} className="px-6 py-10 text-center text-sm text-gray-400">
                     Nenhum registro encontrado.
                   </td>
                 </tr>
@@ -227,10 +221,7 @@ export function DepositosPage() {
                       {item.nome.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-center"><BoolIcon value={item.depositoPadraoRequisicoes} /></td>
-                  <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaQualidade2a} /></td>
                   <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaLote} /></td>
-                  <td className="px-3 py-3 text-center"><BoolIcon value={item.controlaMultiplosLocais} /></td>
                   <td className="pr-4 text-right">
                     <RowMenu ativo={item.ativo}
                       onView={() => navigate(`/cadastros/depositos/${item.id}`)}

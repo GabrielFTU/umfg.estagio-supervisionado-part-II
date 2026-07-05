@@ -18,6 +18,7 @@ namespace Valisys_Production.DTOs
     {
         [Required] public Guid ClienteId { get; set; }
         public Guid? RepresentanteId { get; set; }
+        [Required, MaxLength(100)] public string Finalidade { get; set; } = string.Empty;
         [MaxLength(100)] public string? FormaPagamento { get; set; }
         [MaxLength(100)] public string? CondicaoPagamento { get; set; }
         public DateTime? DataValidade { get; set; }
@@ -43,6 +44,7 @@ namespace Valisys_Production.DTOs
         [Required] public Guid Id { get; set; }
         [Required] public Guid ClienteId { get; set; }
         public Guid? RepresentanteId { get; set; }
+        [Required, MaxLength(100)] public string Finalidade { get; set; } = string.Empty;
         [MaxLength(100)] public string? FormaPagamento { get; set; }
         [MaxLength(100)] public string? CondicaoPagamento { get; set; }
         public DateTime? DataValidade { get; set; }
@@ -75,6 +77,7 @@ namespace Valisys_Production.DTOs
         public string ClienteNome { get; set; } = string.Empty;
         public Guid? RepresentanteId { get; set; }
         public string? RepresentanteNome { get; set; }
+        public string? Finalidade { get; set; }
         public string? FormaPagamento { get; set; }
         public string? CondicaoPagamento { get; set; }
         public DateTime DataEmissao { get; set; }

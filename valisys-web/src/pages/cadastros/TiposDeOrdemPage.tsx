@@ -6,7 +6,7 @@ import { ModalMsg } from '@/components/ui/ModalMsg';
 
 type TipoDeOrdemItem = {
   id: string;
-  codigo: string;
+  codigo: number;
   nome: string;
   descricao: string | null;
   ativo: boolean;
@@ -99,7 +99,7 @@ export function TiposDeOrdemPage() {
       const data: any[] = await res.json();
       const lista: TipoDeOrdemItem[] = data.map(c => ({
         id: c.id,
-        codigo: c.codigo ?? '—',
+        codigo: c.codigo,
         nome: c.nome,
         descricao: c.descricao ?? null,
         ativo: c.ativo,
@@ -151,7 +151,7 @@ export function TiposDeOrdemPage() {
   const filtered = tiposDeOrdem.filter(t => {
     if (search) {
       const q = search.toLowerCase();
-      if (!t.nome.toLowerCase().includes(q) && !t.codigo.includes(q)) return false;
+      if (!t.nome.toLowerCase().includes(q) && !String(t.codigo).padStart(3, '0').includes(search)) return false;
     }
     if (statusFiltro === 'ativo'   && !t.ativo) return false;
     if (statusFiltro === 'inativo' &&  t.ativo) return false;
@@ -247,7 +247,7 @@ export function TiposDeOrdemPage() {
                 <tr key={t.id}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-sm text-gray-500">
-                    {t.codigo !== '—' ? String(t.codigo).padStart(3, '0') : '—'}
+                    {String(t.codigo).padStart(3, '0')}
                   </td>
                   <td className="px-4 py-3">
                     <span className={cn('text-sm', t.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>

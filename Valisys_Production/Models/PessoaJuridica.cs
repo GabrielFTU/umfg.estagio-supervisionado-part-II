@@ -1,3 +1,4 @@
+using Valisys_Production.Helpers;
 using Valisys_Production.Models.Common;
 using Valisys_Production.Models.Enums;
 
@@ -34,6 +35,8 @@ namespace Valisys_Production.Models
             : base(razaoSocial, papel, nomeFantasia, email, telefone, celular, endereco, observacoes)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(cnpj);
+            if (!DocumentoValidator.EhCnpjValido(cnpj))
+                throw new ArgumentException("CNPJ inválido.");
 
             Cnpj               = cnpj;
             InscricaoEstadual  = inscricaoEstadual;
@@ -58,6 +61,8 @@ namespace Valisys_Production.Models
             string? observacoes)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(cnpj);
+            if (!DocumentoValidator.EhCnpjValido(cnpj))
+                throw new ArgumentException("CNPJ inválido.");
 
             Cnpj               = cnpj;
             InscricaoEstadual  = inscricaoEstadual;

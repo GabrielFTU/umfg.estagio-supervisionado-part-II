@@ -9,7 +9,7 @@ type Modo = 'criar' | 'editar' | 'visualizar';
 
 type TipoDeOrdemData = {
   id: string;
-  codigo: string | null;
+  codigo: number;
   nome: string;
   descricao: string | null;
   ativo: boolean;
@@ -61,7 +61,7 @@ export function TiposDeOrdemFormPage() {
 
   const [nome, setNome]           = useState('');
   const [descricao, setDescricao] = useState('');
-  const [codigo, setCodigo]       = useState('');
+  const [codigo, setCodigo]       = useState<number | null>(null);
   const [ativo, setAtivo]         = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -78,7 +78,7 @@ export function TiposDeOrdemFormPage() {
         const data: TipoDeOrdemData = await res.json();
         setNome(data.nome);
         setDescricao(data.descricao ?? '');
-        setCodigo(data.codigo ?? '');
+        setCodigo(data.codigo);
         setAtivo(data.ativo);
       } catch {
         setError('Não foi possível carregar o tipo de ordem.');
@@ -93,8 +93,6 @@ export function TiposDeOrdemFormPage() {
 
   const validate = (): boolean => {
     const erros: Record<string, string> = {};
-    if (!codigo.trim()) erros.codigo = 'O código é obrigatório.';
-    else if (codigo.trim().length > 10) erros.codigo = 'Máximo de 10 caracteres.';
     if (!nome.trim()) erros.nome = 'O nome é obrigatório.';
     else if (nome.trim().length > 100) erros.nome = 'Máximo de 100 caracteres.';
     if (descricao.length > 500) erros.descricao = 'Máximo de 500 caracteres.';
@@ -112,7 +110,6 @@ export function TiposDeOrdemFormPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({
-              codigo: codigo.trim(),
               nome: nome.trim(),
               descricao: descricao.trim() || undefined,
             }),
@@ -120,7 +117,7 @@ export function TiposDeOrdemFormPage() {
         : await fetch(`/api/tipos-ordem-producao/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ id, nome: nome.trim(), descricao: descricao.trim() || undefined, codigo, ativo }),
+            body: JSON.stringify({ id, nome: nome.trim(), descricao: descricao.trim() || undefined, ativo }),
           });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -182,22 +179,14 @@ export function TiposDeOrdemFormPage() {
           )}
 
           {/* Código */}
-          <div className="mb-6">
-            <label className="block text-xs text-gray-500 mb-1">
-              Código {!readonly && <span className="text-red-400">*</span>}
-            </label>
-            <input
-              disabled={readonly}
-              value={codigo}
-              onChange={e => { setCodigo(e.target.value); clearErr('codigo'); }}
-              placeholder="Ex: TP01"
-              maxLength={10}
-              className={underline(fieldErrors.codigo)}
-            />
-            {fieldErrors.codigo && (
-              <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.codigo}</p>
-            )}
-          </div>
+          {codigo != null && (
+            <div className="mb-6">
+              <label className="block text-xs text-gray-500 mb-1">Código</label>
+              <p className="h-9 flex items-center text-sm text-gray-700">
+                {String(codigo).padStart(3, '0')}
+              </p>
+            </div>
+          )}
 
           {/* Nome */}
           <div className="mb-6">

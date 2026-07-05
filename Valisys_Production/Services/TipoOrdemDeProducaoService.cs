@@ -21,7 +21,8 @@ namespace Valisys_Production.Services
             if (string.IsNullOrWhiteSpace(dto.Nome))
                 throw new ArgumentException("O nome do tipo de ordem de produção é obrigatório.");
 
-            var tipo = new TipoOrdemDeProducao(dto.Nome, dto.Codigo, dto.Descricao);
+            var tipo = new TipoOrdemDeProducao(dto.Nome, dto.Descricao);
+            tipo.DefinirCodigo(await GerarProximoCodigoAsync());
             var created = await _repository.AddAsync(tipo);
 
             await _logService.RegistrarAsync("Criação", "Tipos de OP",
@@ -46,7 +47,7 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(dto.Id)
                 ?? throw new KeyNotFoundException("Tipo de OP não encontrado.");
 
-            existing.Atualizar(dto.Nome, dto.Codigo, dto.Descricao, dto.Ativo);
+            existing.Atualizar(dto.Nome, dto.Descricao, dto.Ativo);
             var updated = await _repository.UpdateAsync(existing);
 
             if (updated)
@@ -69,6 +70,12 @@ namespace Valisys_Production.Services
                     $"Inativou o tipo de OP '{existing.Nome}'");
 
             return deleted;
+        }
+
+        private async Task<int> GerarProximoCodigoAsync()
+        {
+            var tipos = await _repository.GetAllAsync();
+            return tipos.Any() ? tipos.Max(t => t.Codigo) + 1 : 1;
         }
     }
 }

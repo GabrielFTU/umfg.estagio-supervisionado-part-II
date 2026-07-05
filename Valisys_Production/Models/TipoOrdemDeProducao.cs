@@ -7,30 +7,28 @@ namespace Valisys_Production.Models
         private readonly List<OrdemDeProducao> _ordensDeProducao = new();
 
         public string Nome { get; private set; } = string.Empty;
-        public string Codigo { get; private set; } = string.Empty;
+        public int Codigo { get; private set; }
         public string? Descricao { get; private set; }
 
         public IReadOnlyCollection<OrdemDeProducao> OrdensDeProducao => _ordensDeProducao.AsReadOnly();
 
         protected TipoOrdemDeProducao() { }
 
-        public TipoOrdemDeProducao(string nome, string codigo, string? descricao = null)
+        public TipoOrdemDeProducao(string nome, string? descricao = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(nome);
-            ArgumentException.ThrowIfNullOrWhiteSpace(codigo);
 
             Nome = nome;
-            Codigo = codigo;
             Descricao = descricao;
         }
 
-        public void Atualizar(string nome, string codigo, string? descricao, bool ativo)
+        public void DefinirCodigo(int codigo) => Codigo = codigo;
+
+        public void Atualizar(string nome, string? descricao, bool ativo)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(nome);
-            ArgumentException.ThrowIfNullOrWhiteSpace(codigo);
 
             Nome = nome;
-            Codigo = codigo;
             Descricao = descricao;
             DefinirAtivo(ativo);
             RegistrarAtualizacao();
