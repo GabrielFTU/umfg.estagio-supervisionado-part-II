@@ -63,7 +63,6 @@ namespace Valisys_Production.Models
         public Usuario Representante { get; private set; } = null!;
         public Guid FinalidadePedidoId { get; private set; }
         public Guid FormaPagamentoId { get; private set; }
-        public Guid TabelaPrecoId { get; private set; }
         public DateTime DataEmissao { get; private set; }
         public DateTime? DataPrevisaoEntrega { get; private set; }
         public decimal Desconto { get; private set; }
@@ -81,7 +80,6 @@ namespace Valisys_Production.Models
                            Guid representanteId,
                            Guid finalidadePedidoId,
                            Guid formaPagamentoId,
-                           Guid tabelaPrecoId,
                            DateTime? dataPrevisaoEntrega = null)
         {
             Codigo = codigo;
@@ -89,7 +87,6 @@ namespace Valisys_Production.Models
             RepresentanteId = representanteId;
             FinalidadePedidoId = finalidadePedidoId;
             FormaPagamentoId = formaPagamentoId;
-            TabelaPrecoId = tabelaPrecoId;
             DataEmissao = DateTime.UtcNow;
             DataPrevisaoEntrega = dataPrevisaoEntrega;
             Status = StatusPedido.Rascunho;
@@ -103,7 +100,6 @@ namespace Valisys_Production.Models
                               Guid representanteId,
                               Guid finalidadePedidoId,
                               Guid formaPagamentoId,
-                              Guid tabelaPrecoId,
                               DateTime? dataPrevisaoEntrega,
                               decimal desconto,
                               string? observacaoInterna,
@@ -116,7 +112,6 @@ namespace Valisys_Production.Models
             RepresentanteId = representanteId;
             FinalidadePedidoId = finalidadePedidoId;
             FormaPagamentoId = formaPagamentoId;
-            TabelaPrecoId = tabelaPrecoId;
             DataPrevisaoEntrega = dataPrevisaoEntrega;
             Desconto = desconto;
             ObservacaoInterna = observacaoInterna;

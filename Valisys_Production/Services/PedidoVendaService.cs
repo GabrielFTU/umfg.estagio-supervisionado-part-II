@@ -13,16 +13,21 @@ namespace Valisys_Production.Services
         private readonly IContaReceberService _contaReceberService;
         private readonly ICondicaoPagamentoRepository _condicaoPagamentoRepository;
         private readonly IFormaPagamentoRepository _formaPagamentoRepository;
+        private readonly ILoteRepository _loteRepository;
+        private readonly IProdutoRepository _produtoRepository;
 
         public PedidoVendaService(IPedidoVendaRepository repository, ILogSistemaService log,
             IContaReceberService contaReceberService, ICondicaoPagamentoRepository condicaoPagamentoRepository,
-            IFormaPagamentoRepository formaPagamentoRepository)
+            IFormaPagamentoRepository formaPagamentoRepository, ILoteRepository loteRepository,
+            IProdutoRepository produtoRepository)
         {
             _repository = repository;
             _log = log;
             _contaReceberService = contaReceberService;
             _condicaoPagamentoRepository = condicaoPagamentoRepository;
             _formaPagamentoRepository = formaPagamentoRepository;
+            _loteRepository = loteRepository;
+            _produtoRepository = produtoRepository;
         }
 
         public async Task<PedidoVenda> CreateAsync(PedidoVendaCreateDto dto, Guid usuarioId)
@@ -44,7 +49,6 @@ namespace Valisys_Production.Services
                 representanteId,
                 Guid.Empty,
                 Guid.Empty,
-                Guid.Empty,
                 dto.DataPrevisaoEntrega);
 
             foreach (var item in dto.Itens)
@@ -53,7 +57,6 @@ namespace Valisys_Production.Services
             pedido.Atualizar(
                 dto.ClienteId,
                 representanteId,
-                Guid.Empty,
                 Guid.Empty,
                 Guid.Empty,
                 dto.DataPrevisaoEntrega,
@@ -94,7 +97,6 @@ namespace Valisys_Production.Services
                 representanteId,
                 Guid.Empty,
                 Guid.Empty,
-                Guid.Empty,
                 dto.DataPrevisaoEntrega,
                 dto.Desconto,
                 CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento, dto.Finalidade),
@@ -123,6 +125,7 @@ namespace Valisys_Production.Services
                 case StatusPedido.Confirmado:
                     if (pedido.Status != StatusPedido.Rascunho)
                         throw new InvalidOperationException("Apenas rascunhos podem ser confirmados.");
+                    await ValidarSaldoEstoqueAsync(pedido);
                     pedido.Confirmar();
                     await GerarContaReceberAutomaticaAsync(pedido);
                     break;
@@ -150,6 +153,27 @@ namespace Valisys_Production.Services
                     $"Alterou status do Pedido #{pedido.Codigo} para {novoStatus}");
 
             return ok;
+        }
+
+        private async Task ValidarSaldoEstoqueAsync(PedidoVenda pedido)
+        {
+            var lotes = await _loteRepository.GetAllAsync();
+            var saldoPorProduto = lotes
+                .Where(l => l.Status == StatusLote.Concluido)
+                .GroupBy(l => l.ProdutoId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            foreach (var item in pedido.Itens)
+            {
+                var saldo = saldoPorProduto.TryGetValue(item.ProdutoId, out var qtd) ? qtd : 0;
+                if (saldo < item.Quantidade)
+                {
+                    var produto = await _produtoRepository.GetByIdAsync(item.ProdutoId);
+                    var nome = produto?.Nome ?? item.ProdutoId.ToString();
+                    throw new InvalidOperationException(
+                        $"Saldo de estoque insuficiente para '{nome}': disponível {saldo}, solicitado {item.Quantidade}.");
+                }
+            }
         }
 
         private async Task GerarContaReceberAutomaticaAsync(PedidoVenda pedido)

@@ -50,8 +50,14 @@ namespace Valisys_Production.Repositories
             foreach (var item in novosItens)
                 existente.AdicionarItem(item.ProdutoId, item.Quantidade, item.ValorUnitario, item.DescontoUnitario);
 
-            try { return await _context.SaveChangesAsync() > 0; }
-            catch { return false; }
+            // Itens recém-criados já têm um Id (Guid) atribuído no construtor e são
+            // descobertos por fixup automático (não por Add explícito): o EF assume por
+            // padrão que uma chave já preenchida pertence a uma linha existente e gera
+            // UPDATE em vez de INSERT. Forçar o estado evita DbUpdateConcurrencyException.
+            foreach (var novo in existente.Itens)
+                _context.Entry(novo).State = EntityState.Added;
+
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

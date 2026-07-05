@@ -409,11 +409,6 @@ namespace Valisys_Production.Data
             modelBuilder.Entity<MovimentacaoCarteira>()
                 .HasIndex(m => m.CarteiraId);
 
-            modelBuilder.Entity<LimiteCredito>()
-                .HasOne(l => l.Pessoa)
-                .WithOne(p => p.LimiteCredito)
-                .HasForeignKey<LimiteCredito>(l => l.PessoaId);
-
             modelBuilder.Entity<FormaPagamento>()
                 .Navigation(f => f.Vendedores).HasField("_vendedores");
 

@@ -535,13 +535,19 @@ export function OrcamentoFormPage() {
     try {
       if (modo === 'criar') {
         const res = await fetch('/api/orcamentos', { method: 'POST', headers, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error('Erro ao criar orçamento.');
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail ?? data.message ?? 'Erro ao criar orçamento.');
+        }
         const criado = await res.json();
         showToast();
         navigate(`/comercial/orcamentos/${criado.id}`);
       } else {
         const res = await fetch(`/api/orcamentos/${orcamentoId}`, { method: 'PUT', headers, body: JSON.stringify({ id: orcamentoId, ...payload }) });
-        if (!res.ok) throw new Error('Erro ao salvar orçamento.');
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail ?? data.message ?? 'Erro ao salvar orçamento.');
+        }
         showToast();
         navigate(`/comercial/orcamentos/${orcamentoId}`);
       }

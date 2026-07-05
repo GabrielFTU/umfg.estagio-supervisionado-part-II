@@ -20,6 +20,8 @@ function fmtBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+const PAGE_SIZE_OPTIONS = [12, 24, 48];
+
 function BankInitials({ nome }: { nome: string }) {
   const words = nome.trim().split(/\s+/);
   const initials = words.length >= 2
@@ -118,6 +120,8 @@ export function CarteirasPage() {
   const [search, setSearch] = useState('');
   const [apenasAtivos, setApenasAtivos] = useState(true);
   const [confirmToggle, setConfirmToggle] = useState<CarteiraItem | null>(null);
+  const [page, setPage]         = useState(1);
+  const [pageSize, setPageSize] = useState(12);
 
   const fetchCarteiras = async () => {
     setLoading(true);
@@ -153,6 +157,12 @@ export function CarteirasPage() {
     );
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
+
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [totalPages, page]);
+
   return (
     <div className="flex flex-col h-full bg-[#f8f9fb]">
       {/* Header */}
@@ -163,14 +173,14 @@ export function CarteirasPage() {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
               <input
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Informe o Titular / Banco"
                 className="w-full pl-9 pr-3 h-9 bg-transparent border-b border-gray-200 text-sm focus:outline-none focus:border-[#1D4E89] placeholder:text-gray-300 transition-colors"
               />
             </div>
             {apenasAtivos && (
               <button
-                onClick={() => setApenasAtivos(false)}
+                onClick={() => { setApenasAtivos(false); setPage(1); }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1D4E89] text-white text-xs font-medium"
               >
                 Status: ATIVO
@@ -179,7 +189,7 @@ export function CarteirasPage() {
             )}
             {!apenasAtivos && (
               <button
-                onClick={() => setApenasAtivos(true)}
+                onClick={() => { setApenasAtivos(true); setPage(1); }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 text-xs"
               >
                 Exibindo todos
@@ -216,7 +226,7 @@ export function CarteirasPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map(c => (
+            {paginated.map(c => (
               <div
                 key={c.id}
                 className={cn(
@@ -268,6 +278,28 @@ export function CarteirasPage() {
           </div>
         )}
       </div>
+
+      {/* Paginação (fixa) */}
+      {!loading && filtered.length > 0 && (
+        <div className="shrink-0 px-6 py-3 border-t border-gray-100 flex items-center justify-center gap-3 text-sm text-gray-500">
+          <span className="mr-4">Exibindo {filtered.length} carteira{filtered.length !== 1 ? 's' : ''}.</span>
+          <button onClick={() => goPage(1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<<'}</button>
+          <button onClick={() => goPage(page - 1)} disabled={page === 1} className="px-1 disabled:opacity-30 hover:text-gray-800">{'<'}</button>
+          {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => goPage(p)}
+              className={cn('w-7 h-7 rounded-full text-sm transition-colors',
+                p === page ? 'bg-blue-100 text-[#1D4E89] font-semibold' : 'hover:bg-gray-100')}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => goPage(page + 1)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>'}</button>
+          <button onClick={() => goPage(totalPages)} disabled={page === totalPages} className="px-1 disabled:opacity-30 hover:text-gray-800">{'>>'}</button>
+          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="ml-2 border border-gray-300 rounded text-xs px-1 py-0.5 outline-none focus:border-[#1D4E89]">
+            {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       <ModalMsg
         aberto={!!confirmToggle}

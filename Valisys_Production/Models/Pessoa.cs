@@ -17,10 +17,6 @@ namespace Valisys_Production.Models
         public Endereco? Endereco { get; protected set; }
         public PapelPessoa PapelPessoa { get; protected set; }
         public string? Observacoes { get; protected set; }
-
-        // Crédito (opcional — vinculado posteriormente)
-        public Guid? LimiteCreditoId { get; protected set; }
-        public LimiteCredito? LimiteCredito { get; protected set; }
         public StatusCredito StatusCredito { get; protected set; } = StatusCredito.Em_Revisao;
 
         protected Pessoa() { }
@@ -70,21 +66,10 @@ namespace Valisys_Production.Models
             RegistrarAtualizacao();
         }
 
-        public void VincularLimiteCredito(Guid limiteCreditoId)
-            => LimiteCreditoId = limiteCreditoId;
-
         public void BloquearCredito()
             => StatusCredito = Enums.StatusCredito.Bloqueado;
 
         public void DesbloquearCredito()
             => StatusCredito = Enums.StatusCredito.Em_Revisao;
-
-        public override void Desativar()
-        {
-            if (LimiteCredito?.ValorUtilizado > 0)
-                throw new InvalidOperationException("Não é possível desativar uma pessoa com saldo pendente.");
-
-            base.Desativar();
-        }
     }
 }

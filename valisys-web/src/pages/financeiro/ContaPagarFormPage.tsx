@@ -149,6 +149,7 @@ export function ContaPagarFormPage() {
     ? 'criar'
     : location.pathname.endsWith('/editar') ? 'editar' : 'visualizar';
   const readonly = modo === 'visualizar';
+  const roId = readonly || modo === 'editar';
 
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving]   = useState(false);
@@ -327,7 +328,7 @@ export function ContaPagarFormPage() {
               onChange={v => { setPessoaId(v); clearErr('pessoaId'); }}
               options={pessoas.map(p => ({ value: p.id, label: p.nome }))}
               placeholder="Selecione uma pessoa…"
-              readOnly={readonly}
+              readOnly={roId}
             />
           </div>
 
@@ -335,7 +336,8 @@ export function ContaPagarFormPage() {
           <div className="grid grid-cols-3 gap-8 mb-6">
             <UField label="Valor" required={!readonly} error={fieldErrors.valor}>
               <input
-                disabled={readonly}
+                disabled={roId}
+                readOnly={roId}
                 value={valor ? `R$ ${valor}` : ''}
                 onChange={e => {
                   const raw = e.target.value.replace(/[^\d,]/g, '');

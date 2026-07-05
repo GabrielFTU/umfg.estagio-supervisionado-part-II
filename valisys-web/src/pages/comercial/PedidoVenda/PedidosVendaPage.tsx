@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, Search, Loader2, MoreHorizontal,
   ShoppingBag, ChevronDown, SlidersHorizontal,
-  Home, ChevronRight, X, AlertCircle,
+  Home, ChevronRight, ChevronLeft, X, AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
@@ -81,6 +81,8 @@ interface Filters {
   representante: string;
   finalidade: string;
 }
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 const DEFAULT_STATUSES = [0, 1, 2];
 
@@ -498,6 +500,8 @@ export function PedidosVendaPage() {
   const [error, setError]     = useState('');
   const [filters, setFilters] = useState<Filters>({ ...DEFAULT_FILTERS, statuses: [...DEFAULT_STATUSES] });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [page, setPage]         = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const filterRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [confirmarTarget, setConfirmarTarget] = useState<PedidoItem | null>(null);
@@ -529,6 +533,7 @@ export function PedidosVendaPage() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { setPage(1); }, [search, filters]);
 
   const clienteOptions       = useMemo(() => [...new Set(pedidos.map(p => p.clienteNome))].sort(), [pedidos]);
   const representanteOptions = useMemo(() => [...new Set(pedidos.map(p => p.representanteNome).filter(Boolean) as string[])].sort(), [pedidos]);
@@ -569,6 +574,16 @@ export function PedidosVendaPage() {
     if (filters.previsaoTo && p.dataPrevisaoEntrega && p.dataPrevisaoEntrega > filters.previsaoTo + 'T23:59:59') return false;
     return true;
   }), [pedidos, search, filters]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginated  = useMemo(() => filtered.slice((page - 1) * pageSize, page * pageSize), [filtered, page, pageSize]);
+
+  const pageButtons = () => {
+    const buttons: number[] = [];
+    const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+    for (let i = start; i <= Math.min(start + 4, totalPages); i++) buttons.push(i);
+    return buttons;
+  };
 
   const chips = useMemo(() => activeChips(filters, search), [filters, search]);
   const activeFilters = filtersCount(filters);
@@ -732,7 +747,7 @@ export function PedidosVendaPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(p => {
+              {paginated.map(p => {
                 const sc  = STATUS_CFG[p.status];
                 const ic  = ICON_CFG[p.status];
                 const od  = isOverdue(p.dataPrevisaoEntrega, p.status);
@@ -826,13 +841,41 @@ export function PedidosVendaPage() {
 
       {/* ── Footer ── */}
       {!loading && !error && (
-        <div className="shrink-0 px-6 py-3 border-t border-gray-100 bg-white flex items-center justify-between">
+        <div className="shrink-0 px-6 py-3 border-t border-gray-100 bg-white flex items-center justify-between gap-4">
           <span className="text-xs text-gray-400">
             {filtered.filter(p => p.status !== 3).length} {filtered.filter(p => p.status !== 3).length === 1 ? 'pedido ativo' : 'pedidos ativos'}
             {filtered.length !== pedidos.length && (
               <span className="text-gray-300"> · {pedidos.filter(p => p.status !== 3).length} no total</span>
             )}
           </span>
+
+          <div className="flex items-center gap-3">
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="w-7 h-7 flex items-center justify-center rounded text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={13} />
+                </button>
+                {pageButtons().map(p => (
+                  <button key={p} onClick={() => setPage(p)}
+                    className={cn(
+                      'w-7 h-7 flex items-center justify-center rounded text-xs font-semibold transition-colors',
+                      p === page ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200',
+                    )}>
+                    {p}
+                  </button>
+                ))}
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="w-7 h-7 flex items-center justify-center rounded text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronRight size={13} />
+                </button>
+              </div>
+            )}
+            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+              className="border border-gray-300 rounded text-xs px-1 py-1 outline-none focus:border-blue-600 text-gray-700">
+              {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s} / página</option>)}
+            </select>
+          </div>
         </div>
       )}
 

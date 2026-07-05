@@ -483,7 +483,7 @@ function ProdutoModal({ onAdd, onClose }: {
 
 
 interface FormState {
-  clienteId: string; representanteNome: string; formaPagamentoId: string;
+  clienteId: string; representanteId: string; formaPagamentoId: string;
   condicaoPagamentoId: string; finalidade: string; dataPrevisaoEntrega: string;
   desconto: string; observacaoInterna: string; observacaoExterna: string;
 }
@@ -509,10 +509,11 @@ export function PedidoVendaFormPage() {
   const [formasPagamento, setFormasPagamento]     = useState<SelectOption[]>([]);
   const [condicoesPagamento, setCondicoesPagamento] = useState<SelectOption[]>([]);
   const [finalidades, setFinalidades]             = useState<SelectOption[]>([]);
+  const [representantes, setRepresentantes]       = useState<SelectOption[]>([]);
 
   const [cliente, setCliente] = useState<{ id: string; nome: string } | null>(null);
   const [form, setForm] = useState<FormState>({
-    clienteId: '', representanteNome: '', formaPagamentoId: '',
+    clienteId: '', representanteId: '', formaPagamentoId: '',
     condicaoPagamentoId: '', finalidade: '', dataPrevisaoEntrega: '',
     desconto: '', observacaoInterna: '', observacaoExterna: '',
   });
@@ -534,6 +535,10 @@ export function PedidoVendaFormPage() {
     fetch('/api/finalidades', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((data: any[]) => setFinalidades(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
+
+    fetch('/api/Usuarios', { headers: h })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: any[]) => setRepresentantes(data.filter(u => u.ativo).map(u => ({ value: u.id, label: u.nome }))));
   }, []);
 
 
@@ -547,7 +552,7 @@ export function PedidoVendaFormPage() {
       setCodigoPedido(data.codigo); setStatusPedido(data.status); setPedidoId(data.id);
       setCliente({ id: data.clienteId, nome: data.clienteNome });
       setForm({
-        clienteId: data.clienteId, representanteNome: data.representanteNome ?? '',
+        clienteId: data.clienteId, representanteId: data.representanteId ?? '',
         formaPagamentoId: data.formaPagamento ?? '',
         condicaoPagamentoId: data.condicaoPagamento ?? '',
         finalidade: data.finalidade ?? '',
@@ -618,6 +623,7 @@ export function PedidoVendaFormPage() {
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
     const payload = {
       clienteId: form.clienteId,
+      representanteId: form.representanteId || undefined,
       formaPagamento: form.formaPagamentoId || undefined,
       condicaoPagamento: form.condicaoPagamentoId || undefined,
       finalidade: form.finalidade || undefined,
@@ -635,13 +641,19 @@ export function PedidoVendaFormPage() {
     try {
       if (modo === 'criar') {
         const res = await fetch('/api/pedidos-venda', { method: 'POST', headers, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error('Erro ao criar pedido.');
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail ?? data.message ?? 'Erro ao criar pedido.');
+        }
         const criado = await res.json();
         showToast();
         navigate(`/comercial/pedidos/${criado.id}`);
       } else {
         const res = await fetch(`/api/pedidos-venda/${pedidoId}`, { method: 'PUT', headers, body: JSON.stringify({ id: pedidoId, ...payload }) });
-        if (!res.ok) throw new Error('Erro ao salvar pedido.');
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail ?? data.message ?? 'Erro ao salvar pedido.');
+        }
         showToast();
         navigate(`/comercial/pedidos/${pedidoId}`);
       }
@@ -654,13 +666,25 @@ export function PedidoVendaFormPage() {
     setMudarStatusAcao(acao);
   };
 
+  const STATUS_APOS_ACAO: Record<'confirmar' | 'cancelar' | 'concluir', number> = { confirmar: 1, concluir: 2, cancelar: 3 };
+
   const execMudarStatus = async () => {
     if (!mudarStatusAcao) return;
     const acao = mudarStatusAcao;
     setMudarStatusAcao(null);
     const token = localStorage.getItem('token');
-    await fetch(`/api/pedidos-venda/${pedidoId}/${acao}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
-    window.location.reload();
+    const res = await fetch(`/api/pedidos-venda/${pedidoId}/${acao}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.detail ?? data.message ?? 'Não foi possível concluir a ação.');
+      return;
+    }
+    setStatusPedido(STATUS_APOS_ACAO[acao]);
+    showToast(
+      acao === 'confirmar' ? 'Pedido confirmado com sucesso.' :
+      acao === 'concluir'  ? 'Pedido concluído com sucesso.' :
+      'Pedido cancelado com sucesso.'
+    );
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -743,6 +767,15 @@ export function PedidoVendaFormPage() {
                 readOnly={readOnly}
               />
             </UField>
+
+            <SelectWrap
+              label="Representante"
+              value={form.representanteId}
+              onChange={setF('representanteId')}
+              options={representantes}
+              placeholder="Selecione o representante"
+              readOnly={readOnly}
+            />
 
             <SelectWrap
               label="Finalidade de pedido"

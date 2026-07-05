@@ -12,6 +12,8 @@ namespace Valisys_Production.Services
             if (await repo.NomeExisteAsync(dto.Nome))
                 throw new InvalidOperationException($"Já existe uma condição de pagamento com o nome '{dto.Nome}'.");
 
+            ValidarParcelas(dto.Parcelas);
+
             var codigo    = await repo.GetProximoCodigoAsync();
             var condicao  = new CondicaoPagamento(codigo, dto.Nome, dto.NumeroParcelas,
                 dto.DiasParaPrimeiroVencimento, dto.DiasEntreParcelas, dto.VencimentoDiaFixo);
@@ -44,6 +46,8 @@ namespace Valisys_Production.Services
             if (await repo.NomeExisteAsync(dto.Nome, dto.Id))
                 throw new InvalidOperationException($"Já existe uma condição de pagamento com o nome '{dto.Nome}'.");
 
+            ValidarParcelas(dto.Parcelas);
+
             c.Atualizar(dto.Nome, dto.NumeroParcelas, dto.DiasParaPrimeiroVencimento,
                 dto.DiasEntreParcelas, dto.VencimentoDiaFixo, dto.Ativo);
 
@@ -63,6 +67,17 @@ namespace Valisys_Production.Services
                 ?? throw new KeyNotFoundException("Condição de pagamento não encontrada.");
             c.Desativar();
             await repo.SaveChangesAsync();
+        }
+
+        private static void ValidarParcelas(List<ParcelaCondicaoDto> parcelas)
+        {
+            if (parcelas.Count == 0)
+                throw new InvalidOperationException("A condição de pagamento deve ter ao menos uma parcela.");
+
+            var soma = parcelas.Sum(p => p.Percentual);
+            if (Math.Abs(soma - 100m) > 0.01m)
+                throw new InvalidOperationException(
+                    $"A soma dos percentuais das parcelas deve ser 100%. Valor informado: {soma:0.##}%.");
         }
 
         private static CondicaoPagamentoReadDto Map(CondicaoPagamento c) => new()
