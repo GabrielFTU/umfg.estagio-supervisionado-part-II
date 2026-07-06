@@ -279,6 +279,7 @@ export function ProdutoFormPage() {
 
   const [imagemUrl, setImagemUrl]       = useState<string | null>(null);
   const [imagemLocal, setImagemLocal]   = useState<string | null>(null);
+  const [imagemFile, setImagemFile]     = useState<File | null>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [imgError, setImgError]         = useState('');
 
@@ -356,7 +357,7 @@ export function ProdutoFormPage() {
   }, []);
 
   // Imagem
-  const handleRemoveImagem = useCallback(() => { setImagemUrl(null); setImagemLocal(null); }, []);
+  const handleRemoveImagem = useCallback(() => { setImagemUrl(null); setImagemLocal(null); setImagemFile(null); }, []);
 
   // Fornecedor
   const handleAddFornecedor = useCallback((pessoa: Option) => {
@@ -534,20 +535,10 @@ export function ProdutoFormPage() {
 
   // ─── Upload imagem ────────────────────────────────────────────────────────
 
-  const handleImagem = useCallback(async (file: File) => {
+  const handleImagem = useCallback((file: File) => {
     setImgError('');
     setImagemLocal(URL.createObjectURL(file));
-    setUploadingImg(true);
-    try {
-      const token = localStorage.getItem('token');
-      const form = new FormData();
-      form.append('arquivo', file);
-      const res = await fetch('/api/produtos/imagem', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
-      if (!res.ok) throw new Error();
-      const { url } = await res.json();
-      setImagemUrl(url);
-    } catch { setImgError('Falha ao enviar. Tente novamente.'); setImagemLocal(null);
-    } finally { setUploadingImg(false); }
+    setImagemFile(file);
   }, []);
 
   // ─── Validação ────────────────────────────────────────────────────────────
@@ -570,13 +561,33 @@ export function ProdutoFormPage() {
     try {
       const token = localStorage.getItem('token');
       const h = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+
+      // Upload da imagem só acontece agora, no momento de salvar o produto.
+      let finalImagemUrl = imagemUrl;
+      if (imagemFile) {
+        setUploadingImg(true);
+        try {
+          const form = new FormData();
+          form.append('arquivo', imagemFile);
+          const res = await fetch('/api/produtos/imagem', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
+          if (!res.ok) throw new Error();
+          finalImagemUrl = (await res.json()).url;
+        } catch {
+          setUploadingImg(false);
+          setImgError('Falha ao enviar imagem. Tente novamente.');
+          setSaving(false);
+          return;
+        }
+        setUploadingImg(false);
+      }
+
       const body = {
         ...(id ? { id } : {}),
         nome: f.nome, descricao: f.descricao, observacoes: f.observacoes || null,
         sku: f.sku.trim().toUpperCase() || null,
         classificacao: f.classificacao, categoriaProdutoId: f.categoriaId,
         unidadeMedidaId: f.unidadeMedidaId, estoqueMinimo: parseFloat(f.estoqueMinimo) || 0,
-        controlarPorLote: f.controlarPorLote, ativo: f.ativo, imagemUrl: imagemUrl ?? null,
+        controlarPorLote: f.controlarPorLote, ativo: f.ativo, imagemUrl: finalImagemUrl ?? null,
         ncm: f.ncm.replace(/\D/g, '') || null,
         tipoItem: f.tipoItem !== '' ? parseInt(f.tipoItem) : null,
         origemMercadoria: parseInt(f.origemMercadoria),
@@ -635,7 +646,6 @@ export function ProdutoFormPage() {
 
   const estoqueTotal = useMemo(() => variacoes.reduce((s, v) => s + v.estoqueAtual, 0), [variacoes]);
 
-  // Retorna true quando os campos principais daquela aba foram preenchidos
   const isTabFilled = useCallback((tab: Aba): boolean => {
     switch (tab) {
       case 'geral':        return !!f.nome.trim() && !!f.descricao.trim() && !!f.categoriaId && !!f.unidadeMedidaId;
@@ -703,7 +713,6 @@ export function ProdutoFormPage() {
                   <ChevronLeft size={13} /> Anterior
                 </button>
               )}
-              {/* Salvar sempre disponível — outline nos passos intermediários, sólido no último */}
               <button form="produto-form" type="submit" disabled={saving}
                 className={cn(
                   'flex items-center gap-1.5 h-8 px-4 rounded-lg text-sm font-medium transition-colors disabled:opacity-60',
