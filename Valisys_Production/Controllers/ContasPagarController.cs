@@ -115,15 +115,20 @@ namespace Valisys_Production.Controllers
             catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
             catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERRO_BAIXA] Concorrência: {ex.Message}");
+                return Conflict(new { message = "Esta parcela já foi paga ou alterada por outra operação. Atualize a página e tente novamente." });
+            }
             catch (DbUpdateException ex)
             {
-                var errorMessage = ex.InnerException?.InnerException?.Message 
-                    ?? ex.InnerException?.Message 
+                var errorMessage = ex.InnerException?.InnerException?.Message
+                    ?? ex.InnerException?.Message
                     ?? ex.Message;
-                
+
                 System.Diagnostics.Debug.WriteLine($"[ERRO_BAIXA] {errorMessage}");
                 System.Diagnostics.Debug.WriteLine($"[ERRO_BAIXA] StackTrace: {ex.StackTrace}");
-                
+
                 return Conflict(new { message = errorMessage });
             }
         }
@@ -144,6 +149,10 @@ namespace Valisys_Production.Controllers
             catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
             catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict(new { message = "Esta parcela já foi alterada por outra operação. Atualize a página e tente novamente." });
+            }
             catch (DbUpdateException ex)
             {
                 return Conflict(new { message = ex.InnerException?.Message ?? "Não foi possível estornar a baixa. Tente novamente." });
