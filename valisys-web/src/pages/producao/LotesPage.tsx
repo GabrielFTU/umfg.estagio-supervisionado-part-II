@@ -13,6 +13,7 @@ interface LoteItem {
   produtoNome: string;
   almoxarifadoNome: string;
   emUso: boolean;
+  ativo: boolean;
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
@@ -248,15 +249,14 @@ export function LotesPage() {
                 </tr>
               ) : paginated.map(item => (
                 <tr key={item.id}
-                  onClick={() => navigate(`/lotes/${item.id}`)}
-                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                  <td className="px-6 py-3 font-medium text-gray-700">{item.codigoLote.toUpperCase()}</td>
-                  <td className="px-4 py-3 text-gray-600">{item.produtoNome}</td>
-                  <td className="px-4 py-3 text-gray-500">{item.almoxarifadoNome}</td>
-                  <td className="px-4 py-3 text-center"><StatusBadge status={item.status} /></td>
-                  <td className="px-4 py-3 text-gray-500 text-center">{formatDate(item.dataAbertura)}</td>
-                  <td className="px-4 py-3 text-gray-500 text-center">{formatDate(item.dataConclusao)}</td>
-                  <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <td className={cn('px-6 py-3 font-medium text-gray-700', !item.ativo && 'opacity-50')}>{item.codigoLote.toUpperCase()}</td>
+                  <td className={cn('px-4 py-3 text-gray-600', !item.ativo && 'opacity-50')}>{item.produtoNome}</td>
+                  <td className={cn('px-4 py-3 text-gray-500', !item.ativo && 'opacity-50')}>{item.almoxarifadoNome}</td>
+                  <td className={cn('px-4 py-3 text-center', !item.ativo && 'opacity-50')}><StatusBadge status={item.status} /></td>
+                  <td className={cn('px-4 py-3 text-gray-500 text-center', !item.ativo && 'opacity-50')}>{formatDate(item.dataAbertura)}</td>
+                  <td className={cn('px-4 py-3 text-gray-500 text-center', !item.ativo && 'opacity-50')}>{formatDate(item.dataConclusao)}</td>
+                  <td className="pr-4 text-right">
                     <RowMenu status={item.status}
                       onView={() => navigate(`/lotes/${item.id}`)}
                       onEdit={() => handleEdit(item)}

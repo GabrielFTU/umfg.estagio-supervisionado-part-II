@@ -15,13 +15,11 @@ namespace Valisys_Production.Controllers
     {
         private readonly IOrcamentoService _service;
         private readonly ApplicationDbContext _ctx;
-        private readonly ICurrentUserService _currentUser;
 
-        public OrcamentoController(IOrcamentoService service, ApplicationDbContext ctx, ICurrentUserService currentUser)
+        public OrcamentoController(IOrcamentoService service, ApplicationDbContext ctx)
         {
-            _service     = service;
-            _ctx         = ctx;
-            _currentUser = currentUser;
+            _service = service;
+            _ctx     = ctx;
         }
 
         // ─── GET /api/orcamentos ──────────────────────────────────────────────────
@@ -30,23 +28,16 @@ namespace Valisys_Production.Controllers
         [HasPermission(Permissions.Orcamentos.Visualizar)]
         public async Task<ActionResult<PagedResultDto<OrcamentoListDto>>> GetAll([FromQuery] OrcamentoPagedQueryDto query)
         {
-            // Row-Level Security: não-admins só veem os próprios orçamentos
-            if (!_currentUser.IsAdmin)
-                query.RepresentanteId = _currentUser.UserId;
-
             var paged = await _service.GetPagedAsync(query);
 
-            var clienteIds = paged.Items.Select(o => o.ClienteId).Distinct().ToList();
-            var usuarioIds = paged.Items.Select(o => o.RepresentanteId).Distinct().ToList();
+            var clienteIds = paged.Items.Select(o => o.ClienteId)
+                .Concat(paged.Items.Select(o => o.RepresentanteId))
+                .Distinct().ToList();
             var produtoIds = paged.Items.SelectMany(o => o.Itens.Select(i => i.ProdutoId)).Distinct().ToList();
 
-            var clientes = await _ctx.Pessoas.AsNoTracking()
+            var pessoas = await _ctx.Pessoas.AsNoTracking()
                 .Where(p => clienteIds.Contains(p.Id))
                 .ToDictionaryAsync(p => p.Id, p => p.Nome);
-
-            var usuarios = await _ctx.Usuarios.AsNoTracking()
-                .Where(u => usuarioIds.Contains(u.Id))
-                .ToDictionaryAsync(u => u.Id, u => u.Nome);
 
             var produtos = await _ctx.Produtos.AsNoTracking()
                 .Where(p => produtoIds.Contains(p.Id))
@@ -56,8 +47,8 @@ namespace Valisys_Production.Controllers
             {
                 Id                = o.Id,
                 Codigo            = o.Codigo,
-                ClienteNome       = clientes.TryGetValue(o.ClienteId, out var cn) ? cn : "—",
-                RepresentanteNome = o.RepresentanteId != Guid.Empty && usuarios.TryGetValue(o.RepresentanteId, out var rn) ? rn : null,
+                ClienteNome       = pessoas.TryGetValue(o.ClienteId, out var cn) ? cn : "—",
+                RepresentanteNome = o.RepresentanteId != Guid.Empty && pessoas.TryGetValue(o.RepresentanteId, out var rn) ? rn : null,
                 DataEmissao       = o.DataEmissao,
                 DataValidade      = o.DataValidade,
                 Total             = o.Total,
@@ -91,8 +82,6 @@ namespace Valisys_Production.Controllers
 
             var clientes = await _ctx.Pessoas.AsNoTracking()
                 .ToDictionaryAsync(p => p.Id, p => p.Nome);
-            var usuarios = await _ctx.Usuarios.AsNoTracking()
-                .ToDictionaryAsync(u => u.Id, u => u.Nome);
             var produtos = await _ctx.Produtos.AsNoTracking()
                 .Include(p => p.UnidadeMedida)
                 .ToDictionaryAsync(p => p.Id);
@@ -104,7 +93,7 @@ namespace Valisys_Production.Controllers
                 ClienteId               = orcamento.ClienteId,
                 ClienteNome             = clientes.TryGetValue(orcamento.ClienteId, out var cn) ? cn : "—",
                 RepresentanteId         = orcamento.RepresentanteId,
-                RepresentanteNome       = orcamento.RepresentanteId != Guid.Empty && usuarios.TryGetValue(orcamento.RepresentanteId, out var rn) ? rn : null,
+                RepresentanteNome       = orcamento.RepresentanteId != Guid.Empty && clientes.TryGetValue(orcamento.RepresentanteId, out var rn) ? rn : null,
                 Finalidade              = ExtrairTag(orcamento.ObservacaoInterna, "Finalidade"),
                 FormaPagamento          = ExtrairTag(orcamento.ObservacaoInterna, "Pagamento"),
                 CondicaoPagamento       = ExtrairTag(orcamento.ObservacaoInterna, "Condicao"),

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { fetchWithAuth } from '@/services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -255,11 +256,10 @@ export function PessoaFormPage() {
     const load = async () => {
       setLoadingData(true);
       try {
-        const token = localStorage.getItem('token');
         const url = tipoParam === 'fisica'
           ? `/api/PessoasFisicas/${id}`
           : `/api/PessoasJuridicas/${id}`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetchWithAuth(url);
         if (!res.ok) throw new Error();
         const d = await res.json();
 
@@ -421,9 +421,9 @@ export function PessoaFormPage() {
       const url = tipo === 'fisica'
         ? `/api/PessoasFisicas${isEdit ? `/${id}` : ''}`
         : `/api/PessoasJuridicas${isEdit ? `/${id}` : ''}`;
-      const res = await fetch(url, {
+      const res = await fetchWithAuth(url, {
         method: isEdit ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();

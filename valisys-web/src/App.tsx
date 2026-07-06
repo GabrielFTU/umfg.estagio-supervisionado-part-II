@@ -70,10 +70,18 @@ import { UsuarioFormPage } from './pages/configuracoes/UsuarioForm';
 import { TiposDeOrdemPage } from './pages/cadastros/TiposDeOrdemPage';
 import { TiposDeOrdemFormPage } from './pages/cadastros/TiposDeOrdemForm';
 import { AppLayout } from './components/layout/AppLayout';
+import { getAcessos } from './lib/permissions';
 
-function PrivateRoute({ children }: { children: React.ReactNode }) {
+function PrivateRoute({ perm, children }: { perm?: string; children: React.ReactNode }) {
   const token = localStorage.getItem('token');
-  return token ? <>{children}</> : <Navigate to="/" replace />;
+  if (!token) return <Navigate to="/" replace />;
+  if (perm) {
+    const { acessos, isAdmin } = getAcessos();
+    if (!isAdmin && !acessos.includes(perm)) {
+      return <Navigate to={perm === 'Dashboard.Visualizar' ? '/' : '/dashboard'} replace />;
+    }
+  }
+  return <>{children}</>;
 }
 
 const App = () => (
@@ -85,7 +93,7 @@ const App = () => (
       <Route
         path="/dashboard"
         element={
-          <PrivateRoute>
+          <PrivateRoute perm="Dashboard.Visualizar">
             <AppLayout><DashboardPage /></AppLayout>
           </PrivateRoute>
         }
@@ -98,18 +106,18 @@ const App = () => (
           </PrivateRoute>
         }
       />
-      <Route path="/financeiro/contas-pagar" element={<PrivateRoute><AppLayout><ContasPagarPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-pagar/novo" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-pagar/:id/editar" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-pagar/:id/baixar" element={<PrivateRoute><AppLayout><BaixaContaPagarPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-pagar/:contaId/comprovante/:parcelaId" element={<PrivateRoute><AppLayout><ContaPagarComprovantePage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-pagar/:id" element={<PrivateRoute><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContasPagarPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/novo" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/:id/editar" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/:id/baixar" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><BaixaContaPagarPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/:contaId/comprovante/:parcelaId" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContaPagarComprovantePage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-pagar/:id" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContaPagarFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/financeiro/contas-receber" element={<PrivateRoute><AppLayout><ContasReceberPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-receber/novo" element={<PrivateRoute><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-receber/:id/editar" element={<PrivateRoute><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-receber/:id/baixar" element={<PrivateRoute><AppLayout><BaixaContaReceberPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/contas-receber/:id" element={<PrivateRoute><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-receber" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContasReceberPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-receber/novo" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-receber/:id/editar" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-receber/:id/baixar" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><BaixaContaReceberPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/contas-receber/:id" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><ContaReceberFormPage /></AppLayout></PrivateRoute>} />
 
       <Route
         path="/comercial"
@@ -120,24 +128,24 @@ const App = () => (
         }
       />
 
-      <Route path="/comercial/orcamentos" element={<PrivateRoute><AppLayout><OrcamentosPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/orcamentos/novo" element={<PrivateRoute><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/orcamentos/:id/editar" element={<PrivateRoute><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/orcamentos/:id" element={<PrivateRoute><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/pedidos" element={<PrivateRoute><AppLayout><PedidosVendaPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/pedidos/novo" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/pedidos/:id/editar" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/pedidos/:id" element={<PrivateRoute><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/catalogo/produtos" element={<PrivateRoute><AppLayout><CatalogoProdutosPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/clientes" element={<PrivateRoute><AppLayout><ClientesPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/clientes/novo" element={<PrivateRoute><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/clientes/:tipo/:id/editar" element={<PrivateRoute><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/comercial/clientes/:tipo/:id" element={<PrivateRoute><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/orcamentos" element={<PrivateRoute perm="Orcamentos.Visualizar"><AppLayout><OrcamentosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/orcamentos/novo" element={<PrivateRoute perm="Orcamentos.Criar"><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/orcamentos/:id/editar" element={<PrivateRoute perm="Orcamentos.Editar"><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/orcamentos/:id" element={<PrivateRoute perm="Orcamentos.Visualizar"><AppLayout><OrcamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/pedidos" element={<PrivateRoute perm="PedidosVenda.Visualizar"><AppLayout><PedidosVendaPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/pedidos/novo" element={<PrivateRoute perm="PedidosVenda.Criar"><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/pedidos/:id/editar" element={<PrivateRoute perm="PedidosVenda.Editar"><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/pedidos/:id" element={<PrivateRoute perm="PedidosVenda.Visualizar"><AppLayout><PedidoVendaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/catalogo/produtos" element={<PrivateRoute perm="Produtos.Visualizar"><AppLayout><CatalogoProdutosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/clientes" element={<PrivateRoute perm="Fornecedores.Visualizar"><AppLayout><ClientesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/clientes/novo" element={<PrivateRoute perm="Fornecedores.Criar"><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/clientes/:tipo/:id/editar" element={<PrivateRoute perm="Fornecedores.Editar"><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/comercial/clientes/:tipo/:id" element={<PrivateRoute perm="Fornecedores.Visualizar"><AppLayout><ClientesFormPage /></AppLayout></PrivateRoute>} />
 
       <Route
         path="/cadastros/pessoas"
         element={
-          <PrivateRoute>
+          <PrivateRoute perm="Fornecedores.Visualizar">
             <AppLayout><PessoasPage /></AppLayout>
           </PrivateRoute>
         }
@@ -145,7 +153,7 @@ const App = () => (
       <Route
         path="/cadastros/pessoas/novo"
         element={
-          <PrivateRoute>
+          <PrivateRoute perm="Fornecedores.Criar">
             <AppLayout><PessoaFormPage /></AppLayout>
           </PrivateRoute>
         }
@@ -153,7 +161,7 @@ const App = () => (
       <Route
         path="/cadastros/pessoas/:tipo/:id/editar"
         element={
-          <PrivateRoute>
+          <PrivateRoute perm="Fornecedores.Editar">
             <AppLayout><PessoaFormPage /></AppLayout>
           </PrivateRoute>
         }
@@ -161,113 +169,113 @@ const App = () => (
       <Route
         path="/cadastros/pessoas/:tipo/:id"
         element={
-          <PrivateRoute>
+          <PrivateRoute perm="Fornecedores.Visualizar">
             <AppLayout><PessoaFormPage /></AppLayout>
           </PrivateRoute>
         }
       />
 
-      <Route path="/cadastros/produtos" element={<PrivateRoute><AppLayout><ProdutosPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/produtos/novo" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/produtos/:id/editar" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/produtos/:id" element={<PrivateRoute><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/produtos" element={<PrivateRoute perm="Produtos.Visualizar"><AppLayout><ProdutosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/produtos/novo" element={<PrivateRoute perm="Produtos.Criar"><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/produtos/:id/editar" element={<PrivateRoute perm="Produtos.Editar"><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/produtos/:id" element={<PrivateRoute perm="Produtos.Visualizar"><AppLayout><ProdutoFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/categorias" element={<PrivateRoute><AppLayout><CategoriasPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/categorias/novo" element={<PrivateRoute><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/categorias/:id/editar" element={<PrivateRoute><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/categorias/:id" element={<PrivateRoute><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/categorias" element={<PrivateRoute perm="Categorias.Visualizar"><AppLayout><CategoriasPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/categorias/novo" element={<PrivateRoute perm="Categorias.Criar"><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/categorias/:id/editar" element={<PrivateRoute perm="Categorias.Editar"><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/categorias/:id" element={<PrivateRoute perm="Categorias.Visualizar"><AppLayout><CategoriaFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/fases" element={<PrivateRoute><AppLayout><FasesPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/fases/novo" element={<PrivateRoute><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/fases/:id/editar" element={<PrivateRoute><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/fases/:id" element={<PrivateRoute><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/fases" element={<PrivateRoute perm="FasesProducao.Visualizar"><AppLayout><FasesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/fases/novo" element={<PrivateRoute perm="FasesProducao.Criar"><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/fases/:id/editar" element={<PrivateRoute perm="FasesProducao.Editar"><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/fases/:id" element={<PrivateRoute perm="FasesProducao.Visualizar"><AppLayout><FaseFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/almoxarifados" element={<PrivateRoute><AppLayout><AlmoxarifadosPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/almoxarifados/novo" element={<PrivateRoute><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/almoxarifados/:id/editar" element={<PrivateRoute><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/almoxarifados/:id" element={<PrivateRoute><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/almoxarifados" element={<PrivateRoute perm="Almoxarifados.Visualizar"><AppLayout><AlmoxarifadosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/almoxarifados/novo" element={<PrivateRoute perm="Almoxarifados.Criar"><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/almoxarifados/:id/editar" element={<PrivateRoute perm="Almoxarifados.Editar"><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/almoxarifados/:id" element={<PrivateRoute perm="Almoxarifados.Visualizar"><AppLayout><AlmoxarifadoFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/depositos" element={<PrivateRoute><AppLayout><DepositosPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/depositos/novo" element={<PrivateRoute><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/depositos/:id/editar" element={<PrivateRoute><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/depositos/:id" element={<PrivateRoute><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/depositos" element={<PrivateRoute perm="Depositos.Visualizar"><AppLayout><DepositosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/depositos/novo" element={<PrivateRoute perm="Depositos.Criar"><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/depositos/:id/editar" element={<PrivateRoute perm="Depositos.Editar"><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/depositos/:id" element={<PrivateRoute perm="Depositos.Visualizar"><AppLayout><DepositoFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/unidades" element={<PrivateRoute><AppLayout><UnidadesMedidaPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/unidades/novo" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/unidades/:id/editar" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/unidades/:id" element={<PrivateRoute><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/unidades" element={<PrivateRoute perm="UnidadesMedida.Visualizar"><AppLayout><UnidadesMedidaPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/unidades/novo" element={<PrivateRoute perm="UnidadesMedida.Criar"><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/unidades/:id/editar" element={<PrivateRoute perm="UnidadesMedida.Editar"><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/unidades/:id" element={<PrivateRoute perm="UnidadesMedida.Visualizar"><AppLayout><UnidadeMedidaFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/formas-pagamento" element={<PrivateRoute><AppLayout><FormasPagamentoPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/formas-pagamento/novo" element={<PrivateRoute><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/formas-pagamento/:id/editar" element={<PrivateRoute><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/formas-pagamento/:id" element={<PrivateRoute><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/formas-pagamento" element={<PrivateRoute perm="FormasPagamento.Visualizar"><AppLayout><FormasPagamentoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/formas-pagamento/novo" element={<PrivateRoute perm="FormasPagamento.Criar"><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/formas-pagamento/:id/editar" element={<PrivateRoute perm="FormasPagamento.Editar"><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/formas-pagamento/:id" element={<PrivateRoute perm="FormasPagamento.Visualizar"><AppLayout><FormaPagamentoFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/finalidades" element={<PrivateRoute><AppLayout><FinalidadesPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/finalidades/novo" element={<PrivateRoute><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/finalidades/:id/editar" element={<PrivateRoute><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/finalidades/:id" element={<PrivateRoute><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/finalidades" element={<PrivateRoute perm="Finalidades.Visualizar"><AppLayout><FinalidadesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/finalidades/novo" element={<PrivateRoute perm="Finalidades.Criar"><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/finalidades/:id/editar" element={<PrivateRoute perm="Finalidades.Editar"><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/finalidades/:id" element={<PrivateRoute perm="Finalidades.Visualizar"><AppLayout><FinalidadeFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/condicoes-pagamento" element={<PrivateRoute><AppLayout><CondicoesPagamentoPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/condicoes-pagamento/novo" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/condicoes-pagamento/:id/editar" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/condicoes-pagamento/:id" element={<PrivateRoute><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/condicoes-pagamento" element={<PrivateRoute perm="CondicoesPagamento.Visualizar"><AppLayout><CondicoesPagamentoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/condicoes-pagamento/novo" element={<PrivateRoute perm="CondicoesPagamento.Criar"><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/condicoes-pagamento/:id/editar" element={<PrivateRoute perm="CondicoesPagamento.Editar"><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/condicoes-pagamento/:id" element={<PrivateRoute perm="CondicoesPagamento.Visualizar"><AppLayout><CondicaoPagamentoFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/cadastros/tipos-ordem" element={<PrivateRoute><AppLayout><TiposDeOrdemPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/tipos-ordem/novo" element={<PrivateRoute><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/tipos-ordem/:id/editar" element={<PrivateRoute><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/cadastros/tipos-ordem/:id" element={<PrivateRoute><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/tipos-ordem" element={<PrivateRoute perm="TiposOrdem.Visualizar"><AppLayout><TiposDeOrdemPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/tipos-ordem/novo" element={<PrivateRoute perm="TiposOrdem.Criar"><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/tipos-ordem/:id/editar" element={<PrivateRoute perm="TiposOrdem.Editar"><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/cadastros/tipos-ordem/:id" element={<PrivateRoute perm="TiposOrdem.Visualizar"><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/estoque/inventario" element={<PrivateRoute><AppLayout><InventariosPage /></AppLayout></PrivateRoute>} />
-      <Route path="/estoque/inventario/novo" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/estoque/inventario/:id/editar" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/estoque/inventario/:id" element={<PrivateRoute><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/inventario" element={<PrivateRoute perm="Estoque.Visualizar"><AppLayout><InventariosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/inventario/novo" element={<PrivateRoute perm="Estoque.Visualizar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/inventario/:id/editar" element={<PrivateRoute perm="Estoque.Visualizar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/inventario/:id" element={<PrivateRoute perm="Estoque.Visualizar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/estoque/movimentacoes" element={<PrivateRoute><AppLayout><MovimentacoesPage /></AppLayout></PrivateRoute>} />
-      <Route path="/estoque/movimentacoes/novo" element={<PrivateRoute><AppLayout><MovimentacaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/movimentacoes" element={<PrivateRoute perm="Movimentacoes.Visualizar"><AppLayout><MovimentacoesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/movimentacoes/novo" element={<PrivateRoute perm="Movimentacoes.Criar"><AppLayout><MovimentacaoFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/producao/ordens" element={<PrivateRoute><AppLayout><OrdensDeProducaoPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/ordens/novo" element={<PrivateRoute><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/ordens/:id/editar" element={<PrivateRoute><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/ordens/:id" element={<PrivateRoute><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/kanban" element={<PrivateRoute><AppLayout><KanbanPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/ordens" element={<PrivateRoute perm="OrdensProducao.Visualizar"><AppLayout><OrdensDeProducaoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/ordens/novo" element={<PrivateRoute perm="OrdensProducao.Criar"><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/ordens/:id/editar" element={<PrivateRoute perm="OrdensProducao.Editar"><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/ordens/:id" element={<PrivateRoute perm="OrdensProducao.Visualizar"><AppLayout><OrdemDeProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/kanban" element={<PrivateRoute perm="OrdensProducao.Visualizar"><AppLayout><KanbanPage /></AppLayout></PrivateRoute>} />
       <Route path="/scan" element={<PrivateRoute><AppLayout><ConsultaAcaoPage /></AppLayout></PrivateRoute>} />
-      <Route path="/lotes" element={<PrivateRoute><AppLayout><LotesPage /></AppLayout></PrivateRoute>} />
-      <Route path="/lotes/novo" element={<PrivateRoute><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/lotes/:id/editar" element={<PrivateRoute><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/lotes/:id" element={<PrivateRoute><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/roteiros" element={<PrivateRoute><AppLayout><RoteiroProducaoPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/roteiros/novo" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/roteiros/:id/editar" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/producao/roteiros/:id" element={<PrivateRoute><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/engenharia/fichas-tecnicas" element={<PrivateRoute><AppLayout><FichaTecnicasPage /></AppLayout></PrivateRoute>} />
-      <Route path="/engenharia/fichas-tecnicas/novo" element={<PrivateRoute><AppLayout><ProdutosSemFichaPage /></AppLayout></PrivateRoute>} />
-      <Route path="/engenharia/fichas-tecnicas/:id" element={<PrivateRoute><AppLayout><FichaTecnicaPainelPage /></AppLayout></PrivateRoute>} />
-      <Route path="/engenharia/fichas-tecnicas/:id/consumo" element={<PrivateRoute><AppLayout><FichaConsumoPage /></AppLayout></PrivateRoute>} />
-      <Route path="/engenharia/fichas-tecnicas/:id/sequencia-operacional" element={<PrivateRoute><AppLayout><SequenciaOperacionalPage /></AppLayout></PrivateRoute>} />
+      <Route path="/lotes" element={<PrivateRoute perm="Lotes.Visualizar"><AppLayout><LotesPage /></AppLayout></PrivateRoute>} />
+      <Route path="/lotes/novo" element={<PrivateRoute perm="Lotes.Criar"><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/lotes/:id/editar" element={<PrivateRoute perm="Lotes.Editar"><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/lotes/:id" element={<PrivateRoute perm="Lotes.Visualizar"><AppLayout><LoteFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/roteiros" element={<PrivateRoute perm="Roteiros.Visualizar"><AppLayout><RoteiroProducaoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/roteiros/novo" element={<PrivateRoute perm="Roteiros.Criar"><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/roteiros/:id/editar" element={<PrivateRoute perm="Roteiros.Editar"><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/producao/roteiros/:id" element={<PrivateRoute perm="Roteiros.Visualizar"><AppLayout><RoteiroProducaoFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas" element={<PrivateRoute perm="FichasTecnicas.Visualizar"><AppLayout><FichaTecnicasPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas/novo" element={<PrivateRoute perm="FichasTecnicas.Criar"><AppLayout><ProdutosSemFichaPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas/:id" element={<PrivateRoute perm="FichasTecnicas.Visualizar"><AppLayout><FichaTecnicaPainelPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas/:id/consumo" element={<PrivateRoute perm="FichasTecnicas.Visualizar"><AppLayout><FichaConsumoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/engenharia/fichas-tecnicas/:id/sequencia-operacional" element={<PrivateRoute perm="FichasTecnicas.Visualizar"><AppLayout><SequenciaOperacionalPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/relatorios/estoque" element={<PrivateRoute><AppLayout><RelatorioEstoquePage /></AppLayout></PrivateRoute>} />
-      <Route path="/relatorios/financeiro" element={<PrivateRoute><AppLayout><RelatorioFinanceiroPage /></AppLayout></PrivateRoute>} />
-      <Route path="/relatorios/vendas" element={<PrivateRoute><AppLayout><RelatorioVendasPage /></AppLayout></PrivateRoute>} />
+      <Route path="/relatorios/estoque" element={<PrivateRoute perm="Relatorios.Visualizar"><AppLayout><RelatorioEstoquePage /></AppLayout></PrivateRoute>} />
+      <Route path="/relatorios/financeiro" element={<PrivateRoute perm="Relatorios.Visualizar"><AppLayout><RelatorioFinanceiroPage /></AppLayout></PrivateRoute>} />
+      <Route path="/relatorios/vendas" element={<PrivateRoute perm="Relatorios.Visualizar"><AppLayout><RelatorioVendasPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/financeiro/fluxo-caixa" element={<PrivateRoute><AppLayout><FluxoCaixaPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/fluxo-caixa" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><FluxoCaixaPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/financeiro/carteira" element={<PrivateRoute><AppLayout><CarteirasPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/carteira/nova" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/carteira/:id/editar" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/carteira/:id/extrato" element={<PrivateRoute><AppLayout><CarteiraExtratoPage /></AppLayout></PrivateRoute>} />
-      <Route path="/financeiro/carteira/:id" element={<PrivateRoute><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><CarteirasPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira/nova" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira/:id/editar" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira/:id/extrato" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><CarteiraExtratoPage /></AppLayout></PrivateRoute>} />
+      <Route path="/financeiro/carteira/:id" element={<PrivateRoute perm="Financeiro.Visualizar"><AppLayout><CarteiraFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/configuracoes/Logs" element={<PrivateRoute><AppLayout><LogsPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/Logs" element={<PrivateRoute perm="Logs.Visualizar"><AppLayout><LogsPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/configuracoes/perfis" element={<PrivateRoute><AppLayout><PerfisPage /></AppLayout></PrivateRoute>} />
-      <Route path="/configuracoes/perfis/novo" element={<PrivateRoute><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/configuracoes/perfis/:id/editar" element={<PrivateRoute><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/configuracoes/perfis/:id" element={<PrivateRoute><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/perfis" element={<PrivateRoute perm="Perfis.Visualizar"><AppLayout><PerfisPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/perfis/novo" element={<PrivateRoute perm="Perfis.Criar"><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/perfis/:id/editar" element={<PrivateRoute perm="Perfis.Editar"><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/perfis/:id" element={<PrivateRoute perm="Perfis.Visualizar"><AppLayout><PerfilFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/configuracoes/usuarios" element={<PrivateRoute><AppLayout><UsuariosPage /></AppLayout></PrivateRoute>} />
-      <Route path="/configuracoes/usuarios/novo" element={<PrivateRoute><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/configuracoes/usuarios/:id/editar" element={<PrivateRoute><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/configuracoes/usuarios/:id" element={<PrivateRoute><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/usuarios" element={<PrivateRoute perm="Usuarios.Visualizar"><AppLayout><UsuariosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/usuarios/novo" element={<PrivateRoute perm="Usuarios.Criar"><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/usuarios/:id/editar" element={<PrivateRoute perm="Usuarios.Editar"><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/configuracoes/usuarios/:id" element={<PrivateRoute perm="Usuarios.Visualizar"><AppLayout><UsuarioFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

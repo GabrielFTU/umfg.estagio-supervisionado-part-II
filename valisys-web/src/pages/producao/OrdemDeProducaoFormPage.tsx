@@ -3,10 +3,11 @@ import { fetchWithAuth } from '@/services/api';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Home, ChevronRight, Loader2, AlertTriangle, X,
-  Search, Check, ChevronDown, MoreVertical,
+  Search, Check, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -283,62 +284,6 @@ function ProdutoSelector({ value, options, onChange, error, readOnly }: {
   );
 }
 
-// ─── FAB ──────────────────────────────────────────────────────────────────────
-
-function FAB({ onSalvar, onCancelar, saving, readOnly }: {
-  onSalvar: () => void;
-  onCancelar: () => void;
-  saving: boolean;
-  readOnly?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [open]);
-
-  return (
-    <div ref={ref} className="fixed bottom-6 right-6 z-50">
-      {open && (
-        <div className="absolute bottom-14 right-0 bg-white rounded-xl shadow-lg border border-gray-200 py-1 min-w-[140px] mb-1.5">
-          {!readOnly && (
-            <button
-              onClick={() => { setOpen(false); onSalvar(); }}
-              disabled={saving}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              {saving && <Loader2 size={13} className="animate-spin" />}
-              Salvar
-            </button>
-          )}
-          <div className="my-0.5 mx-3 border-t border-gray-100" />
-          <button
-            onClick={() => { setOpen(false); onCancelar(); }}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50 transition-colors"
-          >
-            {readOnly ? 'Voltar' : 'Cancelar'}
-          </button>
-        </div>
-      )}
-      <button
-        onClick={() => setOpen(v => !v)}
-        className={cn(
-          'w-12 h-12 rounded-full shadow-lg text-white flex items-center justify-center transition-colors',
-          open ? 'bg-gray-800' : 'bg-gray-700 hover:bg-gray-800',
-        )}
-      >
-        <MoreVertical size={20} />
-      </button>
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function OrdemDeProducaoFormPage() {
@@ -355,6 +300,7 @@ export function OrdemDeProducaoFormPage() {
   const [loading, setLoading]         = useState(false);
   const [saving, setSaving]           = useState(false);
   const [error, setError]             = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [produtos, setProdutos]           = useState<ProdutoOption[]>([]);
   const [tiposOrdem, setTiposOrdem]       = useState<TipoOrdemOption[]>([]);
@@ -504,6 +450,7 @@ export function OrdemDeProducaoFormPage() {
         almoxarifadoId: String(data.almoxarifadoId ?? ''),
         depositoId: String(data.depositoId ?? ''),
         roteiroProducaoId: String(data.roteiroProducaoId ?? ''),
+        faseAtualId: String(data.faseAtualId ?? ''),
         loteId: String(data.loteId ?? ''),
         quantidade: String(data.quantidade ?? 1),
         status: data.status ?? 1,
@@ -628,6 +575,15 @@ export function OrdemDeProducaoFormPage() {
     }
   };
 
+  const handleSalvarClick = () => {
+    if (modo === 'editar') {
+      if (!validate()) return;
+      setConfirmOpen(true);
+      return;
+    }
+    handleSalvar();
+  };
+
   if (loadingRefs || (loading && !!id)) {
     return (
       <div className="flex flex-col h-full">
@@ -667,7 +623,7 @@ export function OrdemDeProducaoFormPage() {
 
       {/* Form body */}
       <div className="flex-1 overflow-auto bg-white">
-        <div className="px-6 py-4 pb-24">
+        <div className="px-6 py-4">
 
           {error && (
             <div className="mb-4 flex items-start gap-2.5 px-4 py-3 rounded-lg bg-red-50 border border-red-200">
@@ -929,12 +885,46 @@ export function OrdemDeProducaoFormPage() {
         </div>
       </div>
 
-      {/* Floating action button */}
-      <FAB
-        onSalvar={handleSalvar}
-        onCancelar={() => navigate('/producao/ordens')}
-        saving={saving}
-        readOnly={readOnly}
+      {/* Bottom bar */}
+      <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
+        <button
+          type="button"
+          onClick={() => navigate('/producao/ordens')}
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          Cancelar
+        </button>
+
+        {readOnly ? (
+          <button
+            type="button"
+            onClick={() => navigate(`/producao/ordens/${id}/editar`)}
+            className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors"
+          >
+            Editar
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleSalvarClick}
+            disabled={saving}
+            className="h-9 px-6 rounded-full bg-[#1D4E89] text-white text-sm font-medium hover:bg-[#163D6D] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {saving
+              ? <span className="flex items-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Salvando…</span>
+              : 'Salvar'}
+          </button>
+        )}
+      </div>
+
+      <ModalMsg
+        aberto={confirmOpen}
+        variante="aviso"
+        titulo="Salvar alterações?"
+        descricao="Os dados da ordem de produção serão atualizados. Deseja continuar?"
+        labelConfirmar="Salvar"
+        onConfirmar={() => { setConfirmOpen(false); handleSalvar(); }}
+        onCancelar={() => setConfirmOpen(false)}
       />
     </div>
   );

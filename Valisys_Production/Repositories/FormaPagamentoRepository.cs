@@ -42,5 +42,24 @@ namespace Valisys_Production.Repositories
             _context.Entry(entity).State = EntityState.Modified;
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<bool> VendedorJaVinculadoAsync(Guid formaPagamentoId, Guid vendedorId)
+            => await _context.FormaPagamentoVendedores.AnyAsync(v =>
+                v.FormaPagamentoId == formaPagamentoId && v.VendedorId == vendedorId);
+
+        public async Task AdicionarVendedorAsync(FormaPagamentoVendedor vinculo)
+        {
+            _context.FormaPagamentoVendedores.Add(vinculo);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> RemoverVendedorAsync(Guid formaPagamentoId, Guid vendedorId)
+        {
+            var link = await _context.FormaPagamentoVendedores.FirstOrDefaultAsync(v =>
+                v.FormaPagamentoId == formaPagamentoId && v.VendedorId == vendedorId);
+            if (link is null) return false;
+            _context.FormaPagamentoVendedores.Remove(link);
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

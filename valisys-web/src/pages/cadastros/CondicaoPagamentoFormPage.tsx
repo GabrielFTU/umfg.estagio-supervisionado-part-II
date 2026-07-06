@@ -15,6 +15,7 @@ interface FormState {
   diasParaPrimeiroVencimento: number;
   diasEntreParcelas: number;
   vencimentoDiaFixo: boolean;
+  diaVencimento: number | '';
   ativo: boolean;
 }
 
@@ -65,7 +66,7 @@ export function CondicaoPagamentoFormPage() {
 
   const [form, setForm] = useState<FormState>({
     nome: '', numeroParcelas: 1, diasParaPrimeiroVencimento: 30,
-    diasEntreParcelas: 30, vencimentoDiaFixo: false, ativo: true,
+    diasEntreParcelas: 30, vencimentoDiaFixo: false, diaVencimento: '', ativo: true,
   });
   const [parcelas, setParcelas] = useState<Parcela[]>(() =>
     gerarParcelas(1, 30, 30)
@@ -89,7 +90,8 @@ export function CondicaoPagamentoFormPage() {
         nome: data.nome, numeroParcelas: data.numeroParcelas,
         diasParaPrimeiroVencimento: data.diasParaPrimeiroVencimento,
         diasEntreParcelas: data.diasEntreParcelas,
-        vencimentoDiaFixo: data.vencimentoDiaFixo, ativo: data.ativo,
+        vencimentoDiaFixo: data.vencimentoDiaFixo,
+        diaVencimento: data.diaVencimento ?? '', ativo: data.ativo,
       });
       setParcelas(data.parcelas.map((p: any) => ({
         numero: p.numero, numeroDias: p.numeroDias, percentual: Number(p.percentual),
@@ -135,7 +137,9 @@ export function CondicaoPagamentoFormPage() {
       id, nome: form.nome.trim(), numeroParcelas: form.numeroParcelas,
       diasParaPrimeiroVencimento: form.diasParaPrimeiroVencimento,
       diasEntreParcelas: form.diasEntreParcelas,
-      vencimentoDiaFixo: form.vencimentoDiaFixo, ativo: form.ativo,
+      vencimentoDiaFixo: form.vencimentoDiaFixo,
+      diaVencimento: form.vencimentoDiaFixo && form.diaVencimento !== '' ? Number(form.diaVencimento) : null,
+      ativo: form.ativo,
       parcelas: parcelas.map(p => ({ numero: p.numero, numeroDias: p.numeroDias, percentual: p.percentual })),
     };
     try {
@@ -158,6 +162,9 @@ export function CondicaoPagamentoFormPage() {
     if (!form.nome.trim()) novosErros.nome = 'O nome é obrigatório.';
     if (form.numeroParcelas < 1) novosErros.numeroParcelas = 'Mínimo 1 parcela.';
     if (Math.abs(totalPercentual - 100) > 0.01) novosErros.percentual = 'A soma dos percentuais deve ser 100%.';
+    if (form.vencimentoDiaFixo && (form.diaVencimento === '' || form.diaVencimento < 1 || form.diaVencimento > 31)) {
+      novosErros.diaVencimento = 'Informe um dia entre 1 e 31.';
+    }
     if (Object.keys(novosErros).length) { setErros(novosErros); return; }
     if (modo === 'editar') { setConfirmOpen(true); return; }
     execSalvar();
@@ -236,7 +243,7 @@ export function CondicaoPagamentoFormPage() {
             </div>
 
             {/* Toggle vencimento em dia fixo */}
-            <div className="py-4 border-b border-gray-200 flex items-center justify-between">
+            <div className={cn('py-4 flex items-center justify-between', !form.vencimentoDiaFixo && 'border-b border-gray-200')}>
               <p className="text-sm text-gray-700">Vencimento em dia fixo ?</p>
               <button type="button" disabled={readOnly}
                 onClick={() => !readOnly && setF('vencimentoDiaFixo')(!form.vencimentoDiaFixo)}
@@ -251,6 +258,24 @@ export function CondicaoPagamentoFormPage() {
                 )} />
               </button>
             </div>
+
+            {/* Dia do mês do vencimento — só aparece quando "dia fixo" está ligado */}
+            {form.vencimentoDiaFixo && (
+              <UField label="Dia do vencimento" required error={erros.diaVencimento} small>
+                {readOnly
+                  ? <p className="text-sm text-gray-700">{form.diaVencimento || '—'}</p>
+                  : (
+                    <input type="number" min={1} max={31} className={uInput}
+                      placeholder="Ex: 10" value={form.diaVencimento}
+                      onChange={e => {
+                        const v = e.target.value === '' ? '' : Math.max(1, Math.min(31, parseInt(e.target.value) || 1));
+                        setF('diaVencimento')(v);
+                        setErros(p => ({ ...p, diaVencimento: '' }));
+                      }} />
+                  )
+                }
+              </UField>
+            )}
 
             {/* Toggle ativo (somente editar) */}
             {modo === 'editar' && (

@@ -34,14 +34,13 @@ namespace Valisys_Production.Services
             ValidarDesconto(dto.Desconto, dto.Itens.Select(i => (i.ValorUnitario, i.DescontoUnitario, i.Quantidade)));
             ValidarDataValidade(dto.DataValidade);
 
-            var codigo          = await _repository.GetProximoCodigoAsync();
-            var representanteId = dto.RepresentanteId ?? usuarioId;
+            var codigo = await _repository.GetProximoCodigoAsync();
 
-            var orcamento = new Orcamento(codigo, dto.ClienteId, representanteId, dto.DataValidade);
+            var orcamento = new Orcamento(codigo, dto.ClienteId, dto.RepresentanteId, dto.DataValidade);
 
             orcamento.Atualizar(
                 dto.ClienteId,
-                representanteId,
+                dto.RepresentanteId,
                 dto.DataValidade,
                 dto.Desconto,
                 CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento, dto.Finalidade),
@@ -85,11 +84,9 @@ namespace Valisys_Production.Services
             ValidarDesconto(dto.Desconto, dto.Itens.Select(i => (i.ValorUnitario, i.DescontoUnitario, i.Quantidade)));
             ValidarDataValidade(dto.DataValidade);
 
-            var representanteId = dto.RepresentanteId ?? usuarioId;
-
             existente.Atualizar(
                 dto.ClienteId,
-                representanteId,
+                dto.RepresentanteId,
                 dto.DataValidade,
                 dto.Desconto,
                 CombinarObservacaoInterna(dto.ObservacaoInterna, dto.FormaPagamento, dto.CondicaoPagamento, dto.Finalidade),

@@ -128,3 +128,21 @@ export const ALL_PERMISSION_VALUES: string[] = PERMISSION_SECTIONS
   .map(a => a.value);
 
 export const TOTAL_PERMISSION_COUNT = ALL_PERMISSION_VALUES.length;
+
+export function getAcessos(): { acessos: string[]; isAdmin: boolean } {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') ?? '{}');
+    return {
+      acessos: Array.isArray(user.acessos) ? user.acessos : [],
+      isAdmin: user.perfilNome === 'Administrador',
+    };
+  } catch {
+    return { acessos: [], isAdmin: false };
+  }
+}
+
+export function canAccess(permissions: string[] | undefined, acessos: string[], isAdmin: boolean): boolean {
+  if (isAdmin) return true;
+  if (!permissions || permissions.length === 0) return true;
+  return permissions.some(p => acessos.includes(p));
+}

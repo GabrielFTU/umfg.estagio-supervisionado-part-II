@@ -23,6 +23,8 @@ namespace Valisys_Production.Repositories
                 .Include(l => l.OrdensDeProducao)
                 .ToListAsync();
 
+        public async Task<int> ContarAsync() => await _dbSet.CountAsync();
+
         public override async Task<bool> DeleteAsync(Guid id)
         {
             var entity = await _dbSet.FindAsync(id);

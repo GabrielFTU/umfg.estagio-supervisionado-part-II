@@ -90,7 +90,7 @@ function VendedorSearch({ onSelect, existingIds }: {
   }, [open]);
 
   useEffect(() => {
-    if (!query.trim()) { setResults([]); return; }
+    if (!open) return;
     const t = setTimeout(async () => {
       setLoading(true);
       try {
@@ -108,7 +108,8 @@ function VendedorSearch({ onSelect, existingIds }: {
         const q = query.toLowerCase();
         setResults(
           vendedores
-            .filter(v => !existingIds.includes(v.id) && (v.nome.toLowerCase().includes(q) || v.doc.includes(query)))
+            .filter(v => !existingIds.includes(v.id) &&
+              (!q || v.nome.toLowerCase().includes(q) || v.doc.includes(query)))
             .slice(0, 8)
         );
       } finally { setLoading(false); }
@@ -386,7 +387,7 @@ export function FormaPagamentoFormPage() {
 
           {/* Vendedores autorizados (só aparece no modo visualizar/editar) */}
           {id && (
-            <div className="mt-6 rounded-xl border border-gray-200 overflow-hidden">
+            <div className="mt-6 rounded-xl border border-gray-200">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users size={15} className="text-gray-400" />

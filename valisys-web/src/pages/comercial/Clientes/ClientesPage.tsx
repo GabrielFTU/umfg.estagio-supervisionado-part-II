@@ -157,7 +157,7 @@ export function ClientesPage() {
           email: p.email ?? null,
           telefone: p.celular ?? p.telefone ?? null,
           cidade: p.endereco?.cidade ?? '—', uf: p.endereco?.uf ?? '',
-          ativo: p.ativo, bloqueado: p.bloqueado ?? false,
+          ativo: p.ativo, bloqueado: p.statusCredito === 1,
         })),
         ...juridicas.filter(p => p.papelPessoa & 1).map(p => ({
           id: p.id, tipo: 'juridica' as const,
@@ -166,7 +166,7 @@ export function ClientesPage() {
           email: p.email ?? null,
           telefone: p.celular ?? p.telefone ?? null,
           cidade: p.endereco?.cidade ?? '—', uf: p.endereco?.uf ?? '',
-          ativo: p.ativo, bloqueado: p.bloqueado ?? false,
+          ativo: p.ativo, bloqueado: p.statusCredito === 1,
         })),
       ];
       lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));

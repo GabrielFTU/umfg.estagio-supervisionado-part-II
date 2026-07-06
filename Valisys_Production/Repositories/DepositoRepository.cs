@@ -22,5 +22,7 @@ namespace Valisys_Production.Repositories
 
         public async Task<bool> HasActiveLotesInAlmoxarifadoAsync(Guid almoxarifadoId)
             => await _context.Lotes.AnyAsync(l => l.AlmoxarifadoId == almoxarifadoId && l.Ativo);
+
+        public async Task<int> ContarAsync() => await _dbSet.CountAsync();
     }
 }

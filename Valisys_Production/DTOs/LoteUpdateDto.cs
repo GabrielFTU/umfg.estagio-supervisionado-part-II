@@ -17,6 +17,12 @@ namespace Valisys_Production.DTOs
 
         public DateTime? DataConclusao { get; set; }
 
+        [MaxLength(500)]
+        public string? Descricao { get; set; }
+
+        [MaxLength(500)]
+        public string? Observacoes { get; set; }
+
         public bool Ativo { get; set; }
     }
 }

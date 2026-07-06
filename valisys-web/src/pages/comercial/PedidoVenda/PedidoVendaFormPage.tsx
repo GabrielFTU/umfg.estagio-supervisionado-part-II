@@ -180,7 +180,6 @@ function ClienteSearch({
   }, [open]);
 
   const buscar = useCallback(async (q: string) => {
-    if (!q.trim()) { setResults([]); return; }
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -192,10 +191,13 @@ function ClienteSearch({
       const [fisicas, juridicas]: [any[], any[]] = await Promise.all([rF.json(), rJ.json()]);
       const lower = q.toLowerCase();
       const todos: ClienteOption[] = [
-        ...fisicas.map(p => ({ id: p.id, nome: p.nome, doc: p.cpf })),
-        ...juridicas.map(p => ({ id: p.id, nome: p.razaoSocial, doc: p.cnpj })),
+        ...fisicas.filter(p => p.ativo && (p.papelPessoa & 1)).map(p => ({ id: p.id, nome: p.nome, doc: p.cpf })),
+        ...juridicas.filter(p => p.ativo && (p.papelPessoa & 1)).map(p => ({ id: p.id, nome: p.razaoSocial, doc: p.cnpj })),
       ];
-      setResults(todos.filter(c => c.nome.toLowerCase().includes(lower) || c.doc.includes(q)).slice(0, 8));
+      const filtrados = q.trim()
+        ? todos.filter(c => c.nome.toLowerCase().includes(lower) || c.doc.includes(q))
+        : todos;
+      setResults(filtrados.slice(0, 8));
     } finally { setLoading(false); }
   }, []);
 
@@ -536,9 +538,13 @@ export function PedidoVendaFormPage() {
       .then(r => r.ok ? r.json() : [])
       .then((data: any[]) => setFinalidades(data.filter(f => f.ativo).map(f => ({ value: f.nome, label: f.nome }))));
 
-    fetch('/api/Usuarios', { headers: h })
-      .then(r => r.ok ? r.json() : [])
-      .then((data: any[]) => setRepresentantes(data.filter(u => u.ativo).map(u => ({ value: u.id, label: u.nome }))));
+    Promise.all([
+      fetch('/api/PessoasFisicas', { headers: h }).then(r => r.ok ? r.json() : []),
+      fetch('/api/PessoasJuridicas', { headers: h }).then(r => r.ok ? r.json() : []),
+    ]).then(([fisicas, juridicas]: [any[], any[]]) => setRepresentantes([
+      ...fisicas.filter(p => p.ativo && (p.papelPessoa & 8)).map(p => ({ value: p.id, label: p.nome })),
+      ...juridicas.filter(p => p.ativo && (p.papelPessoa & 8)).map(p => ({ value: p.id, label: p.razaoSocial })),
+    ]));
   }, []);
 
 
@@ -606,6 +612,7 @@ export function PedidoVendaFormPage() {
   const validar = () => {
     const e: Record<string, string> = {};
     if (!form.clienteId) e.clienteId = 'Selecione um cliente.';
+    if (!form.representanteId) e.representanteId = 'Selecione o representante.';
     if (!form.finalidade) e.finalidade = 'Selecione a finalidade.';
     if (!form.formaPagamentoId) e.formaPagamentoId = 'Selecione a forma de pagamento.';
     if (!form.condicaoPagamentoId) e.condicaoPagamentoId = 'Selecione a condição de pagamento.';
@@ -623,7 +630,7 @@ export function PedidoVendaFormPage() {
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
     const payload = {
       clienteId: form.clienteId,
-      representanteId: form.representanteId || undefined,
+      representanteId: form.representanteId,
       formaPagamento: form.formaPagamentoId || undefined,
       condicaoPagamento: form.condicaoPagamentoId || undefined,
       finalidade: form.finalidade || undefined,
@@ -770,11 +777,13 @@ export function PedidoVendaFormPage() {
 
             <SelectWrap
               label="Representante"
+              required
               value={form.representanteId}
               onChange={setF('representanteId')}
               options={representantes}
               placeholder="Selecione o representante"
               readOnly={readOnly}
+              error={erros.representanteId}
             />
 
             <SelectWrap

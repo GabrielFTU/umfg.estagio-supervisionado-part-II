@@ -4,6 +4,7 @@ import { ChevronRight, Home, Loader2, Plus, Trash2, ArrowUp, ArrowDown, Clock, S
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -110,11 +111,10 @@ export function RoteiroProducaoFormPage() {
   const tempoTotal = etapas.reduce((acc, e) => acc + (Number(e.tempoDias) || 0), 0);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
     const fetchOpts = async () => {
       const [pr, fr] = await Promise.all([
-        fetch('/api/produtos', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/fases-producao', { headers: { Authorization: `Bearer ${token}` } }),
+        fetchWithAuth('/api/produtos'),
+        fetchWithAuth('/api/fases-producao'),
       ]);
       if (pr.ok) {
         const data: ProdutoOption[] = await pr.json();
@@ -129,11 +129,8 @@ export function RoteiroProducaoFormPage() {
     if (!id) return;
     const fetchRoteiro = async () => {
       setLoading(true);
-      const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`/api/roteiros-producao/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetchWithAuth(`/api/roteiros-producao/${id}`);
         if (!res.ok) throw new Error();
         const data: RoteiroReadData = await res.json();
         setProdutoId(data.produtoId);
@@ -181,7 +178,6 @@ export function RoteiroProducaoFormPage() {
   const execSave = async () => {
     setSaving(true);
     setError('');
-    const token = localStorage.getItem('token');
     try {
       const payload = {
         ...(id ? { id } : {}),
@@ -199,11 +195,11 @@ export function RoteiroProducaoFormPage() {
         })),
       };
 
-      const res = await fetch(
+      const res = await fetchWithAuth(
         id ? `/api/roteiros-producao/${id}` : '/api/roteiros-producao',
         {
           method: id ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         },
       );

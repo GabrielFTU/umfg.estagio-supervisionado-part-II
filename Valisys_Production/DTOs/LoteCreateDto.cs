@@ -4,10 +4,6 @@ namespace Valisys_Production.DTOs
 {
     public class LoteCreateDto
     {
-        [Required]
-        [MaxLength(50)]
-        public string CodigoLote { get; set; }
-
         [MaxLength(500)]
         public string Descricao { get; set; }
 

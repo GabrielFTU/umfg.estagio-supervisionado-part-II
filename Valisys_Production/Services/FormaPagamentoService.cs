@@ -68,26 +68,26 @@ namespace Valisys_Production.Services
 
         public async Task<bool> AdicionarVendedorAsync(Guid formaPagamentoId, Guid vendedorId)
         {
-            var forma = await _repository.GetByIdWithVendedoresAsync(formaPagamentoId)
+            var forma = await _repository.GetByIdAsync(formaPagamentoId)
                 ?? throw new KeyNotFoundException("Forma de pagamento não encontrada.");
 
-            forma.AdicionarVendedor(vendedorId);
-            var ok = await _repository.UpdateAsync(forma);
+            if (!await _repository.VendedorJaVinculadoAsync(formaPagamentoId, vendedorId))
+            {
+                await _repository.AdicionarVendedorAsync(new FormaPagamentoVendedor(formaPagamentoId, vendedorId));
 
-            if (ok)
                 await _log.RegistrarAsync("Vínculo", "FormasPagamento",
                     $"Vinculou vendedor '{vendedorId}' à forma '{forma.Nome}'");
+            }
 
-            return ok;
+            return true;
         }
 
         public async Task<bool> RemoverVendedorAsync(Guid formaPagamentoId, Guid vendedorId)
         {
-            var forma = await _repository.GetByIdWithVendedoresAsync(formaPagamentoId)
+            var forma = await _repository.GetByIdAsync(formaPagamentoId)
                 ?? throw new KeyNotFoundException("Forma de pagamento não encontrada.");
 
-            forma.RemoverVendedor(vendedorId);
-            var ok = await _repository.UpdateAsync(forma);
+            var ok = await _repository.RemoverVendedorAsync(formaPagamentoId, vendedorId);
 
             if (ok)
                 await _log.RegistrarAsync("Desvinculo", "FormasPagamento",

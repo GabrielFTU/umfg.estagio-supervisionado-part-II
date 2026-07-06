@@ -33,6 +33,10 @@ namespace Valisys_Production.Controllers
             {
                 return Conflict(new { detail = ex.Message });
             }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { detail = ex.Message });
+            }
         }
 
         [HttpPut("{id:guid}")]
@@ -51,6 +55,10 @@ namespace Valisys_Production.Controllers
             catch (InvalidOperationException ex)
             {
                 return Conflict(new { detail = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { detail = ex.Message });
             }
         }
 

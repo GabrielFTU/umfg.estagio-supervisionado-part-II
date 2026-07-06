@@ -6,6 +6,7 @@ import {
   SlidersHorizontal, LogOut, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAcessos, canAccess } from '@/lib/permissions';
 
 interface SubItem { label: string; href: string; permissions?: string[] }
 interface NavGroup { label: string; items: SubItem[] }
@@ -134,24 +135,6 @@ const CONFIG_ITEM: NavItemDef = {
   ],
 };
 
-
-function getAcessos(): { acessos: string[]; isAdmin: boolean } {
-  try {
-    const user = JSON.parse(localStorage.getItem('user') ?? '{}');
-    return {
-      acessos: Array.isArray(user.acessos) ? user.acessos : [],
-      isAdmin: user.perfilNome === 'Administrador',
-    };
-  } catch {
-    return { acessos: [], isAdmin: false };
-  }
-}
-
-function canAccess(permissions: string[] | undefined, acessos: string[], isAdmin: boolean): boolean {
-  if (isAdmin) return true;
-  if (!permissions || permissions.length === 0) return true;
-  return permissions.some(p => acessos.includes(p));
-}
 
 function filterItem(item: NavItemDef, acessos: string[], isAdmin: boolean): NavItemDef | null {
   const filteredChildren = item.children

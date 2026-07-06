@@ -10,6 +10,8 @@ type Modo = 'criar' | 'editar' | 'visualizar';
 type LoteReadData = {
   id: string;
   codigoLote: string;
+  descricao?: string;
+  observacoes?: string;
   dataAbertura: string;
   dataConclusao?: string;
   ativo: boolean;
@@ -136,6 +138,8 @@ export function LoteFormPage() {
         setCodigoLote(data.codigoLote);
         setProdutoId(data.produtoId);
         setAlmoxarifadoId(data.almoxarifadoId);
+        setDescricao(data.descricao ?? '');
+        setObservacoes(data.observacoes ?? '');
         setDataAbertura(toDateValue(data.dataAbertura));
         setDataConclusao(toDateValue(data.dataConclusao));
         setAtivo(data.ativo);
@@ -156,7 +160,7 @@ export function LoteFormPage() {
 
   const validate = (): boolean => {
     const erros: Record<string, string> = {};
-    if (!codigoLote.trim()) erros.codigoLote = 'O código do lote é obrigatório.';
+    if (modo !== 'criar' && !codigoLote.trim()) erros.codigoLote = 'O código do lote é obrigatório.';
     if (modo === 'criar') {
       if (!produtoId) erros.produtoId = 'Selecione um produto.';
       if (!almoxarifadoId) erros.almoxarifadoId = 'Selecione um almoxarifado.';
@@ -177,7 +181,6 @@ export function LoteFormPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-            codigoLote: codigoLote.trim(),
             produtoId,
             almoxarifadoId,
             descricao: descricao.trim() || null,
@@ -193,6 +196,8 @@ export function LoteFormPage() {
             codigoLote: codigoLote.trim(),
             dataAbertura,
             dataConclusao: dataConclusao || null,
+            descricao: descricao.trim() || null,
+            observacoes: observacoes.trim() || null,
             ativo,
           }),
         });
@@ -273,28 +278,29 @@ export function LoteFormPage() {
             </div>
           )}
 
-          {/* Código do Lote */}
-          <div className="mb-6">
-            <label className="block text-xs text-gray-500 mb-1">
-              Código do Lote {!readonly && <span className="text-red-400">*</span>}
-            </label>
-            {readonly ? (
-              <p className="text-sm font-medium text-gray-700 border-b border-gray-200 h-9 flex items-center">
-                {codigoLote}
-              </p>
-            ) : (
-              <input
-                value={codigoLote}
-                onChange={e => { setCodigoLote(e.target.value); clearErr('codigoLote'); }}
-                placeholder="Ex: LOTE-001"
-                maxLength={50}
-                className={underline(fieldErrors.codigoLote)}
-              />
-            )}
-            {fieldErrors.codigoLote && (
-              <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.codigoLote}</p>
-            )}
-          </div>
+          {/* Código do Lote (gerado automaticamente; não existe até salvar) */}
+          {modo !== 'criar' && (
+            <div className="mb-6">
+              <label className="block text-xs text-gray-500 mb-1">
+                Código do Lote {!readonly && <span className="text-red-400">*</span>}
+              </label>
+              {readonly ? (
+                <p className="text-sm font-medium text-gray-700 border-b border-gray-200 h-9 flex items-center">
+                  {codigoLote}
+                </p>
+              ) : (
+                <input
+                  value={codigoLote}
+                  onChange={e => { setCodigoLote(e.target.value); clearErr('codigoLote'); }}
+                  maxLength={50}
+                  className={underline(fieldErrors.codigoLote)}
+                />
+              )}
+              {fieldErrors.codigoLote && (
+                <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.codigoLote}</p>
+              )}
+            </div>
+          )}
 
           {/* Produto + Almoxarifado */}
           <div className="grid grid-cols-2 gap-8 mb-6">
@@ -345,74 +351,80 @@ export function LoteFormPage() {
             </div>
           </div>
 
-          {/* Descrição + Observações (somente criação) */}
-          {modo === 'criar' && (
-            <>
-              <div className="mb-6">
-                <label className="block text-xs text-gray-500 mb-1">Descrição</label>
-                <textarea
-                  value={descricao}
-                  onChange={e => setDescricao(e.target.value)}
-                  placeholder="Descrição do lote (opcional)"
-                  maxLength={500}
-                  rows={2}
-                  className="w-full text-sm border rounded-md px-3 py-2 border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
-                />
-              </div>
-              <div className="mb-6">
-                <label className="block text-xs text-gray-500 mb-1">Observações</label>
-                <textarea
-                  value={observacoes}
-                  onChange={e => setObservacoes(e.target.value)}
-                  placeholder="Observações (opcional)"
-                  maxLength={500}
-                  rows={2}
-                  className="w-full text-sm border rounded-md px-3 py-2 border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
-                />
-              </div>
-            </>
-          )}
+          {/* Descrição + Observações */}
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">Descrição</label>
+            {readonly ? (
+              <p className="text-sm text-gray-700 border-b border-gray-200 min-h-9 py-2">
+                {descricao || '—'}
+              </p>
+            ) : (
+              <textarea
+                value={descricao}
+                onChange={e => setDescricao(e.target.value)}
+                placeholder="Descrição do lote (opcional)"
+                maxLength={500}
+                rows={2}
+                className="w-full text-sm border rounded-md px-3 py-2 border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
+              />
+            )}
+          </div>
+          <div className="mb-6">
+            <label className="block text-xs text-gray-500 mb-1">Observações</label>
+            {readonly ? (
+              <p className="text-sm text-gray-700 border-b border-gray-200 min-h-9 py-2">
+                {observacoes || '—'}
+              </p>
+            ) : (
+              <textarea
+                value={observacoes}
+                onChange={e => setObservacoes(e.target.value)}
+                placeholder="Observações (opcional)"
+                maxLength={500}
+                rows={2}
+                className="w-full text-sm border rounded-md px-3 py-2 border-gray-300 focus:border-[#1D4E89] focus:outline-none resize-none placeholder:text-gray-300 transition-colors"
+              />
+            )}
+          </div>
 
-          {/* Data Abertura + Conclusão (editar / visualizar) */}
-          {modo !== 'criar' && (
-            <div className="grid grid-cols-2 gap-8 mb-6">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Data de Abertura {modo === 'editar' && <span className="text-red-400">*</span>}
-                </label>
-                {readonly ? (
-                  <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
-                    {formatDate(dataAbertura)}
-                  </p>
-                ) : (
-                  <input
-                    type="date"
-                    value={dataAbertura}
-                    onChange={e => { setDataAbertura(e.target.value); clearErr('dataAbertura'); }}
-                    className={underline(fieldErrors.dataAbertura)}
-                  />
-                )}
-                {fieldErrors.dataAbertura && (
-                  <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.dataAbertura}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Data de Conclusão</label>
-                {readonly ? (
-                  <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
-                    {dataConclusao ? formatDate(dataConclusao) : '—'}
-                  </p>
-                ) : (
-                  <input
-                    type="date"
-                    value={dataConclusao}
-                    onChange={e => setDataConclusao(e.target.value)}
-                    className={underline()}
-                  />
-                )}
-              </div>
+          {/* Data Abertura + Conclusão */}
+          <div className="grid grid-cols-2 gap-8 mb-6">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Data de Abertura {modo === 'editar' && <span className="text-red-400">*</span>}
+              </label>
+              {modo === 'editar' ? (
+                <input
+                  type="date"
+                  value={dataAbertura}
+                  onChange={e => { setDataAbertura(e.target.value); clearErr('dataAbertura'); }}
+                  className={underline(fieldErrors.dataAbertura)}
+                />
+              ) : (
+                <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
+                  {modo === 'criar' ? new Date().toLocaleDateString('pt-BR') : formatDate(dataAbertura)}
+                </p>
+              )}
+              {fieldErrors.dataAbertura && (
+                <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.dataAbertura}</p>
+              )}
             </div>
-          )}
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Data de Conclusão</label>
+              {modo === 'editar' ? (
+                <input
+                  type="date"
+                  value={dataConclusao}
+                  onChange={e => setDataConclusao(e.target.value)}
+                  className={underline()}
+                />
+              ) : (
+                <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
+                  {modo === 'criar' ? '—' : (dataConclusao ? formatDate(dataConclusao) : '—')}
+                </p>
+              )}
+            </div>
+          </div>
 
           {/* Ativo toggle (editar) */}
           {modo === 'editar' && (

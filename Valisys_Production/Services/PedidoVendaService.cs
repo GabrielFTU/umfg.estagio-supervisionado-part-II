@@ -39,14 +39,13 @@ namespace Valisys_Production.Services
                 throw new ArgumentException("O pedido deve conter ao menos um item.");
 
             var codigo = await _repository.GetProximoCodigoAsync();
-            var representanteId = dto.RepresentanteId ?? usuarioId;
 
-            await ValidarFormaPagamentoAsync(dto.FormaPagamento, representanteId);
+            await ValidarFormaPagamentoAsync(dto.FormaPagamento, dto.RepresentanteId);
 
             var pedido = new PedidoVenda(
                 codigo,
                 dto.ClienteId,
-                representanteId,
+                dto.RepresentanteId,
                 Guid.Empty,
                 Guid.Empty,
                 dto.DataPrevisaoEntrega);
@@ -56,7 +55,7 @@ namespace Valisys_Production.Services
 
             pedido.Atualizar(
                 dto.ClienteId,
-                representanteId,
+                dto.RepresentanteId,
                 Guid.Empty,
                 Guid.Empty,
                 dto.DataPrevisaoEntrega,
@@ -88,13 +87,11 @@ namespace Valisys_Production.Services
             if (existente.Status == StatusPedido.Cancelado || existente.Status == StatusPedido.Concluido)
                 throw new InvalidOperationException("Pedidos cancelados ou concluídos não podem ser editados.");
 
-            var representanteId = dto.RepresentanteId ?? usuarioId;
-
-            await ValidarFormaPagamentoAsync(dto.FormaPagamento, representanteId);
+            await ValidarFormaPagamentoAsync(dto.FormaPagamento, dto.RepresentanteId);
 
             existente.Atualizar(
                 dto.ClienteId,
-                representanteId,
+                dto.RepresentanteId,
                 Guid.Empty,
                 Guid.Empty,
                 dto.DataPrevisaoEntrega,

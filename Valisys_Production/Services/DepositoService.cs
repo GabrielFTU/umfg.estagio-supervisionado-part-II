@@ -21,7 +21,8 @@ namespace Valisys_Production.Services
             if (dto.AlmoxarifadoId == Guid.Empty)
                 throw new ArgumentException("O almoxarifado é obrigatório.");
 
-            var deposito = new Deposito(dto.AlmoxarifadoId, dto.CodigoIdentificador, dto.Nome, dto.Descricao,
+            var codigo = await GerarProximoCodigoAsync();
+            var deposito = new Deposito(dto.AlmoxarifadoId, codigo, dto.Nome, dto.Descricao,
                 dto.ControlaLote);
             return await _repository.AddAsync(deposito);
         }
@@ -74,5 +75,8 @@ namespace Valisys_Production.Services
             existing.Desativar();
             return await _repository.UpdateAsync(existing);
         }
+
+        private async Task<int> GerarProximoCodigoAsync()
+            => await _repository.ContarAsync() + 1;
     }
 }

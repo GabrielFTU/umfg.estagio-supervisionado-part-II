@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 interface RoteiroItem {
   id: string;
@@ -102,8 +103,7 @@ export function RoteiroProducaoPage() {
 
   const load = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const res = await fetch('/api/roteiros-producao', { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetchWithAuth('/api/roteiros-producao');
     if (res.ok) setItems(await res.json());
     setLoading(false);
   };
@@ -121,11 +121,7 @@ export function RoteiroProducaoPage() {
       navigate(`/producao/roteiros/${item.id}/editar`);
       return;
     }
-    const token = localStorage.getItem('token');
-    await fetch(`/api/roteiros-producao/${item.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetchWithAuth(`/api/roteiros-producao/${item.id}`, { method: 'DELETE' });
     load();
   };
 
@@ -250,18 +246,18 @@ export function RoteiroProducaoPage() {
                   onClick={() => navigate(`/producao/roteiros/${item.id}/editar`)}
                   className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <td className="px-6 py-3 font-medium text-gray-700">{item.codigo}</td>
-                  <td className="px-4 py-3 text-gray-600">{item.produtoNome}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className={cn('px-6 py-3 font-medium text-gray-700', !item.ativo && 'opacity-50')}>{item.codigo}</td>
+                  <td className={cn('px-4 py-3 text-gray-600', !item.ativo && 'opacity-50')}>{item.produtoNome}</td>
+                  <td className={cn('px-4 py-3 text-center', !item.ativo && 'opacity-50')}>
                     <span className="inline-flex items-center gap-1 text-gray-600 font-medium">
                       <Clock size={13} className="text-gray-400" />
                       {item.tempoTotal} dias
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center text-gray-600">
+                  <td className={cn('px-4 py-3 text-center text-gray-600', !item.ativo && 'opacity-50')}>
                     {item.etapas ? item.etapas.length : 0}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={cn('px-4 py-3', !item.ativo && 'opacity-50')}>
                     <span className={cn(
                       'text-[11px] px-2 py-0.5 rounded-full font-medium border',
                       item.ativo

@@ -176,7 +176,7 @@ export function PessoasPage() {
           telefone: p.celular ?? p.telefone ?? null,
           cidade: p.endereco?.cidade ?? '—', uf: p.endereco?.uf ?? '',
           papeis: decodePapeis(p.papelPessoa),
-          papelEnum: p.papelPessoa, ativo: p.ativo, bloqueado: p.bloqueado ?? false,
+          papelEnum: p.papelPessoa, ativo: p.ativo, bloqueado: p.statusCredito === 1,
         })),
         ...juridicas.map(p => ({
           id: p.id, tipo: 'juridica' as const,
@@ -185,7 +185,7 @@ export function PessoasPage() {
           telefone: p.celular ?? p.telefone ?? null,
           cidade: p.endereco?.cidade ?? '—', uf: p.endereco?.uf ?? '',
           papeis: decodePapeis(p.papelPessoa),
-          papelEnum: p.papelPessoa, ativo: p.ativo, bloqueado: p.bloqueado ?? false,
+          papelEnum: p.papelPessoa, ativo: p.ativo, bloqueado: p.statusCredito === 1,
         })),
       ];
       lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));

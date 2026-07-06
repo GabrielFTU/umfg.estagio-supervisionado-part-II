@@ -18,10 +18,9 @@ namespace Valisys_Production.Services
 
         public async Task<Lote> CreateAsync(LoteCreateDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.CodigoLote))
-                throw new ArgumentException("Código do lote obrigatório.");
+            var codigoLote = await GerarProximoCodigoLoteAsync();
 
-            var lote = new Lote(dto.CodigoLote, dto.ProdutoId, dto.AlmoxarifadoId,
+            var lote = new Lote(codigoLote, dto.ProdutoId, dto.AlmoxarifadoId,
                 dto.Descricao, dto.Observacoes);
 
             var created = await _repository.AddAsync(lote);
@@ -40,7 +39,8 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(dto.Id)
                 ?? throw new KeyNotFoundException("Lote não encontrado.");
 
-            existing.Atualizar(dto.CodigoLote, dto.DataAbertura, dto.DataConclusao, dto.Ativo);
+            existing.Atualizar(dto.CodigoLote, dto.DataAbertura, dto.DataConclusao,
+                dto.Descricao, dto.Observacoes, dto.Ativo);
 
             var result = await _repository.UpdateAsync(existing);
 
@@ -64,6 +64,12 @@ namespace Valisys_Production.Services
                     $"Cancelou o Lote: {existing.CodigoLote}");
 
             return result;
+        }
+
+        private async Task<string> GerarProximoCodigoLoteAsync()
+        {
+            var proximo = await _repository.ContarAsync() + 1;
+            return $"LOTE-{proximo:D4}";
         }
     }
 }

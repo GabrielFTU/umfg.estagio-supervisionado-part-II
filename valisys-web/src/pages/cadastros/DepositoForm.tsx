@@ -132,8 +132,6 @@ export function DepositoFormPage() {
   const validate = (): boolean => {
     const erros: Record<string, string> = {};
     if (!almoxarifadoId) erros.almoxarifadoId = 'Obrigatório.';
-    if (!codigoIdentificador.trim() || isNaN(Number(codigoIdentificador)) || Number(codigoIdentificador) <= 0)
-      erros.codigoIdentificador = 'Código inválido.';
     if (!nome.trim()) erros.nome = 'O nome é obrigatório.';
     setFieldErrors(erros);
     return Object.keys(erros).length === 0;
@@ -144,22 +142,19 @@ export function DepositoFormPage() {
     setError('');
     const token = localStorage.getItem('token');
     try {
-      const body = {
-        almoxarifadoId,
-        codigoIdentificador: Number(codigoIdentificador),
-        nome: nome.trim(),
-        controlaLote,
-      };
       const res = modo === 'criar'
         ? await fetch('/api/Deposito', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(body),
+            body: JSON.stringify({ almoxarifadoId, nome: nome.trim(), controlaLote }),
           })
         : await fetch(`/api/Deposito/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ id, ...body, ativo }),
+            body: JSON.stringify({
+              id, almoxarifadoId, nome: nome.trim(), controlaLote,
+              codigoIdentificador: Number(codigoIdentificador), ativo,
+            }),
           });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -222,8 +217,8 @@ export function DepositoFormPage() {
             </div>
           )}
 
-          {/* Almoxarifado + Código */}
-          <div className="grid grid-cols-2 gap-8 mb-6">
+          {/* Almoxarifado + Código (código gerado automaticamente; não existe até salvar) */}
+          <div className={cn('grid gap-8 mb-6', modo === 'criar' ? 'grid-cols-1' : 'grid-cols-2')}>
             <div>
               <label className="block text-xs text-gray-500 mb-1">
                 Almoxarifado {!readonly && <span className="text-red-400">*</span>}
@@ -244,21 +239,14 @@ export function DepositoFormPage() {
                 <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.almoxarifadoId}</p>
               )}
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Código {!readonly && <span className="text-red-400">*</span>}
-              </label>
-              <input
-                type="number" min={1} disabled={readonly}
-                value={codigoIdentificador}
-                onChange={e => { setCodigoIdentificador(e.target.value); clearErr('codigoIdentificador'); }}
-                placeholder="Ex: 1"
-                className={underline(fieldErrors.codigoIdentificador)}
-              />
-              {fieldErrors.codigoIdentificador && (
-                <p className="text-[11px] text-red-500 mt-0.5">{fieldErrors.codigoIdentificador}</p>
-              )}
-            </div>
+            {modo !== 'criar' && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Código</label>
+                <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
+                  {codigoIdentificador}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Nome */}

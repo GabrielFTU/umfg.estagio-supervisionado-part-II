@@ -9,6 +9,7 @@ namespace Valisys_Production.DTOs
         public int DiasParaPrimeiroVencimento { get; set; }
         public int DiasEntreParcelas { get; set; }
         public bool VencimentoDiaFixo { get; set; }
+        public int? DiaVencimento { get; set; }
         public List<ParcelaCondicaoDto> Parcelas { get; set; } = [];
     }
 
@@ -20,6 +21,7 @@ namespace Valisys_Production.DTOs
         public int DiasParaPrimeiroVencimento { get; set; }
         public int DiasEntreParcelas { get; set; }
         public bool VencimentoDiaFixo { get; set; }
+        public int? DiaVencimento { get; set; }
         public bool Ativo { get; set; }
         public List<ParcelaCondicaoDto> Parcelas { get; set; } = [];
     }
@@ -33,6 +35,7 @@ namespace Valisys_Production.DTOs
         public int DiasParaPrimeiroVencimento { get; set; }
         public int DiasEntreParcelas { get; set; }
         public bool VencimentoDiaFixo { get; set; }
+        public int? DiaVencimento { get; set; }
         public bool Ativo { get; set; }
         public DateTime CriadoEm { get; set; }
         public List<ParcelaCondicaoDto> Parcelas { get; set; } = [];

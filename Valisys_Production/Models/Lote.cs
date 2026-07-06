@@ -38,11 +38,14 @@ namespace Valisys_Production.Models
             DataAbertura = DateTime.UtcNow;
         }
 
-        public void Atualizar(string codigoLote, DateTime dataAbertura, DateTime? dataConclusao, bool ativo)
+        public void Atualizar(string codigoLote, DateTime dataAbertura, DateTime? dataConclusao,
+            string? descricao, string? observacoes, bool ativo)
         {
             CodigoLote = codigoLote;
             DataAbertura = dataAbertura;
             DataConclusao = dataConclusao;
+            Descricao = descricao;
+            Observacoes = observacoes;
             DefinirAtivo(ativo);
             RegistrarAtualizacao();
         }

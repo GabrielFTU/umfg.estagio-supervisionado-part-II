@@ -60,7 +60,7 @@ namespace Valisys_Production.Models
         public Guid ClienteId { get; private set; }
         public Pessoa Cliente { get; private set; } = null!;
         public Guid RepresentanteId { get; private set; }
-        public Usuario Representante { get; private set; } = null!;
+        public Pessoa Representante { get; private set; } = null!;
         public Guid FinalidadePedidoId { get; private set; }
         public Guid FormaPagamentoId { get; private set; }
         public DateTime DataEmissao { get; private set; }

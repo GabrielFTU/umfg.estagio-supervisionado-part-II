@@ -16,7 +16,7 @@ namespace Valisys_Production.Services
 
             var codigo    = await repo.GetProximoCodigoAsync();
             var condicao  = new CondicaoPagamento(codigo, dto.Nome, dto.NumeroParcelas,
-                dto.DiasParaPrimeiroVencimento, dto.DiasEntreParcelas, dto.VencimentoDiaFixo);
+                dto.DiasParaPrimeiroVencimento, dto.DiasEntreParcelas, dto.VencimentoDiaFixo, dto.DiaVencimento);
 
             var parcelas = dto.Parcelas.Select(p => new ParcelaCondicao(condicao.Id, p.Numero, p.NumeroDias, p.Percentual));
             condicao.SetParcelas(parcelas);
@@ -49,7 +49,7 @@ namespace Valisys_Production.Services
             ValidarParcelas(dto.Parcelas);
 
             c.Atualizar(dto.Nome, dto.NumeroParcelas, dto.DiasParaPrimeiroVencimento,
-                dto.DiasEntreParcelas, dto.VencimentoDiaFixo, dto.Ativo);
+                dto.DiasEntreParcelas, dto.VencimentoDiaFixo, dto.DiaVencimento, dto.Ativo);
 
             var novasParcelas = dto.Parcelas
                 .Select(p => new ParcelaCondicao(c.Id, p.Numero, p.NumeroDias, p.Percentual))
@@ -89,6 +89,7 @@ namespace Valisys_Production.Services
             DiasParaPrimeiroVencimento = c.DiasParaPrimeiroVencimento,
             DiasEntreParcelas         = c.DiasEntreParcelas,
             VencimentoDiaFixo          = c.VencimentoDiaFixo,
+            DiaVencimento              = c.DiaVencimento,
             Ativo                      = c.Ativo,
             CriadoEm                   = c.CriadoEm,
             Parcelas                   = c.Parcelas

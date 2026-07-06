@@ -7,5 +7,6 @@ namespace Valisys_Production.Repositories.Interfaces
         Task<IEnumerable<Deposito>> GetAllWithAlmoxarifadoAsync();
         Task<Deposito?> GetByIdWithAlmoxarifadoAsync(Guid id);
         Task<bool> HasActiveLotesInAlmoxarifadoAsync(Guid almoxarifadoId);
+        Task<int> ContarAsync();
     }
 }

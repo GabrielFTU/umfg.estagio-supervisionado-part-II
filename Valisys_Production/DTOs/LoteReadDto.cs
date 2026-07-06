@@ -6,6 +6,8 @@ namespace Valisys_Production.DTOs
     {
         public Guid Id { get; set; }
         public string CodigoLote { get; set; }
+        public string? Descricao { get; set; }
+        public string? Observacoes { get; set; }
         public DateTime DataAbertura { get; set; }
         public DateTime? DataConclusao { get; set; }
         public bool Ativo { get; set; }

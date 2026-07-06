@@ -34,16 +34,12 @@ namespace Valisys_Production.Controllers
                 .AsNoTracking()
                 .ToDictionaryAsync(p => p.Id, p => p.Nome);
 
-            var usuarios = await _ctx.Usuarios
-                .AsNoTracking()
-                .ToDictionaryAsync(u => u.Id, u => u.Nome);
-
             var result = pedidos.Select(p => new PedidoVendaListDto
             {
                 Id                 = p.Id,
                 Codigo             = p.Codigo,
                 ClienteNome        = clientes.TryGetValue(p.ClienteId, out var cn) ? cn : "—",
-                RepresentanteNome  = p.RepresentanteId != Guid.Empty && usuarios.TryGetValue(p.RepresentanteId, out var rn) ? rn : null,
+                RepresentanteNome  = p.RepresentanteId != Guid.Empty && clientes.TryGetValue(p.RepresentanteId, out var rn) ? rn : null,
                 DataEmissao        = p.DataEmissao,
                 DataPrevisaoEntrega = p.DataPrevisaoEntrega,
                 Total              = p.Total,
@@ -66,8 +62,6 @@ namespace Valisys_Production.Controllers
 
             var clientes = await _ctx.Pessoas.AsNoTracking()
                 .ToDictionaryAsync(p => p.Id, p => p.Nome);
-            var usuarios = await _ctx.Usuarios.AsNoTracking()
-                .ToDictionaryAsync(u => u.Id, u => u.Nome);
             var produtos = await _ctx.Produtos.AsNoTracking()
                 .Include(p => p.UnidadeMedida)
                 .ToDictionaryAsync(p => p.Id);
@@ -79,7 +73,7 @@ namespace Valisys_Production.Controllers
                 ClienteId           = pedido.ClienteId,
                 ClienteNome         = clientes.TryGetValue(pedido.ClienteId, out var cn) ? cn : "—",
                 RepresentanteId     = pedido.RepresentanteId,
-                RepresentanteNome   = pedido.RepresentanteId != Guid.Empty && usuarios.TryGetValue(pedido.RepresentanteId, out var rn) ? rn : null,
+                RepresentanteNome   = pedido.RepresentanteId != Guid.Empty && clientes.TryGetValue(pedido.RepresentanteId, out var rn) ? rn : null,
                 FormaPagamento      = ExtrairTag(pedido.ObservacaoInterna, "Pagamento"),
                 CondicaoPagamento   = ExtrairTag(pedido.ObservacaoInterna, "Condicao"),
                 Finalidade          = ExtrairTag(pedido.ObservacaoInterna, "Finalidade"),
