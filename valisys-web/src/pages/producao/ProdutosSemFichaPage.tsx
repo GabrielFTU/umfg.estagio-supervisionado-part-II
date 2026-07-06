@@ -63,7 +63,7 @@ export function ProdutosSemFichaPage() {
       }
       const ficha = await res.json();
       showToast('Ficha técnica criada');
-      navigate(`/producao/fichas-tecnicas/${ficha.id}`);
+      navigate(`/engenharia/fichas-tecnicas/${ficha.id}`);
     } catch (e: any) {
       alert(e.message ?? 'Erro inesperado.');
       setCreating(null);
@@ -78,7 +78,7 @@ export function ProdutosSemFichaPage() {
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Home size={11} /><ChevronRight size={11} />
           <span>Produção</span><ChevronRight size={11} />
-          <button onClick={() => navigate('/producao/fichas-tecnicas')}
+          <button onClick={() => navigate('/engenharia/fichas-tecnicas')}
             className="hover:text-gray-700 transition-colors">Ficha Técnica</button>
           <ChevronRight size={11} />
           <span className="text-gray-800 font-semibold">Produtos sem ficha técnica</span>
