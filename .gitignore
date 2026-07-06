@@ -29,6 +29,4 @@ postgres_data/
 
 /appsettings
 .appsettings
-migrations/
-.migrations
 .claude
