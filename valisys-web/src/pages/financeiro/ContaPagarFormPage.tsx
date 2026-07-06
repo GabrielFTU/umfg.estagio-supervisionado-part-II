@@ -357,11 +357,12 @@ export function ContaPagarFormPage() {
                 error={!!fieldErrors.vencimento}
               />
             </UField>
-            <UField label="Competência" required={!readonly}>
+            <UField label="Data do Lançamento" required={!readonly} error={fieldErrors.competencia}>
               <DatePicker
                 value={competencia}
                 onChange={setCompetencia}
                 disabled={readonly}
+                error={!!fieldErrors.competencia}
               />
             </UField>
           </div>
