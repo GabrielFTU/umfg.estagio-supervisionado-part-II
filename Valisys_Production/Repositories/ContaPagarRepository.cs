@@ -39,28 +39,57 @@ namespace Valisys_Production.Repositories
             DateTime dataPagamento, FormaPagamentoEnum formaPagamento, Guid carteiraId,
             decimal? juros, decimal? multa, string? observacoes)
         {
-            var conta = await _context.ContasPagar
-                .Include(c => c.Parcelas)
-                .FirstOrDefaultAsync(c => c.Id == contaId);
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var conta = await _context.ContasPagar
+                        .Include(c => c.Parcelas)
+                        .FirstOrDefaultAsync(c => c.Id == contaId);
 
-            if (conta is null) return false;
+                    if (conta is null)
+                    {
+                        await transaction.RollbackAsync();
+                        return false;
+                    }
 
-            var carteira = await _context.Carteiras.FirstOrDefaultAsync(c => c.Id == carteiraId)
-                ?? throw new KeyNotFoundException("Carteira financeira não encontrada.");
+                    var carteira = await _context.Carteiras.FirstOrDefaultAsync(c => c.Id == carteiraId)
+                        ?? throw new KeyNotFoundException("Carteira financeira não encontrada.");
 
-            var parcela = conta.Parcelas.FirstOrDefault(p => p.Id == parcelaId)
-                ?? throw new KeyNotFoundException("Parcela não encontrada.");
+                    var parcela = conta.Parcelas.FirstOrDefault(p => p.Id == parcelaId)
+                        ?? throw new KeyNotFoundException("Parcela não encontrada.");
 
-            conta.BaixarParcela(parcelaId, valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes);
-            carteira.Debitar(valorPago);
+                    if (parcela.DataPagamento.HasValue)
+                        throw new InvalidOperationException("Esta parcela já foi paga.");
 
-            var movimentacao = new MovimentacaoCarteira(carteiraId, TipoMovimentacaoCarteira.Debito,
-                OrigemMovimentacaoCarteira.ContaPagar, valorPago, dataPagamento,
-                $"Baixa parcela {parcela.NumeroParcela}/{conta.Parcelas.Count} - {conta.Descricao}",
-                contaPagarId: contaId, parcelaPagarId: parcelaId);
-            _context.MovimentacoesCarteira.Add(movimentacao);
+                    conta.BaixarParcela(parcelaId, valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes);
+                    carteira.Debitar(valorPago);
 
-            return await _context.SaveChangesAsync() > 0;
+                    var movimentacao = new MovimentacaoCarteira(carteiraId, TipoMovimentacaoCarteira.Debito,
+                        OrigemMovimentacaoCarteira.ContaPagar, valorPago, dataPagamento,
+                        $"Baixa parcela {parcela.NumeroParcela}/{conta.Parcelas.Count} - {conta.Descricao}",
+                        contaPagarId: contaId, parcelaPagarId: parcelaId);
+                    
+                    _context.MovimentacoesCarteira.Add(movimentacao);
+
+                    _context.ContasPagar.Update(conta);
+                    _context.Carteiras.Update(carteira);
+
+                    var result = await _context.SaveChangesAsync() > 0;
+
+                    if (result)
+                        await transaction.CommitAsync();
+                    else
+                        await transaction.RollbackAsync();
+
+                    return result;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
         }
 
         public async Task<bool> EstornarParcelaAsync(Guid contaId, Guid parcelaId)

@@ -114,8 +114,11 @@ namespace Valisys_Production.Controllers
             }
             catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (InvalidOperationException) { return NoContent(); }
-            catch (DbUpdateException) { return NoContent(); }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+            catch (DbUpdateException ex)
+            {
+                return Conflict(new { message = ex.InnerException?.Message ?? "Não foi possível salvar a baixa." });
+            }
         }
 
         [HttpPost("estornar-parcela")]
