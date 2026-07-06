@@ -12,14 +12,17 @@ namespace Valisys_Production.Services
         private readonly IOrcamentoRepository _repository;
         private readonly ILogSistemaService _log;
         private readonly IPedidoVendaService _pedidoVendaService;
+        private readonly IProdutoRepository _produtoRepository;
         private readonly ApplicationDbContext _context;
 
         public OrcamentoService(IOrcamentoRepository repository, ILogSistemaService log,
-                                IPedidoVendaService pedidoVendaService, ApplicationDbContext context)
+                                IPedidoVendaService pedidoVendaService, IProdutoRepository produtoRepository,
+                                ApplicationDbContext context)
         {
             _repository         = repository;
             _log                = log;
             _pedidoVendaService = pedidoVendaService;
+            _produtoRepository  = produtoRepository;
             _context            = context;
         }
 
@@ -33,6 +36,7 @@ namespace Valisys_Production.Services
 
             ValidarDesconto(dto.Desconto, dto.Itens.Select(i => (i.ValorUnitario, i.DescontoUnitario, i.Quantidade)));
             ValidarDataValidade(dto.DataValidade);
+            await ValidarProdutosDisponiveisParaVendaAsync(dto.Itens.Select(i => i.ProdutoId));
 
             var codigo = await _repository.GetProximoCodigoAsync();
 
@@ -83,6 +87,7 @@ namespace Valisys_Production.Services
 
             ValidarDesconto(dto.Desconto, dto.Itens.Select(i => (i.ValorUnitario, i.DescontoUnitario, i.Quantidade)));
             ValidarDataValidade(dto.DataValidade);
+            await ValidarProdutosDisponiveisParaVendaAsync(dto.Itens.Select(i => i.ProdutoId));
 
             existente.Atualizar(
                 dto.ClienteId,
@@ -185,6 +190,19 @@ namespace Valisys_Production.Services
             {
                 await transaction.RollbackAsync();
                 throw;
+            }
+        }
+
+        private async Task ValidarProdutosDisponiveisParaVendaAsync(IEnumerable<Guid> produtoIds)
+        {
+            foreach (var produtoId in produtoIds.Distinct())
+            {
+                var produto = await _produtoRepository.GetByIdAsync(produtoId)
+                    ?? throw new ArgumentException("Produto não encontrado.");
+
+                if (!produto.DisponivelParaVenda)
+                    throw new InvalidOperationException(
+                        $"O produto '{produto.Nome}' não está disponível para venda.");
             }
         }
 
