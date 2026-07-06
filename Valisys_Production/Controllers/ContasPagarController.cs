@@ -12,11 +12,13 @@ namespace Valisys_Production.Controllers
     {
         private readonly IContaPagarService _service;
         private readonly IMapper _mapper;
+        private readonly ILogger<ContasPagarController> _logger;
 
-        public ContasPagarController(IContaPagarService service, IMapper mapper)
+        public ContasPagarController(IContaPagarService service, IMapper mapper, ILogger<ContasPagarController> logger)
         {
             _service = service;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -117,7 +119,9 @@ namespace Valisys_Production.Controllers
             catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
             catch (DbUpdateConcurrencyException ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ERRO_BAIXA] Concorrência: {ex.Message}");
+                var entidades = string.Join(", ", ex.Entries.Select(e => $"{e.Entity.GetType().Name}[{e.State}]"));
+                _logger.LogWarning(ex, "Concorrência ao baixar parcela {ParcelaId} da conta {ContaId}. Entidades envolvidas: {Entidades}",
+                    dto.ParcelaId, dto.ContaId, entidades);
                 return Conflict(new { message = "Esta parcela já foi paga ou alterada por outra operação. Atualize a página e tente novamente." });
             }
             catch (DbUpdateException ex)
