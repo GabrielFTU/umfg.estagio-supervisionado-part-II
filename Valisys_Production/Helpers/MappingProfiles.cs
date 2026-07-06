@@ -101,6 +101,9 @@ namespace Valisys_Production.Helpers
                 .ForMember(dest => dest.UnidadeMedidaCompraSigla, opt => opt.MapFrom(src =>
                     src.UnidadeMedidaCompra != null ? src.UnidadeMedidaCompra.Sigla : null));
 
+            // ProdutoVariacao
+            CreateMap<ProdutoVariacao, ProdutoVariacaoReadDto>();
+
             // Produto
             CreateMap<Produto, ProdutoReadDto>()
                 .ForMember(dest => dest.Codigo, opt => opt.MapFrom(src => src.CodigoInternoProduto.ToString()))

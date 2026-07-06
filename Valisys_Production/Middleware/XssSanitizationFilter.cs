@@ -24,30 +24,31 @@ namespace Valisys_Production.Middleware
         {
             var type = obj.GetType();
 
-            if (type.IsPrimitive || type.IsEnum || type == typeof(Guid) || type == typeof(DateTime)
-                || type == typeof(DateOnly) || type == typeof(decimal))
+            if (type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(Guid)
+                || type == typeof(DateTime) || type == typeof(DateOnly) || type == typeof(decimal))
                 return;
 
+            // Coleções (List<T>, arrays, etc.) expõem um indexador ("Item[int]") que
+            // GetProperties() inclui, mas GetValue(obj) sem índice lança
+            // TargetParameterCountException. Trata a coleção antes de refletir propriedades.
+            if (obj is System.Collections.IEnumerable enumerable)
+            {
+                foreach (var item in enumerable)
+                    if (item is not null)
+                        SanitizeObject(item);
+                return;
+            }
+
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                         .Where(p => p.CanRead && p.CanWrite))
+                         .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0))
             {
                 try
                 {
                     var value = prop.GetValue(obj);
                     if (value is string str)
-                    {
                         prop.SetValue(obj, HtmlTagRegex.Replace(str, string.Empty));
-                    }
-                    else if (value is System.Collections.IEnumerable enumerable && value is not string)
-                    {
-                        foreach (var item in enumerable)
-                            if (item is not null && !item.GetType().IsPrimitive)
-                                SanitizeObject(item);
-                    }
-                    else if (value is not null && !value.GetType().IsPrimitive && value.GetType() != typeof(Guid))
-                    {
+                    else if (value is not null)
                         SanitizeObject(value);
-                    }
                 }
                 catch (TargetInvocationException) { }
             }
