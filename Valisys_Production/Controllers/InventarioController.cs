@@ -85,7 +85,8 @@ namespace Valisys_Production.Controllers
         {
             try
             {
-                var ok = await _service.FinalizarAsync(id);
+                var usuarioId = GetAuthenticatedUserId();
+                var ok = await _service.FinalizarAsync(id, usuarioId);
                 if (!ok) return NotFoundProblem($"Inventário '{id}' não encontrado.");
                 return NoContent();
             }

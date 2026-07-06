@@ -80,7 +80,13 @@ export const PERMISSION_SECTIONS: PermissionSection[] = [
   {
     label: 'Estoque',
     groups: [
-      { key: 'Estoque', label: 'Inventário', actions: [acoes.ver('Estoque')] },
+      {
+        key: 'Inventarios', label: 'Inventário', actions: [
+          acoes.ver('Inventarios'), acoes.criar('Inventarios'), acoes.editar('Inventarios'),
+          { value: 'Inventarios.Finalizar', label: 'Finalizar' },
+          acoes.cancelar('Inventarios'),
+        ],
+      },
       { key: 'Movimentacoes', label: 'Movimentações', actions: [acoes.ver('Movimentacoes'), acoes.criar('Movimentacoes'), acoes.editar('Movimentacoes'), acoes.excluir('Movimentacoes')] },
     ],
   },

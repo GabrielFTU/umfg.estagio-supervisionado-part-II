@@ -5,6 +5,7 @@ import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X } from 'luc
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
 import { useToast } from '@/contexts/ToastContext';
+import { fetchWithAuth } from '@/services/api';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -139,12 +140,10 @@ export function ClientesPage() {
 
   const load = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers: HeadersInit = { Authorization: `Bearer ${token}` };
     try {
       const [rF, rJ] = await Promise.all([
-        fetch('/api/PessoasFisicas',   { headers }),
-        fetch('/api/PessoasJuridicas', { headers }),
+        fetchWithAuth('/api/PessoasFisicas'),
+        fetchWithAuth('/api/PessoasJuridicas'),
       ]);
       if (!rF.ok || !rJ.ok) throw new Error();
       const [fisicas, juridicas]: [any[], any[]] = await Promise.all([rF.json(), rJ.json()]);
@@ -192,25 +191,24 @@ export function ClientesPage() {
       navigate(`/comercial/clientes/${p.tipo}/${p.id}/editar`);
       return;
     }
-    const token = localStorage.getItem('token');
     const base = p.tipo === 'fisica' ? '/api/PessoasFisicas' : '/api/PessoasJuridicas';
     if (acao === 'desativar') {
       const method = p.ativo ? 'DELETE' : 'PATCH';
       const url = p.ativo ? `${base}/${p.id}` : `${base}/${p.id}/reativar`;
-      const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetchWithAuth(url, { method });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        showToast(data.message ?? `Não foi possível ${p.ativo ? 'desativar' : 'reativar'} o cliente.`);
+        showToast(data.message ?? `Não foi possível ${p.ativo ? 'desativar' : 'reativar'} o cliente.`, 'error');
         return;
       }
       showToast(`Cliente ${p.ativo ? 'desativado' : 'reativado'} com sucesso.`);
       load();
     } else {
       const endpoint = p.bloqueado ? 'desbloquear' : 'bloquear';
-      const res = await fetch(`${base}/${p.id}/${endpoint}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetchWithAuth(`${base}/${p.id}/${endpoint}`, { method: 'PATCH' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        showToast(data.message ?? `Não foi possível ${p.bloqueado ? 'desbloquear' : 'bloquear'} o crédito do cliente.`);
+        showToast(data.message ?? `Não foi possível ${p.bloqueado ? 'desbloquear' : 'bloquear'} o crédito do cliente.`, 'error');
         return;
       }
       setPessoas(prev => prev.map(item => item.id === p.id ? { ...item, bloqueado: !p.bloqueado } : item));

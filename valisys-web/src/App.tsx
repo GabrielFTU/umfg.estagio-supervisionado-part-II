@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ToastProvider } from './contexts/ToastContext';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { ToastProvider, useToast } from './contexts/ToastContext';
 import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
 import { FinanceiroPage } from './pages/financeiro';
@@ -72,13 +73,26 @@ import { TiposDeOrdemFormPage } from './pages/cadastros/TiposDeOrdemForm';
 import { AppLayout } from './components/layout/AppLayout';
 import { getAcessos } from './lib/permissions';
 
+function AccessDenied({ to }: { to: string }) {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    showToast('Você não tem permissão para acessar esta página.', 'error');
+    navigate(to, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
+}
+
 function PrivateRoute({ perm, children }: { perm?: string; children: React.ReactNode }) {
   const token = localStorage.getItem('token');
   if (!token) return <Navigate to="/" replace />;
   if (perm) {
     const { acessos, isAdmin } = getAcessos();
     if (!isAdmin && !acessos.includes(perm)) {
-      return <Navigate to={perm === 'Dashboard.Visualizar' ? '/' : '/dashboard'} replace />;
+      return <AccessDenied to={perm === 'Dashboard.Visualizar' ? '/' : '/dashboard'} />;
     }
   }
   return <>{children}</>;
@@ -225,10 +239,10 @@ const App = () => (
       <Route path="/cadastros/tipos-ordem/:id/editar" element={<PrivateRoute perm="TiposOrdem.Editar"><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
       <Route path="/cadastros/tipos-ordem/:id" element={<PrivateRoute perm="TiposOrdem.Visualizar"><AppLayout><TiposDeOrdemFormPage /></AppLayout></PrivateRoute>} />
 
-      <Route path="/estoque/inventario" element={<PrivateRoute perm="Estoque.Visualizar"><AppLayout><InventariosPage /></AppLayout></PrivateRoute>} />
-      <Route path="/estoque/inventario/novo" element={<PrivateRoute perm="Estoque.Visualizar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/estoque/inventario/:id/editar" element={<PrivateRoute perm="Estoque.Visualizar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
-      <Route path="/estoque/inventario/:id" element={<PrivateRoute perm="Estoque.Visualizar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/inventario" element={<PrivateRoute perm="Inventarios.Visualizar"><AppLayout><InventariosPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/inventario/novo" element={<PrivateRoute perm="Inventarios.Criar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/inventario/:id/editar" element={<PrivateRoute perm="Inventarios.Editar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
+      <Route path="/estoque/inventario/:id" element={<PrivateRoute perm="Inventarios.Visualizar"><AppLayout><InventarioFormPage /></AppLayout></PrivateRoute>} />
 
       <Route path="/estoque/movimentacoes" element={<PrivateRoute perm="Movimentacoes.Visualizar"><AppLayout><MovimentacoesPage /></AppLayout></PrivateRoute>} />
       <Route path="/estoque/movimentacoes/novo" element={<PrivateRoute perm="Movimentacoes.Criar"><AppLayout><MovimentacaoFormPage /></AppLayout></PrivateRoute>} />

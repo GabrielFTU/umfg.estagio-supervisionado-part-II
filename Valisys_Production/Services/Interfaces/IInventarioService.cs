@@ -9,7 +9,7 @@ namespace Valisys_Production.Services.Interfaces
         Task<Inventario?> GetByIdAsync(Guid id);
         Task<IEnumerable<Inventario>> GetAllAsync();
         Task<bool> UpdateAsync(InventarioUpdateDto dto);
-        Task<bool> FinalizarAsync(Guid id);
+        Task<bool> FinalizarAsync(Guid id, Guid usuarioId);
         Task<bool> CancelarAsync(Guid id);
     }
 }

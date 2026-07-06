@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
 import { SelectField } from '@/components/ui/SelectField';
+import { fetchWithAuth } from '@/services/api';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -69,15 +70,13 @@ export function InventarioFormPage() {
   const [itens, setItens]               = useState<InventarioItem[]>([]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const h = { Authorization: `Bearer ${token}` };
-    fetch('/api/almoxarifados', { headers: h })
+    fetchWithAuth('/api/almoxarifados')
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setAlmoxarifados(d.map(a => ({ id: a.id, nome: a.nome }))));
-    fetch('/api/Deposito', { headers: h })
+    fetchWithAuth('/api/Deposito')
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setDepositos(d.map(dep => ({ id: dep.id, nome: dep.nome, almoxarifadoId: dep.almoxarifadoId ?? '' }))));
-    fetch('/api/Produtos', { headers: h })
+    fetchWithAuth('/api/Produtos')
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setProdutos(d.map(p => ({ id: p.id, nome: p.nome, sku: p.sku ?? p.codigo ?? '—' }))));
   }, []);
@@ -86,9 +85,8 @@ export function InventarioFormPage() {
     if (!id) return;
     const load = async () => {
       setLoading(true);
-      const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`/api/inventarios/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetchWithAuth(`/api/inventarios/${id}`);
         if (!res.ok) throw new Error();
         const d = await res.json();
         setTipoContagem(d.tipoContagem ?? 'CICLICO');
@@ -171,12 +169,11 @@ export function InventarioFormPage() {
     if (!validate()) return;
     setSaving(true);
     setError('');
-    const token = localStorage.getItem('token');
-    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+    const headers = { 'Content-Type': 'application/json' };
     try {
       const res = modo === 'criar'
-        ? await fetch('/api/inventarios', { method: 'POST', headers, body: JSON.stringify(buildBody()) })
-        : await fetch(`/api/inventarios/${id}`, { method: 'PUT', headers, body: JSON.stringify({ id, ...buildBody() }) });
+        ? await fetchWithAuth('/api/inventarios', { method: 'POST', headers, body: JSON.stringify(buildBody()) })
+        : await fetchWithAuth(`/api/inventarios/${id}`, { method: 'PUT', headers, body: JSON.stringify({ id, ...buildBody() }) });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? 'Erro ao salvar.');
@@ -199,25 +196,21 @@ export function InventarioFormPage() {
     setFinalizarConfirm(false);
     setFinalizing(true);
     setError('');
-    const token = localStorage.getItem('token');
-    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+    const headers = { 'Content-Type': 'application/json' };
     try {
       let targetId = id;
 
       // Salva primeiro se necessário
       const saveRes = modo === 'criar'
-        ? await fetch('/api/inventarios', { method: 'POST', headers, body: JSON.stringify(buildBody()) })
-        : await fetch(`/api/inventarios/${id}`, { method: 'PUT', headers, body: JSON.stringify({ id, ...buildBody() }) });
+        ? await fetchWithAuth('/api/inventarios', { method: 'POST', headers, body: JSON.stringify(buildBody()) })
+        : await fetchWithAuth(`/api/inventarios/${id}`, { method: 'PUT', headers, body: JSON.stringify({ id, ...buildBody() }) });
       if (!saveRes.ok) throw new Error('Erro ao salvar.');
       if (modo === 'criar') {
         const created = await saveRes.json();
         targetId = created.id;
       }
 
-      const finRes = await fetch(`/api/inventarios/${targetId}/finalizar`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const finRes = await fetchWithAuth(`/api/inventarios/${targetId}/finalizar`, { method: 'PATCH' });
       if (!finRes.ok) throw new Error('Erro ao finalizar.');
       showToast();
       navigate('/estoque/inventario');

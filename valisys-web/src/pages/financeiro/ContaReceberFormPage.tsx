@@ -97,7 +97,7 @@ export function ContaReceberFormPage() {
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchWithAuth('/api/Pessoas')
+    fetchWithAuth('/api/Pessoas?papel=Cliente')
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setPessoas(d.map(p => ({ id: p.id, nome: p.nomeCompleto ?? p.razaoSocial ?? p.nome ?? '—' }))));
 

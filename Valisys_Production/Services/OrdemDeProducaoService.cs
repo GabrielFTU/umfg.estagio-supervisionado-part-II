@@ -119,8 +119,6 @@ namespace Valisys_Production.Services
             if (ordem == null) throw new KeyNotFoundException("Ordem não encontrada.");
             if (ordem.Status == StatusOrdemDeProducao.Finalizada) return;
 
-            var almoxarifadoMP = await GetAlmoxarifadoPrincipalAsync();
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -136,10 +134,11 @@ namespace Valisys_Production.Services
                     }
                 }
 
+                // Produto acabado entra no estoque do almoxarifado/depósito da OP.
                 var mov = new Movimentacao(
                     ordem.ProdutoId, ordem.Quantidade,
                     $"Finalização OP: {ordem.CodigoOrdem}",
-                    almoxarifadoMP.Id, null,
+                    null, null,
                     ordem.AlmoxarifadoId, ordem.DepositoId,
                     usuarioId,
                     ordemDeProducaoId: ordem.Id);
@@ -209,17 +208,15 @@ namespace Valisys_Production.Services
             if (ordem.Status != StatusOrdemDeProducao.Finalizada)
                 throw new InvalidOperationException("Somente Ordens de Produção finalizadas podem ser estornadas.");
 
-            var almoxarifadoMP = await GetAlmoxarifadoPrincipalAsync();
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Reverte a entrada do produto acabado (saída do almoxarifado de produção para o principal)
+                // Reverte a entrada do produto acabado gerada na finalização.
                 var movEstorno = new Movimentacao(
                     ordem.ProdutoId, ordem.Quantidade,
                     $"Estorno de Produção OP: {ordem.CodigoOrdem}",
                     ordem.AlmoxarifadoId, ordem.DepositoId,
-                    almoxarifadoMP.Id, null,
+                    null, null,
                     usuarioId,
                     ordemDeProducaoId: ordem.Id);
                 await _movimentacaoRepository.AddAsync(movEstorno);

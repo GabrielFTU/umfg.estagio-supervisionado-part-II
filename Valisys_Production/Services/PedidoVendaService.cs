@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Valisys_Production.Data;
 using Valisys_Production.DTOs;
 using Valisys_Production.Models;
 using Valisys_Production.Models.Enums;
@@ -13,21 +15,26 @@ namespace Valisys_Production.Services
         private readonly IContaReceberService _contaReceberService;
         private readonly ICondicaoPagamentoRepository _condicaoPagamentoRepository;
         private readonly IFormaPagamentoRepository _formaPagamentoRepository;
-        private readonly ILoteRepository _loteRepository;
         private readonly IProdutoRepository _produtoRepository;
+        private readonly IMovimentacaoRepository _movimentacaoRepository;
+        private readonly IAlmoxarifadoRepository _almoxarifadoRepository;
+        private readonly ApplicationDbContext _context;
 
         public PedidoVendaService(IPedidoVendaRepository repository, ILogSistemaService log,
             IContaReceberService contaReceberService, ICondicaoPagamentoRepository condicaoPagamentoRepository,
-            IFormaPagamentoRepository formaPagamentoRepository, ILoteRepository loteRepository,
-            IProdutoRepository produtoRepository)
+            IFormaPagamentoRepository formaPagamentoRepository,
+            IProdutoRepository produtoRepository, IMovimentacaoRepository movimentacaoRepository,
+            IAlmoxarifadoRepository almoxarifadoRepository, ApplicationDbContext context)
         {
             _repository = repository;
             _log = log;
             _contaReceberService = contaReceberService;
             _condicaoPagamentoRepository = condicaoPagamentoRepository;
             _formaPagamentoRepository = formaPagamentoRepository;
-            _loteRepository = loteRepository;
             _produtoRepository = produtoRepository;
+            _movimentacaoRepository = movimentacaoRepository;
+            _almoxarifadoRepository = almoxarifadoRepository;
+            _context = context;
         }
 
         public async Task<PedidoVenda> CreateAsync(PedidoVendaCreateDto dto, Guid usuarioId)
@@ -117,52 +124,81 @@ namespace Valisys_Production.Services
             var pedido = await _repository.GetByIdWithItensAsync(id)
                 ?? throw new KeyNotFoundException("Pedido não encontrado.");
 
-            switch (novoStatus)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                case StatusPedido.Confirmado:
-                    if (pedido.Status != StatusPedido.Rascunho)
-                        throw new InvalidOperationException("Apenas rascunhos podem ser confirmados.");
-                    await ValidarSaldoEstoqueAsync(pedido);
-                    pedido.Confirmar();
-                    await GerarContaReceberAutomaticaAsync(pedido);
-                    break;
+                switch (novoStatus)
+                {
+                    case StatusPedido.Confirmado:
+                        if (pedido.Status != StatusPedido.Rascunho)
+                            throw new InvalidOperationException("Apenas rascunhos podem ser confirmados.");
+                        await ValidarSaldoEstoqueAsync(pedido);
+                        pedido.Confirmar();
+                        await BaixarEstoqueAsync(pedido, usuarioId);
+                        await GerarContaReceberAutomaticaAsync(pedido);
+                        break;
 
-                case StatusPedido.Concluido:
-                    if (pedido.Status != StatusPedido.Confirmado)
-                        throw new InvalidOperationException("Apenas pedidos confirmados podem ser concluídos.");
-                    pedido.Concluir();
-                    break;
+                    case StatusPedido.Concluido:
+                        if (pedido.Status != StatusPedido.Confirmado)
+                            throw new InvalidOperationException("Apenas pedidos confirmados podem ser concluídos.");
+                        pedido.Concluir();
+                        break;
 
-                case StatusPedido.Cancelado:
-                    if (pedido.Status == StatusPedido.Concluido)
-                        throw new InvalidOperationException("Pedidos concluídos não podem ser cancelados.");
-                    pedido.Cancelar();
-                    break;
+                    case StatusPedido.Cancelado:
+                        if (pedido.Status == StatusPedido.Concluido)
+                            throw new InvalidOperationException("Pedidos concluídos não podem ser cancelados.");
+                        pedido.Cancelar();
+                        break;
 
-                default:
-                    throw new ArgumentException("Transição de status inválida.");
+                    default:
+                        throw new ArgumentException("Transição de status inválida.");
+                }
+
+                var ok = await _repository.UpdateAsync(pedido);
+                await transaction.CommitAsync();
+
+                if (ok)
+                    await _log.RegistrarAsync("Status", "PedidosVenda",
+                        $"Alterou status do Pedido #{pedido.Codigo} para {novoStatus}");
+
+                return ok;
             }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
 
-            var ok = await _repository.UpdateAsync(pedido);
+        private async Task<Almoxarifado> GetAlmoxarifadoPrincipalAsync()
+        {
+            var almoxarifados = await _almoxarifadoRepository.GetAllAsync();
+            return almoxarifados.FirstOrDefault() ?? throw new InvalidOperationException("Nenhum almoxarifado cadastrado.");
+        }
 
-            if (ok)
-                await _log.RegistrarAsync("Status", "PedidosVenda",
-                    $"Alterou status do Pedido #{pedido.Codigo} para {novoStatus}");
+        private async Task<Dictionary<Guid, decimal>> ObterSaldosPorProdutoAsync(IEnumerable<Guid> produtoIds)
+        {
+            var ids = produtoIds.Distinct().ToList();
+            var movs = await _context.Movimentacoes.AsNoTracking()
+                .Where(m => ids.Contains(m.ProdutoId))
+                .ToListAsync();
 
-            return ok;
+            return ids.ToDictionary(pid => pid, pid =>
+            {
+                var movsP = movs.Where(m => m.ProdutoId == pid);
+                var entrada = movsP.Where(m => m.Tipo == TipoMovimentacao.Entrada).Sum(m => m.Quantidade);
+                var saida = movsP.Where(m => m.Tipo == TipoMovimentacao.Saida || m.Tipo == TipoMovimentacao.Baixa).Sum(m => m.Quantidade);
+                return entrada - saida;
+            });
         }
 
         private async Task ValidarSaldoEstoqueAsync(PedidoVenda pedido)
         {
-            var lotes = await _loteRepository.GetAllAsync();
-            var saldoPorProduto = lotes
-                .Where(l => l.Status == StatusLote.Concluido)
-                .GroupBy(l => l.ProdutoId)
-                .ToDictionary(g => g.Key, g => g.Count());
+            var saldos = await ObterSaldosPorProdutoAsync(pedido.Itens.Select(i => i.ProdutoId));
 
             foreach (var item in pedido.Itens)
             {
-                var saldo = saldoPorProduto.TryGetValue(item.ProdutoId, out var qtd) ? qtd : 0;
+                var saldo = saldos.TryGetValue(item.ProdutoId, out var qtd) ? qtd : 0;
                 if (saldo < item.Quantidade)
                 {
                     var produto = await _produtoRepository.GetByIdAsync(item.ProdutoId);
@@ -170,6 +206,23 @@ namespace Valisys_Production.Services
                     throw new InvalidOperationException(
                         $"Saldo de estoque insuficiente para '{nome}': disponível {saldo}, solicitado {item.Quantidade}.");
                 }
+            }
+        }
+
+        private async Task BaixarEstoqueAsync(PedidoVenda pedido, Guid usuarioId)
+        {
+            var almoxarifado = await GetAlmoxarifadoPrincipalAsync();
+
+            foreach (var item in pedido.Itens)
+            {
+                var mov = new Movimentacao(
+                    item.ProdutoId, item.Quantidade,
+                    $"Baixa por Pedido de Venda #{pedido.Codigo}",
+                    almoxarifado.Id, null,
+                    null, null,
+                    usuarioId,
+                    pedidoVendaId: pedido.Id);
+                await _movimentacaoRepository.AddAsync(mov);
             }
         }
 

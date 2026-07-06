@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 interface InventarioRow {
   id: string;
@@ -156,9 +157,8 @@ export function InventariosPage() {
 
   const load = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/inventarios', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetchWithAuth('/api/inventarios');
       if (!res.ok) return;
       const data: any[] = await res.json();
       setRows(data.map(d => ({
@@ -185,8 +185,7 @@ export function InventariosPage() {
     if (!finalizarId) return;
     const id = finalizarId;
     setFinalizarId(null);
-    const token = localStorage.getItem('token');
-    await fetch(`/api/inventarios/${id}/finalizar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    await fetchWithAuth(`/api/inventarios/${id}/finalizar`, { method: 'PATCH' });
     load();
   };
 
@@ -196,8 +195,7 @@ export function InventariosPage() {
     if (!cancelarId) return;
     const id = cancelarId;
     setCancelarId(null);
-    const token = localStorage.getItem('token');
-    await fetch(`/api/inventarios/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    await fetchWithAuth(`/api/inventarios/${id}`, { method: 'DELETE' });
     load();
   };
 

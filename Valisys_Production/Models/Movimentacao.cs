@@ -75,10 +75,10 @@ namespace Valisys_Production.Models
         {
             if (AlmoxarifadoOrigemId != null && AlmoxarifadoDestinoId != null)
                 return TipoMovimentacao.Transferencia;
-            if (PedidoVendaId != null || OrdemDeProducaoId != null)
-                return TipoMovimentacao.Baixa;
             if (AlmoxarifadoDestinoId != null)
                 return TipoMovimentacao.Entrada;
+            if (PedidoVendaId != null || OrdemDeProducaoId != null)
+                return TipoMovimentacao.Baixa;
             return TipoMovimentacao.Saida;
         }
     }
