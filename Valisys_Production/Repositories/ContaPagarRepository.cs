@@ -60,8 +60,7 @@ namespace Valisys_Production.Repositories
                 contaPagarId: contaId, parcelaPagarId: parcelaId);
             _context.MovimentacoesCarteira.Add(movimentacao);
 
-            try { return await _context.SaveChangesAsync() > 0; }
-            catch { return false; }
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> EstornarParcelaAsync(Guid contaId, Guid parcelaId)
@@ -96,8 +95,7 @@ namespace Valisys_Production.Repositories
                 _context.MovimentacoesCarteira.Add(movimentacao);
             }
 
-            try { return await _context.SaveChangesAsync() > 0; }
-            catch { return false; }
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task VerificarVencimentosAsync()

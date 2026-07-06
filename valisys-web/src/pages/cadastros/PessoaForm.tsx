@@ -191,6 +191,9 @@ function Section({ title, open: defaultOpen = true, children }: {
   title: string; open?: boolean; children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+
+  useEffect(() => { if (defaultOpen) setOpen(true); }, [defaultOpen]);
+
   return (
     <div className="border-t border-gray-100 first:border-t-0 pt-1">
       <button type="button" onClick={() => setOpen(v => !v)}
@@ -246,6 +249,7 @@ export function PessoaFormPage() {
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [papeis, setPapeis]   = useState<Papel[]>([]);
   const [f, setF]             = useState(emptyForm);
+  const [enderecoAberto, setEnderecoAberto] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const set = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
@@ -367,7 +371,15 @@ export function PessoaFormPage() {
         ...prev,
         nome:         prev.nome         || data.razao_social  || prev.nome,
         nomeFantasia: prev.nomeFantasia  || data.nome_fantasia || prev.nomeFantasia,
+        cep:          prev.cep          || data.cep          || prev.cep,
+        logradouro:   prev.logradouro   || data.logradouro   || prev.logradouro,
+        numero:       prev.numero       || data.numero       || prev.numero,
+        complemento:  prev.complemento  || data.complemento  || prev.complemento,
+        bairro:       prev.bairro       || data.bairro       || prev.bairro,
+        cidade:       prev.cidade       || data.municipio    || prev.cidade,
+        uf:           prev.uf           || data.uf           || prev.uf,
       }));
+      if (data.cep) setEnderecoAberto(true);
     } catch { /* silencia erros de rede */ }
     finally { setLoadingCnpj(false); }
   };
@@ -660,7 +672,7 @@ export function PessoaFormPage() {
                 </Section>
 
                 {/* Endereço */}
-                <Section title="Endereço" open={false}>
+                <Section title="Endereço" open={enderecoAberto}>
                   <Field label="CEP">
                     <div className="relative">
                       <IMaskInput mask="00000-000" value={f.cep}

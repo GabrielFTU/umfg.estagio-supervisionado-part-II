@@ -107,7 +107,7 @@ export function FichaTecnicaPainelPage() {
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Home size={11} /><ChevronRight size={11} />
           <span>Engenharia</span><ChevronRight size={11} />
-          <a href="/engenharia/fichas-tecnicas" className="hover:text-[#1D4E89] transition-colors">Ficha Técnica</a>
+          <button onClick={() => navigate('/engenharia/fichas-tecnicas')} className="hover:text-[#1D4E89] transition-colors">Ficha Técnica</button>
           <ChevronRight size={11} />
           <span className="text-gray-800 font-semibold">Painel</span>
         </div>

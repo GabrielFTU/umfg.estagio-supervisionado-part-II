@@ -313,7 +313,7 @@ export function SequenciaOperacionalPage() {
   if (error || !ficha) return (
     <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
       <p className="text-sm text-red-600 font-medium">{error || 'Ficha técnica não encontrada.'}</p>
-      <button onClick={() => navigate('/producao/fichas-tecnicas')}
+      <button onClick={() => navigate('/engenharia/fichas-tecnicas')}
         className="text-xs text-blue-600 hover:underline font-medium">Voltar</button>
     </div>
   );
@@ -326,10 +326,10 @@ export function SequenciaOperacionalPage() {
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <Home size={11} /><ChevronRight size={11} />
           <span>Produção</span><ChevronRight size={11} />
-          <button onClick={() => navigate('/producao/fichas-tecnicas')}
+          <button onClick={() => navigate('/engenharia/fichas-tecnicas')}
             className="hover:text-gray-700 transition-colors">Ficha Técnica</button>
           <ChevronRight size={11} />
-          <button onClick={() => navigate(`/producao/fichas-tecnicas/${id}`)}
+          <button onClick={() => navigate(`/engenharia/fichas-tecnicas/${id}`)}
             className="hover:text-gray-700 transition-colors">Painel</button>
           <ChevronRight size={11} />
           <span className="text-gray-800 font-semibold">Sequência Operacional</span>
@@ -343,7 +343,7 @@ export function SequenciaOperacionalPage() {
           <span className="ml-2 text-xs font-normal text-gray-400">{ficha.codigo}</span>
         </p>
         <div className="flex items-center gap-2">
-          <button onClick={() => navigate(`/producao/fichas-tecnicas/${id}`)}
+          <button onClick={() => navigate(`/engenharia/fichas-tecnicas/${id}`)}
             className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors">
             <ChevronLeft size={13} /> Voltar
           </button>
