@@ -57,7 +57,7 @@ export function LoginPage() {
         <div className="relative z-10 flex flex-col items-center gap-6 max-w-xs text-center">
           <img src="/icon-white.png" alt="Valisys" className="h-20 w-auto object-contain select-none" />
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight mb-2">Althel ERP</h2>
+            <h2 className="text-2xl font-semibold tracking-tight mb-2">Valisys</h2>
             <p className="text-white/90 text-sm leading-relaxed">
               Controle total da sua empresa em uma única plataforma.
             </p>

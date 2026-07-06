@@ -8,7 +8,7 @@ export default defineConfig({
   },
   html: {
     favicon: './public/icon-white.png',
-    title: 'Althel ERP',
+    title: 'Valisys ERP',
   },
   plugins: [pluginReact()],
   server: {
