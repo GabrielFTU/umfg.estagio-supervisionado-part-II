@@ -58,9 +58,6 @@ services:
     build:
       context: ./valisys-web
       dockerfile: Dockerfile
-      args:
-        # O browser acessa o backend pelo endereço do HOST, não pelo container
-        VITE_API_URL: http://localhost:5019/api
     container_name: valisys_frontend
     restart: unless-stopped
     ports:

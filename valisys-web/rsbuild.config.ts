@@ -11,11 +11,6 @@ export default defineConfig({
     title: 'Althel ERP',
   },
   plugins: [pluginReact()],
-  source: {
-    define: {
-      'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL ?? ''),
-    },
-  },
   server: {
     proxy: {
       '/api': {

@@ -1,11 +1,6 @@
 import type { LoginResponse } from '@/types';
 
-// Dev (npm run dev):  NODE_ENV = 'development' → '/api' → proxiado pelo Rsbuild para localhost:5019.
-// Prod (Docker build): NODE_ENV = 'production'  → usa VITE_API_URL injetado via build-arg.
-const API_BASE: string =
-  process.env.NODE_ENV === 'development'
-    ? '/api'
-    : process.env.VITE_API_URL || '/api';
+const API_BASE = '/api';
 
 export async function login(email: string, senha: string): Promise<LoginResponse> {
   const res = await fetch(`${API_BASE}/Auth/login`, {
