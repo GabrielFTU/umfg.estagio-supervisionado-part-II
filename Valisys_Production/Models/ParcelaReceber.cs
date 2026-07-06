@@ -45,7 +45,7 @@ namespace Valisys_Production.Models
 
         public void DefinirCodigo(string codigo) => Codigo = codigo;
 
-        public void Baixar(decimal valorPago, DateTime dataPagamento,
+        public BaixaParcelaReceber Baixar(decimal valorPago, DateTime dataPagamento,
             FormaPagamentoEnum formaPagamento, Guid carteiraId, decimal? juros = null,
             decimal? multa = null, string? observacoes = null, bool pagamentoIntegralObrigatorio = false)
         {
@@ -73,10 +73,12 @@ namespace Valisys_Production.Models
             if (ValorPago >= Valor)
                 Status = StatusParcela.Pago;
 
-            _baixas.Add(new BaixaParcelaReceber(carteiraId, valorPago, principal, juros, multa,
-                dataPagamento, formaPagamento, observacoes));
+            var baixa = new BaixaParcelaReceber(carteiraId, valorPago, principal, juros, multa,
+                dataPagamento, formaPagamento, observacoes);
+            _baixas.Add(baixa);
 
             RegistrarAtualizacao();
+            return baixa;
         }
 
         public IReadOnlyList<BaixaParcelaReceber> EstornarBaixa()

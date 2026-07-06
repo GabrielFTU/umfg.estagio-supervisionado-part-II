@@ -62,7 +62,8 @@ namespace Valisys_Production.Repositories
                     if (parcela.DataPagamento.HasValue)
                         throw new InvalidOperationException("Esta parcela já foi paga.");
 
-                    conta.BaixarParcela(parcelaId, valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes);
+                    var novaBaixa = conta.BaixarParcela(parcelaId, valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes);
+                    _context.BaixasParcelaPagar.Add(novaBaixa);
                     carteira.Debitar(valorPago);
 
                     var movimentacao = new MovimentacaoCarteira(carteiraId, TipoMovimentacaoCarteira.Debito,

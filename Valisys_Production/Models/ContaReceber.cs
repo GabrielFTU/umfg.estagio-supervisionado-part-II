@@ -59,7 +59,7 @@ namespace Valisys_Production.Models
 
         public void LimparParcelas() => _parcelas.Clear();
 
-        public void BaixarParcela(Guid parcelaId, decimal valorPago, DateTime dataPagamento,
+        public BaixaParcelaReceber BaixarParcela(Guid parcelaId, decimal valorPago, DateTime dataPagamento,
             FormaPagamentoEnum formaPagamento, Guid carteiraId, decimal? juros = null,
             decimal? multa = null, string? observacoes = null)
         {
@@ -70,9 +70,10 @@ namespace Valisys_Production.Models
                 ?? throw new KeyNotFoundException("Parcela não encontrada.");
 
             var pagamentoAVista = _parcelas.Count == 1;
-            parcela.Baixar(valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes, pagamentoAVista);
+            var baixa = parcela.Baixar(valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes, pagamentoAVista);
             RecalcularStatus();
             RegistrarAtualizacao();
+            return baixa;
         }
 
         public IReadOnlyList<BaixaParcelaReceber> EstornarParcela(Guid parcelaId)
