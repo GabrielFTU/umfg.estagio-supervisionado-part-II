@@ -12,8 +12,8 @@ using Valisys_Production.Data;
 namespace Valisys_Production.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260705233427_RemoveLimiteCreditoETabelaPreco")]
-    partial class RemoveLimiteCreditoETabelaPreco
+    [Migration("20260706223732_InitialBaseline")]
+    partial class InitialBaseline
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -368,6 +368,9 @@ namespace Valisys_Production.Migrations
 
                     b.Property<DateTime?>("DesativadoEm")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("DiaVencimento")
+                        .HasColumnType("integer");
 
                     b.Property<int>("DiasEntreParcelas")
                         .HasColumnType("integer");
@@ -1021,6 +1024,114 @@ namespace Valisys_Production.Migrations
                     b.ToTable("Fornecedores");
                 });
 
+            modelBuilder.Entity("Valisys_Production.Models.Inventario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CriadoPor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DataAbertura")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("DataFinalizacao")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("DepositoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DesativadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacao")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TipoContagem")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UsuarioAberturaId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepositoId");
+
+                    b.HasIndex("Numero")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioAberturaId");
+
+                    b.ToTable("Inventarios");
+                });
+
+            modelBuilder.Entity("Valisys_Production.Models.ItemInventario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CriadoPor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("DesativadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("InventarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProdutoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("QuantidadeContada")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventarioId");
+
+                    b.HasIndex("ProdutoId");
+
+                    b.ToTable("ItensInventario");
+                });
+
             modelBuilder.Entity("Valisys_Production.Models.ItemOrcamento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1393,6 +1504,53 @@ namespace Valisys_Production.Migrations
                     b.HasIndex("ParcelaReceberId");
 
                     b.ToTable("MovimentacoesCarteira");
+                });
+
+            modelBuilder.Entity("Valisys_Production.Models.Notificacao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("AtualizadoPor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CriadoPor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("DesativadoEm")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Mensagem")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("OrdemDeProducaoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Notificacoes");
                 });
 
             modelBuilder.Entity("Valisys_Production.Models.Orcamento", b =>
@@ -1882,7 +2040,7 @@ namespace Valisys_Production.Migrations
                         new
                         {
                             Id = new Guid("c0de0000-0000-0000-0000-000000000050"),
-                            Acessos = "Dashboard.Visualizar,Almoxarifados.Visualizar,Almoxarifados.Criar,Almoxarifados.Editar,Almoxarifados.Inativar,Categorias.Visualizar,Categorias.Criar,Categorias.Editar,Categorias.Inativar,CondicoesPagamento.Visualizar,CondicoesPagamento.Criar,CondicoesPagamento.Editar,CondicoesPagamento.Inativar,Depositos.Visualizar,Depositos.Criar,Depositos.Editar,Depositos.Excluir,FasesProducao.Visualizar,FasesProducao.Criar,FasesProducao.Editar,FasesProducao.Excluir,Finalidades.Visualizar,Finalidades.Criar,Finalidades.Editar,Finalidades.Inativar,FormasPagamento.Visualizar,FormasPagamento.Criar,FormasPagamento.Editar,FormasPagamento.Inativar,TiposOrdem.Visualizar,TiposOrdem.Criar,TiposOrdem.Editar,TiposOrdem.Excluir,UnidadesMedida.Visualizar,UnidadesMedida.Criar,UnidadesMedida.Editar,UnidadesMedida.Excluir,Fornecedores.Visualizar,Fornecedores.Criar,Fornecedores.Editar,Fornecedores.Inativar,Produtos.Visualizar,Produtos.Criar,Produtos.Editar,Produtos.Inativar,Orcamentos.Visualizar,Orcamentos.Criar,Orcamentos.Editar,Orcamentos.Enviar,Orcamentos.Aprovar,Orcamentos.Cancelar,Orcamentos.ConverterEmPedido,PedidosVenda.Visualizar,PedidosVenda.Criar,PedidosVenda.Editar,PedidosVenda.Confirmar,PedidosVenda.Cancelar,PedidosVenda.Concluir,FichasTecnicas.Visualizar,FichasTecnicas.Criar,FichasTecnicas.Editar,FichasTecnicas.Inativar,Roteiros.Visualizar,Roteiros.Criar,Roteiros.Editar,Roteiros.Excluir,Estoque.Visualizar,Movimentacoes.Visualizar,Movimentacoes.Criar,Movimentacoes.Editar,Movimentacoes.Excluir,Financeiro.Visualizar,Lotes.Visualizar,Lotes.Criar,Lotes.Editar,Lotes.Cancelar,OrdensProducao.Visualizar,OrdensProducao.Criar,OrdensProducao.Editar,OrdensProducao.Cancelar,OrdensProducao.Finalizar,OrdensProducao.AvancarFase,OrdensProducao.Estornar,Solicitacoes.Visualizar,Solicitacoes.Criar,Solicitacoes.Aprovar,Solicitacoes.Cancelar,Relatorios.Visualizar",
+                            Acessos = "Dashboard.Visualizar,Almoxarifados.Visualizar,Almoxarifados.Criar,Almoxarifados.Editar,Almoxarifados.Inativar,Categorias.Visualizar,Categorias.Criar,Categorias.Editar,Categorias.Inativar,CondicoesPagamento.Visualizar,CondicoesPagamento.Criar,CondicoesPagamento.Editar,CondicoesPagamento.Inativar,Depositos.Visualizar,Depositos.Criar,Depositos.Editar,Depositos.Excluir,FasesProducao.Visualizar,FasesProducao.Criar,FasesProducao.Editar,FasesProducao.Excluir,Finalidades.Visualizar,Finalidades.Criar,Finalidades.Editar,Finalidades.Inativar,FormasPagamento.Visualizar,FormasPagamento.Criar,FormasPagamento.Editar,FormasPagamento.Inativar,TiposOrdem.Visualizar,TiposOrdem.Criar,TiposOrdem.Editar,TiposOrdem.Excluir,UnidadesMedida.Visualizar,UnidadesMedida.Criar,UnidadesMedida.Editar,UnidadesMedida.Excluir,Fornecedores.Visualizar,Fornecedores.Criar,Fornecedores.Editar,Fornecedores.Inativar,Produtos.Visualizar,Produtos.Criar,Produtos.Editar,Produtos.Inativar,Orcamentos.Visualizar,Orcamentos.Criar,Orcamentos.Editar,Orcamentos.Enviar,Orcamentos.Aprovar,Orcamentos.Cancelar,Orcamentos.ConverterEmPedido,PedidosVenda.Visualizar,PedidosVenda.Criar,PedidosVenda.Editar,PedidosVenda.Confirmar,PedidosVenda.Cancelar,PedidosVenda.Concluir,FichasTecnicas.Visualizar,FichasTecnicas.Criar,FichasTecnicas.Editar,FichasTecnicas.Inativar,Roteiros.Visualizar,Roteiros.Criar,Roteiros.Editar,Roteiros.Excluir,Estoque.Visualizar,Movimentacoes.Visualizar,Movimentacoes.Criar,Movimentacoes.Editar,Movimentacoes.Excluir,Inventarios.Visualizar,Inventarios.Criar,Inventarios.Editar,Inventarios.Finalizar,Inventarios.Cancelar,Financeiro.Visualizar,Lotes.Visualizar,Lotes.Criar,Lotes.Editar,Lotes.Cancelar,OrdensProducao.Visualizar,OrdensProducao.Criar,OrdensProducao.Editar,OrdensProducao.Cancelar,OrdensProducao.Finalizar,OrdensProducao.AvancarFase,OrdensProducao.Estornar,Solicitacoes.Visualizar,Solicitacoes.Criar,Solicitacoes.Aprovar,Solicitacoes.Cancelar,Relatorios.Visualizar",
                             Ativo = true,
                             AtualizadoEm = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -3114,6 +3272,42 @@ namespace Valisys_Production.Migrations
                     b.Navigation("Vendedor");
                 });
 
+            modelBuilder.Entity("Valisys_Production.Models.Inventario", b =>
+                {
+                    b.HasOne("Valisys_Production.Models.Deposito", "Deposito")
+                        .WithMany()
+                        .HasForeignKey("DepositoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Valisys_Production.Models.Usuario", "UsuarioAbertura")
+                        .WithMany()
+                        .HasForeignKey("UsuarioAberturaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Deposito");
+
+                    b.Navigation("UsuarioAbertura");
+                });
+
+            modelBuilder.Entity("Valisys_Production.Models.ItemInventario", b =>
+                {
+                    b.HasOne("Valisys_Production.Models.Inventario", null)
+                        .WithMany("Itens")
+                        .HasForeignKey("InventarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Valisys_Production.Models.Produto", "Produto")
+                        .WithMany()
+                        .HasForeignKey("ProdutoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Produto");
+                });
+
             modelBuilder.Entity("Valisys_Production.Models.ItemOrcamento", b =>
                 {
                     b.HasOne("Valisys_Production.Models.Orcamento", null)
@@ -3276,7 +3470,7 @@ namespace Valisys_Production.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Valisys_Production.Models.Usuario", "Representante")
+                    b.HasOne("Valisys_Production.Models.Pessoa", "Representante")
                         .WithMany()
                         .HasForeignKey("RepresentanteId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -3407,7 +3601,7 @@ namespace Valisys_Production.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Valisys_Production.Models.Usuario", "Representante")
+                    b.HasOne("Valisys_Production.Models.Pessoa", "Representante")
                         .WithMany()
                         .HasForeignKey("RepresentanteId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -3663,6 +3857,11 @@ namespace Valisys_Production.Migrations
             modelBuilder.Entity("Valisys_Production.Models.FormaPagamento", b =>
                 {
                     b.Navigation("Vendedores");
+                });
+
+            modelBuilder.Entity("Valisys_Production.Models.Inventario", b =>
+                {
+                    b.Navigation("Itens");
                 });
 
             modelBuilder.Entity("Valisys_Production.Models.Lote", b =>

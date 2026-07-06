@@ -21,43 +21,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Applicatio
             .UseNpgsql(connectionString)
             .Options;
 
-        var ctx = new ApplicationDbContext(options);
-
-        EnsureInitialMigrationRegistered(connectionString);
-
-        return ctx;
-    }
-
-    private static void EnsureInitialMigrationRegistered(string connectionString)
-    {
-        const string migrationId = "20260628204025_InitialCreate";
-        try
-        {
-            using var conn = new Npgsql.NpgsqlConnection(connectionString);
-            conn.Open();
-
-            using var checkCmd = conn.CreateCommand();
-            checkCmd.CommandText = """
-                SELECT EXISTS (
-                    SELECT 1 FROM information_schema.tables
-                    WHERE table_name = '__EFMigrationsHistory'
-                ) AND EXISTS (
-                    SELECT 1 FROM information_schema.tables
-                    WHERE table_name = 'Almoxarifados'
-                )
-                """;
-            var schemaExists = (bool)checkCmd.ExecuteScalar()!;
-            if (!schemaExists) return;
-
-            using var insertCmd = conn.CreateCommand();
-            insertCmd.CommandText = $"""
-                INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-                VALUES ('{migrationId}', '8.0.2')
-                ON CONFLICT ("MigrationId") DO NOTHING
-                """;
-            insertCmd.ExecuteNonQuery();
-        }
-        catch { }
+        return new ApplicationDbContext(options);
     }
 
     private static string Env(string key, string fallback = "") =>

@@ -258,75 +258,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var conn = dbContext.Database.GetDbConnection();
-        await conn.OpenAsync();
-
-        const string initialMigrationId = "20260623223725_AddRefreshTokens";
-
-        bool hasHistory = false;
-        bool hasExistingSchema = false;
-
-        await using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory')";
-            hasHistory = (bool)(await cmd.ExecuteScalarAsync())!;
-        }
-
-        if (!hasHistory)
-        {
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'Almoxarifados')";
-                hasExistingSchema = (bool)(await cmd.ExecuteScalarAsync())!;
-            }
-        }
-
-        if (hasExistingSchema && !hasHistory)
-        {
-            Console.WriteLine("Banco pré-existente detectado. Registrando migrations e criando tabelas faltantes...");
-
-            await using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = """
-                    CREATE TABLE "__EFMigrationsHistory" (
-                        "MigrationId" character varying(150) NOT NULL,
-                        "ProductVersion" character varying(32) NOT NULL,
-                        CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
-                    );
-                    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-                    VALUES ('20260623223725_AddRefreshTokens', '8.0.2');
-                    CREATE TABLE IF NOT EXISTS "RefreshTokens" (
-                        "Id" uuid NOT NULL,
-                        "UsuarioId" uuid NOT NULL,
-                        "Token" text NOT NULL,
-                        "ExpiresAt" timestamp without time zone NOT NULL,
-                        "IsRevoked" boolean NOT NULL,
-                        "CriadoEm" timestamp without time zone NOT NULL,
-                        CONSTRAINT "PK_RefreshTokens" PRIMARY KEY ("Id"),
-                        CONSTRAINT "FK_RefreshTokens_Usuarios_UsuarioId" FOREIGN KEY ("UsuarioId")
-                            REFERENCES "Usuarios" ("Id") ON DELETE CASCADE
-                    );
-                    CREATE INDEX IF NOT EXISTS "IX_RefreshTokens_UsuarioId" ON "RefreshTokens" ("UsuarioId");
-                    """;
-                await cmd.ExecuteNonQueryAsync();
-            }
-        }
-        else if (hasHistory)
-        {
-            // Histórico existe mas pode faltar a entry da migration inicial (bancos criados por
-            // migrations antigas excluídas da compilação). Sem essa entrada, dotnet ef tenta
-            // recriar todas as tabelas e falha com "relation already exists".
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = $"""
-                INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-                VALUES ('{initialMigrationId}', '8.0.2')
-                ON CONFLICT ("MigrationId") DO NOTHING
-                """;
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        await conn.CloseAsync();
-        dbContext.Database.Migrate();
+        await dbContext.Database.MigrateAsync();
         Console.WriteLine("Banco de Dados migrado com sucesso!");
     }
     catch (Exception ex)

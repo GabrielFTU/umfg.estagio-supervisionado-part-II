@@ -8,11 +8,17 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Valisys_Production.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialBaseline : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateSequence(
+                name: "conta_pagar_codigo_seq");
+
+            migrationBuilder.CreateSequence(
+                name: "conta_receber_codigo_seq");
+
             migrationBuilder.CreateTable(
                 name: "Almoxarifados",
                 columns: table => new
@@ -36,6 +42,30 @@ namespace Valisys_Production.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Almoxarifados", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Carteiras",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CodigoBanco = table.Column<string>(type: "text", nullable: false),
+                    NomeBanco = table.Column<string>(type: "text", nullable: false),
+                    Titular = table.Column<string>(type: "text", nullable: false),
+                    SaldoInicial = table.Column<decimal>(type: "numeric", nullable: false),
+                    SaldoAtual = table.Column<decimal>(type: "numeric", nullable: false),
+                    DataHoraSaldoInicial = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Carteiras", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -68,8 +98,9 @@ namespace Valisys_Production.Migrations
                     Nome = table.Column<string>(type: "text", nullable: false),
                     NumeroParcelas = table.Column<int>(type: "integer", nullable: false),
                     DiasParaPrimeiroVencimento = table.Column<int>(type: "integer", nullable: false),
-                    DiastEntreParcelas = table.Column<int>(type: "integer", nullable: false),
+                    DiasEntreParcelas = table.Column<int>(type: "integer", nullable: false),
                     VencimentoDiaFixo = table.Column<bool>(type: "boolean", nullable: false),
+                    DiaVencimento = table.Column<int>(type: "integer", nullable: true),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -135,7 +166,6 @@ namespace Valisys_Production.Migrations
                     Codigo = table.Column<int>(type: "integer", nullable: false),
                     Nome = table.Column<string>(type: "text", nullable: false),
                     Descricao = table.Column<string>(type: "text", nullable: true),
-                    PrazoDias = table.Column<int>(type: "integer", nullable: true),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -178,6 +208,28 @@ namespace Valisys_Production.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Notificacoes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Titulo = table.Column<string>(type: "text", nullable: false),
+                    Mensagem = table.Column<string>(type: "text", nullable: false),
+                    Tipo = table.Column<string>(type: "text", nullable: false),
+                    OrdemDeProducaoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notificacoes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Perfis",
                 columns: table => new
                 {
@@ -217,7 +269,6 @@ namespace Valisys_Production.Migrations
                     Endereco_CodigoIbge = table.Column<string>(type: "text", nullable: true),
                     PapelPessoa = table.Column<int>(type: "integer", nullable: false),
                     Observacoes = table.Column<string>(type: "text", nullable: true),
-                    LimiteCreditoId = table.Column<Guid>(type: "uuid", nullable: true),
                     StatusCredito = table.Column<int>(type: "integer", nullable: false),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -233,12 +284,32 @@ namespace Valisys_Production.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RegrasRecorrencia",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Frequencia = table.Column<int>(type: "integer", nullable: false),
+                    NumeroOcorrencias = table.Column<int>(type: "integer", nullable: false),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RegrasRecorrencia", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TiposDeOrdemDeProducao",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Nome = table.Column<string>(type: "text", nullable: false),
-                    Codigo = table.Column<string>(type: "text", nullable: false),
+                    Codigo = table.Column<int>(type: "integer", nullable: false),
                     Descricao = table.Column<string>(type: "text", nullable: true),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -285,10 +356,7 @@ namespace Valisys_Production.Migrations
                     CodigoIdentificador = table.Column<int>(type: "integer", nullable: false),
                     Nome = table.Column<string>(type: "text", nullable: false),
                     Descricao = table.Column<string>(type: "text", nullable: true),
-                    DepositoPadraoRequisicoes = table.Column<bool>(type: "boolean", nullable: false),
-                    ControlaQualidade2a = table.Column<bool>(type: "boolean", nullable: false),
                     ControlaLote = table.Column<bool>(type: "boolean", nullable: false),
-                    ControlaMultiplosLocais = table.Column<bool>(type: "boolean", nullable: false),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -327,39 +395,6 @@ namespace Valisys_Production.Migrations
                         principalTable: "CondicoesPagamento",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ContasPagar",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Codigo = table.Column<string>(type: "text", nullable: false),
-                    Descricao = table.Column<string>(type: "text", nullable: false),
-                    ValorTotal = table.Column<decimal>(type: "numeric", nullable: false),
-                    ValorPago = table.Column<decimal>(type: "numeric", nullable: false),
-                    DataEmissao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    DataVencimento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    Observacoes = table.Column<string>(type: "text", nullable: true),
-                    NumeroDocumento = table.Column<string>(type: "text", nullable: true),
-                    FornecedorId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
-                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    CriadoPor = table.Column<string>(type: "text", nullable: true),
-                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ContasPagar", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ContasPagar_Fornecedores_FornecedorId",
-                        column: x => x.FornecedorId,
-                        principalTable: "Fornecedores",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -423,20 +458,20 @@ namespace Valisys_Production.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LimiteCredito",
+                name: "Orcamentos",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Codigo = table.Column<int>(type: "integer", nullable: false),
-                    PessoaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LimiteTotal = table.Column<decimal>(type: "numeric", nullable: false),
-                    ValorUtilizado = table.Column<decimal>(type: "numeric", nullable: false),
-                    LimiteDisponivel = table.Column<decimal>(type: "numeric", nullable: false),
-                    RatingRisco = table.Column<int>(type: "integer", nullable: false),
-                    StatusCredito = table.Column<int>(type: "integer", nullable: false),
-                    DataConcessao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    DataVencimento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    DataProxRevisao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    ClienteId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RepresentanteId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DataEmissao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DataValidade = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    Desconto = table.Column<decimal>(type: "numeric", nullable: false),
+                    ObservacaoInterna = table.Column<string>(type: "text", nullable: true),
+                    ObservacaoExterna = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    PedidoVendaConvertidoId = table.Column<Guid>(type: "uuid", nullable: true),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -447,13 +482,60 @@ namespace Valisys_Production.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LimiteCredito", x => x.Id);
+                    table.PrimaryKey("PK_Orcamentos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_LimiteCredito_Pessoas_PessoaId",
-                        column: x => x.PessoaId,
+                        name: "FK_Orcamentos_Pessoas_ClienteId",
+                        column: x => x.ClienteId,
                         principalTable: "Pessoas",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Orcamentos_Pessoas_RepresentanteId",
+                        column: x => x.RepresentanteId,
+                        principalTable: "Pessoas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PedidosVenda",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Codigo = table.Column<int>(type: "integer", nullable: false),
+                    ClienteId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RepresentanteId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FinalidadePedidoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FormaPagamentoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DataEmissao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DataPrevisaoEntrega = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    Desconto = table.Column<decimal>(type: "numeric", nullable: false),
+                    ObservacaoInterna = table.Column<string>(type: "text", nullable: true),
+                    ObservacaoExterna = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PedidosVenda", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PedidosVenda_Pessoas_ClienteId",
+                        column: x => x.ClienteId,
+                        principalTable: "Pessoas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PedidosVenda_Pessoas_RepresentanteId",
+                        column: x => x.RepresentanteId,
+                        principalTable: "Pessoas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -498,6 +580,54 @@ namespace Valisys_Production.Migrations
                         principalTable: "Pessoas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ContasPagar",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Codigo = table.Column<string>(type: "text", nullable: false),
+                    Descricao = table.Column<string>(type: "text", nullable: false),
+                    ValorTotal = table.Column<decimal>(type: "numeric", nullable: false),
+                    ValorPago = table.Column<decimal>(type: "numeric", nullable: false),
+                    DataEmissao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DataVencimento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Observacoes = table.Column<string>(type: "text", nullable: true),
+                    NumeroDocumento = table.Column<string>(type: "text", nullable: true),
+                    FornecedorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    FormaPagamentoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    RegraRecorrenciaId = table.Column<Guid>(type: "uuid", nullable: true),
+                    NumeroOcorrenciaRecorrencia = table.Column<int>(type: "integer", nullable: true),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ContasPagar", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ContasPagar_FormasPagamento_FormaPagamentoId",
+                        column: x => x.FormaPagamentoId,
+                        principalTable: "FormasPagamento",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContasPagar_Pessoas_FornecedorId",
+                        column: x => x.FornecedorId,
+                        principalTable: "Pessoas",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ContasPagar_RegrasRecorrencia_RegraRecorrenciaId",
+                        column: x => x.RegraRecorrenciaId,
+                        principalTable: "RegrasRecorrencia",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -549,21 +679,18 @@ namespace Valisys_Production.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ParcelasPagar",
+                name: "Inventarios",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaPagarId = table.Column<Guid>(type: "uuid", nullable: false),
-                    NumeroParcela = table.Column<int>(type: "integer", nullable: false),
-                    Valor = table.Column<decimal>(type: "numeric", nullable: false),
-                    DataVencimento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    DataPagamento = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    ValorPago = table.Column<decimal>(type: "numeric", nullable: true),
-                    Juros = table.Column<decimal>(type: "numeric", nullable: true),
-                    Multa = table.Column<decimal>(type: "numeric", nullable: true),
+                    Numero = table.Column<int>(type: "integer", nullable: false),
+                    DepositoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TipoContagem = table.Column<int>(type: "integer", nullable: false),
+                    Observacao = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    FormaPagamento = table.Column<int>(type: "integer", nullable: true),
-                    Observacoes = table.Column<string>(type: "text", nullable: true),
+                    DataAbertura = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DataFinalizacao = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    UsuarioAberturaId = table.Column<Guid>(type: "uuid", nullable: false),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -574,13 +701,19 @@ namespace Valisys_Production.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ParcelasPagar", x => x.Id);
+                    table.PrimaryKey("PK_Inventarios", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ParcelasPagar_ContasPagar_ContaPagarId",
-                        column: x => x.ContaPagarId,
-                        principalTable: "ContasPagar",
+                        name: "FK_Inventarios_Depositos_DepositoId",
+                        column: x => x.DepositoId,
+                        principalTable: "Depositos",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Inventarios_Usuarios_UsuarioAberturaId",
+                        column: x => x.UsuarioAberturaId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -613,88 +746,6 @@ namespace Valisys_Production.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Orcamentos",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Codigo = table.Column<int>(type: "integer", nullable: false),
-                    ClienteId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RepresentanteId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DataEmissao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    DataValidade = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    Desconto = table.Column<decimal>(type: "numeric", nullable: false),
-                    ObservacaoInterna = table.Column<string>(type: "text", nullable: true),
-                    ObservacaoExterna = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    PedidoVendaConvertidoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
-                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    CriadoPor = table.Column<string>(type: "text", nullable: true),
-                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Orcamentos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Orcamentos_Pessoas_ClienteId",
-                        column: x => x.ClienteId,
-                        principalTable: "Pessoas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Orcamentos_Usuarios_RepresentanteId",
-                        column: x => x.RepresentanteId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PedidosVenda",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Codigo = table.Column<int>(type: "integer", nullable: false),
-                    ClienteId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RepresentanteId = table.Column<Guid>(type: "uuid", nullable: false),
-                    FinalidadePedidoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    FormaPagamentoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TabelaPrecoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DataEmissao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    DataPrevisaoEntrega = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    Desconto = table.Column<decimal>(type: "numeric", nullable: false),
-                    ObservacaoInterna = table.Column<string>(type: "text", nullable: true),
-                    ObservacaoExterna = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
-                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    CriadoPor = table.Column<string>(type: "text", nullable: true),
-                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PedidosVenda", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PedidosVenda_Pessoas_ClienteId",
-                        column: x => x.ClienteId,
-                        principalTable: "Pessoas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_PedidosVenda_Usuarios_RepresentanteId",
-                        column: x => x.RepresentanteId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "RefreshTokens",
                 columns: table => new
                 {
@@ -712,6 +763,94 @@ namespace Valisys_Production.Migrations
                         name: "FK_RefreshTokens_Usuarios_UsuarioId",
                         column: x => x.UsuarioId,
                         principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ContasReceber",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Codigo = table.Column<string>(type: "text", nullable: false),
+                    Descricao = table.Column<string>(type: "text", nullable: false),
+                    ValorTotal = table.Column<decimal>(type: "numeric", nullable: false),
+                    ValorPago = table.Column<decimal>(type: "numeric", nullable: false),
+                    DataEmissao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DataVencimento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Observacoes = table.Column<string>(type: "text", nullable: true),
+                    PessoaId = table.Column<Guid>(type: "uuid", nullable: true),
+                    PedidoVendaId = table.Column<Guid>(type: "uuid", nullable: true),
+                    FormaPagamentoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ContasReceber", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ContasReceber_FormasPagamento_FormaPagamentoId",
+                        column: x => x.FormaPagamentoId,
+                        principalTable: "FormasPagamento",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContasReceber_PedidosVenda_PedidoVendaId",
+                        column: x => x.PedidoVendaId,
+                        principalTable: "PedidosVenda",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ContasReceber_Pessoas_PessoaId",
+                        column: x => x.PessoaId,
+                        principalTable: "Pessoas",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ParcelasPagar",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaPagarId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Codigo = table.Column<string>(type: "text", nullable: false),
+                    NumeroParcela = table.Column<int>(type: "integer", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric", nullable: false),
+                    DataVencimento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DataPagamento = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    ValorPago = table.Column<decimal>(type: "numeric", nullable: true),
+                    Juros = table.Column<decimal>(type: "numeric", nullable: true),
+                    Multa = table.Column<decimal>(type: "numeric", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    FormaPagamento = table.Column<int>(type: "integer", nullable: true),
+                    Observacoes = table.Column<string>(type: "text", nullable: true),
+                    CarteiraId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ParcelasPagar", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ParcelasPagar_Carteiras_CarteiraId",
+                        column: x => x.CarteiraId,
+                        principalTable: "Carteiras",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ParcelasPagar_ContasPagar_ContaPagarId",
+                        column: x => x.ContaPagarId,
+                        principalTable: "ContasPagar",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -738,6 +877,76 @@ namespace Valisys_Production.Migrations
                     table.PrimaryKey("PK_FichasTecnicas", x => x.Id);
                     table.ForeignKey(
                         name: "FK_FichasTecnicas_Produtos_ProdutoId",
+                        column: x => x.ProdutoId,
+                        principalTable: "Produtos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ItensOrcamento",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrcamentoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProdutoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Quantidade = table.Column<int>(type: "integer", nullable: false),
+                    ValorUnitario = table.Column<decimal>(type: "numeric", nullable: false),
+                    DescontoUnitario = table.Column<decimal>(type: "numeric", nullable: false),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ItensOrcamento", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItensOrcamento_Orcamentos_OrcamentoId",
+                        column: x => x.OrcamentoId,
+                        principalTable: "Orcamentos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ItensOrcamento_Produtos_ProdutoId",
+                        column: x => x.ProdutoId,
+                        principalTable: "Produtos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ItensPedido",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    PedidoVendaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProdutoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Quantidade = table.Column<int>(type: "integer", nullable: false),
+                    ValorUnitario = table.Column<decimal>(type: "numeric", nullable: false),
+                    DescontoUnitario = table.Column<decimal>(type: "numeric", nullable: false),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ItensPedido", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItensPedido_PedidosVenda_PedidoVendaId",
+                        column: x => x.PedidoVendaId,
+                        principalTable: "PedidosVenda",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ItensPedido_Produtos_ProdutoId",
                         column: x => x.ProdutoId,
                         principalTable: "Produtos",
                         principalColumn: "Id",
@@ -926,15 +1135,13 @@ namespace Valisys_Production.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ItensOrcamento",
+                name: "ItensInventario",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    OrcamentoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    InventarioId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProdutoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Quantidade = table.Column<int>(type: "integer", nullable: false),
-                    ValorUnitario = table.Column<decimal>(type: "numeric", nullable: false),
-                    DescontoUnitario = table.Column<decimal>(type: "numeric", nullable: false),
+                    QuantidadeContada = table.Column<decimal>(type: "numeric", nullable: false),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -945,15 +1152,15 @@ namespace Valisys_Production.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ItensOrcamento", x => x.Id);
+                    table.PrimaryKey("PK_ItensInventario", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ItensOrcamento_Orcamentos_OrcamentoId",
-                        column: x => x.OrcamentoId,
-                        principalTable: "Orcamentos",
+                        name: "FK_ItensInventario_Inventarios_InventarioId",
+                        column: x => x.InventarioId,
+                        principalTable: "Inventarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ItensOrcamento_Produtos_ProdutoId",
+                        name: "FK_ItensInventario_Produtos_ProdutoId",
                         column: x => x.ProdutoId,
                         principalTable: "Produtos",
                         principalColumn: "Id",
@@ -961,20 +1168,23 @@ namespace Valisys_Production.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ContasReceber",
+                name: "ParcelasReceber",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaReceberId = table.Column<Guid>(type: "uuid", nullable: false),
                     Codigo = table.Column<string>(type: "text", nullable: false),
-                    Descricao = table.Column<string>(type: "text", nullable: false),
-                    ValorTotal = table.Column<decimal>(type: "numeric", nullable: false),
-                    ValorPago = table.Column<decimal>(type: "numeric", nullable: false),
-                    DataEmissao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    NumeroParcela = table.Column<int>(type: "integer", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric", nullable: false),
                     DataVencimento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DataPagamento = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    ValorPago = table.Column<decimal>(type: "numeric", nullable: true),
+                    Juros = table.Column<decimal>(type: "numeric", nullable: true),
+                    Multa = table.Column<decimal>(type: "numeric", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
+                    FormaPagamento = table.Column<int>(type: "integer", nullable: true),
                     Observacoes = table.Column<string>(type: "text", nullable: true),
-                    PessoaId = table.Column<Guid>(type: "uuid", nullable: true),
-                    PedidoVendaId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CarteiraId = table.Column<Guid>(type: "uuid", nullable: true),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -985,29 +1195,37 @@ namespace Valisys_Production.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ContasReceber", x => x.Id);
+                    table.PrimaryKey("PK_ParcelasReceber", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ContasReceber_PedidosVenda_PedidoVendaId",
-                        column: x => x.PedidoVendaId,
-                        principalTable: "PedidosVenda",
-                        principalColumn: "Id");
+                        name: "FK_ParcelasReceber_Carteiras_CarteiraId",
+                        column: x => x.CarteiraId,
+                        principalTable: "Carteiras",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ContasReceber_Pessoas_PessoaId",
-                        column: x => x.PessoaId,
-                        principalTable: "Pessoas",
-                        principalColumn: "Id");
+                        name: "FK_ParcelasReceber_ContasReceber_ContaReceberId",
+                        column: x => x.ContaReceberId,
+                        principalTable: "ContasReceber",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ItensPedido",
+                name: "BaixasParcelaPagar",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    PedidoVendaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProdutoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Quantidade = table.Column<int>(type: "integer", nullable: false),
-                    ValorUnitario = table.Column<decimal>(type: "numeric", nullable: false),
-                    DescontoUnitario = table.Column<decimal>(type: "numeric", nullable: false),
+                    ParcelaPagarId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CarteiraId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ValorPago = table.Column<decimal>(type: "numeric", nullable: false),
+                    Principal = table.Column<decimal>(type: "numeric", nullable: false),
+                    Juros = table.Column<decimal>(type: "numeric", nullable: true),
+                    Multa = table.Column<decimal>(type: "numeric", nullable: true),
+                    DataPagamento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    FormaPagamento = table.Column<int>(type: "integer", nullable: false),
+                    Observacoes = table.Column<string>(type: "text", nullable: true),
+                    Estornada = table.Column<bool>(type: "boolean", nullable: false),
+                    DataEstorno = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -1018,19 +1236,19 @@ namespace Valisys_Production.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ItensPedido", x => x.Id);
+                    table.PrimaryKey("PK_BaixasParcelaPagar", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ItensPedido_PedidosVenda_PedidoVendaId",
-                        column: x => x.PedidoVendaId,
-                        principalTable: "PedidosVenda",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ItensPedido_Produtos_ProdutoId",
-                        column: x => x.ProdutoId,
-                        principalTable: "Produtos",
+                        name: "FK_BaixasParcelaPagar_Carteiras_CarteiraId",
+                        column: x => x.CarteiraId,
+                        principalTable: "Carteiras",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_BaixasParcelaPagar_ParcelasPagar_ParcelaPagarId",
+                        column: x => x.ParcelaPagarId,
+                        principalTable: "ParcelasPagar",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1168,6 +1386,7 @@ namespace Valisys_Production.Migrations
                     AlmoxarifadoId = table.Column<Guid>(type: "uuid", nullable: false),
                     FaseAtualId = table.Column<Guid>(type: "uuid", nullable: false),
                     LoteId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DepositoId = table.Column<Guid>(type: "uuid", nullable: true),
                     ProdutoVariacaoId = table.Column<Guid>(type: "uuid", nullable: true),
                     RoteiroProducaoId = table.Column<Guid>(type: "uuid", nullable: true),
                     TipoOrdemDeProducaoId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -1189,6 +1408,11 @@ namespace Valisys_Production.Migrations
                         principalTable: "Almoxarifados",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OrdensDeProducao_Depositos_DepositoId",
+                        column: x => x.DepositoId,
+                        principalTable: "Depositos",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_OrdensDeProducao_FasesProducao_FaseAtualId",
                         column: x => x.FaseAtualId,
@@ -1263,21 +1487,21 @@ namespace Valisys_Production.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ParcelasReceber",
+                name: "BaixasParcelaReceber",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaReceberId = table.Column<Guid>(type: "uuid", nullable: false),
-                    NumeroParcela = table.Column<int>(type: "integer", nullable: false),
-                    Valor = table.Column<decimal>(type: "numeric", nullable: false),
-                    DataVencimento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    DataPagamento = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    ValorPago = table.Column<decimal>(type: "numeric", nullable: true),
+                    ParcelaReceberId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CarteiraId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ValorPago = table.Column<decimal>(type: "numeric", nullable: false),
+                    Principal = table.Column<decimal>(type: "numeric", nullable: false),
                     Juros = table.Column<decimal>(type: "numeric", nullable: true),
                     Multa = table.Column<decimal>(type: "numeric", nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    FormaPagamento = table.Column<int>(type: "integer", nullable: true),
+                    DataPagamento = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    FormaPagamento = table.Column<int>(type: "integer", nullable: false),
                     Observacoes = table.Column<string>(type: "text", nullable: true),
+                    Estornada = table.Column<bool>(type: "boolean", nullable: false),
+                    DataEstorno = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     Ativo = table.Column<bool>(type: "boolean", nullable: false),
                     DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -1288,13 +1512,77 @@ namespace Valisys_Production.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ParcelasReceber", x => x.Id);
+                    table.PrimaryKey("PK_BaixasParcelaReceber", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ParcelasReceber_ContasReceber_ContaReceberId",
+                        name: "FK_BaixasParcelaReceber_Carteiras_CarteiraId",
+                        column: x => x.CarteiraId,
+                        principalTable: "Carteiras",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_BaixasParcelaReceber_ParcelasReceber_ParcelaReceberId",
+                        column: x => x.ParcelaReceberId,
+                        principalTable: "ParcelasReceber",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MovimentacoesCarteira",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CarteiraId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tipo = table.Column<int>(type: "integer", nullable: false),
+                    Origem = table.Column<int>(type: "integer", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric", nullable: false),
+                    DataMovimentacao = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    Descricao = table.Column<string>(type: "text", nullable: false),
+                    ContaPagarId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ContaReceberId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ParcelaPagarId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ParcelaReceberId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    DataCadastro = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    DesativadoEm = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    AtualizadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MovimentacoesCarteira", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MovimentacoesCarteira_Carteiras_CarteiraId",
+                        column: x => x.CarteiraId,
+                        principalTable: "Carteiras",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MovimentacoesCarteira_ContasPagar_ContaPagarId",
+                        column: x => x.ContaPagarId,
+                        principalTable: "ContasPagar",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MovimentacoesCarteira_ContasReceber_ContaReceberId",
                         column: x => x.ContaReceberId,
                         principalTable: "ContasReceber",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MovimentacoesCarteira_ParcelasPagar_ParcelaPagarId",
+                        column: x => x.ParcelaPagarId,
+                        principalTable: "ParcelasPagar",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MovimentacoesCarteira_ParcelasReceber_ParcelaReceberId",
+                        column: x => x.ParcelaReceberId,
+                        principalTable: "ParcelasReceber",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1382,12 +1670,17 @@ namespace Valisys_Production.Migrations
             migrationBuilder.InsertData(
                 table: "Perfis",
                 columns: new[] { "Id", "Acessos", "Ativo", "AtualizadoEm", "AtualizadoPor", "CriadoEm", "CriadoPor", "DataCadastro", "DesativadoEm", "Nome" },
-                values: new object[] { new Guid("c0de0000-0000-0000-0000-000000000001"), "", true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Administrador" });
+                values: new object[,]
+                {
+                    { new Guid("c0de0000-0000-0000-0000-000000000001"), "", true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Administrador" },
+                    { new Guid("c0de0000-0000-0000-0000-000000000050"), "Dashboard.Visualizar,Almoxarifados.Visualizar,Almoxarifados.Criar,Almoxarifados.Editar,Almoxarifados.Inativar,Categorias.Visualizar,Categorias.Criar,Categorias.Editar,Categorias.Inativar,CondicoesPagamento.Visualizar,CondicoesPagamento.Criar,CondicoesPagamento.Editar,CondicoesPagamento.Inativar,Depositos.Visualizar,Depositos.Criar,Depositos.Editar,Depositos.Excluir,FasesProducao.Visualizar,FasesProducao.Criar,FasesProducao.Editar,FasesProducao.Excluir,Finalidades.Visualizar,Finalidades.Criar,Finalidades.Editar,Finalidades.Inativar,FormasPagamento.Visualizar,FormasPagamento.Criar,FormasPagamento.Editar,FormasPagamento.Inativar,TiposOrdem.Visualizar,TiposOrdem.Criar,TiposOrdem.Editar,TiposOrdem.Excluir,UnidadesMedida.Visualizar,UnidadesMedida.Criar,UnidadesMedida.Editar,UnidadesMedida.Excluir,Fornecedores.Visualizar,Fornecedores.Criar,Fornecedores.Editar,Fornecedores.Inativar,Produtos.Visualizar,Produtos.Criar,Produtos.Editar,Produtos.Inativar,Orcamentos.Visualizar,Orcamentos.Criar,Orcamentos.Editar,Orcamentos.Enviar,Orcamentos.Aprovar,Orcamentos.Cancelar,Orcamentos.ConverterEmPedido,PedidosVenda.Visualizar,PedidosVenda.Criar,PedidosVenda.Editar,PedidosVenda.Confirmar,PedidosVenda.Cancelar,PedidosVenda.Concluir,FichasTecnicas.Visualizar,FichasTecnicas.Criar,FichasTecnicas.Editar,FichasTecnicas.Inativar,Roteiros.Visualizar,Roteiros.Criar,Roteiros.Editar,Roteiros.Excluir,Estoque.Visualizar,Movimentacoes.Visualizar,Movimentacoes.Criar,Movimentacoes.Editar,Movimentacoes.Excluir,Inventarios.Visualizar,Inventarios.Criar,Inventarios.Editar,Inventarios.Finalizar,Inventarios.Cancelar,Financeiro.Visualizar,Lotes.Visualizar,Lotes.Criar,Lotes.Editar,Lotes.Cancelar,OrdensProducao.Visualizar,OrdensProducao.Criar,OrdensProducao.Editar,OrdensProducao.Cancelar,OrdensProducao.Finalizar,OrdensProducao.AvancarFase,OrdensProducao.Estornar,Solicitacoes.Visualizar,Solicitacoes.Criar,Solicitacoes.Aprovar,Solicitacoes.Cancelar,Relatorios.Visualizar", true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Gerente" },
+                    { new Guid("c0de0000-0000-0000-0000-000000000051"), "Dashboard.Visualizar,Produtos.Visualizar,Fornecedores.Visualizar,Orcamentos.Visualizar,Orcamentos.Criar,Orcamentos.Editar,Orcamentos.Enviar,Orcamentos.Aprovar,Orcamentos.Cancelar,Orcamentos.ConverterEmPedido,PedidosVenda.Visualizar,PedidosVenda.Criar,PedidosVenda.Editar,PedidosVenda.Confirmar,PedidosVenda.Cancelar,PedidosVenda.Concluir", true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Vendedor" }
+                });
 
             migrationBuilder.InsertData(
                 table: "TiposDeOrdemDeProducao",
                 columns: new[] { "Id", "Ativo", "AtualizadoEm", "AtualizadoPor", "Codigo", "CriadoEm", "CriadoPor", "DataCadastro", "DesativadoEm", "Descricao", "Nome" },
-                values: new object[] { new Guid("c0de0000-0000-0000-0000-000000000008"), true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "NOR", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Ordem de Produção Padrão", "Normal" });
+                values: new object[] { new Guid("c0de0000-0000-0000-0000-000000000008"), true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Ordem de Produção Padrão", "Normal" });
 
             migrationBuilder.InsertData(
                 table: "UnidadesMedida",
@@ -1420,7 +1713,27 @@ namespace Valisys_Production.Migrations
             migrationBuilder.InsertData(
                 table: "Usuarios",
                 columns: new[] { "Id", "Ativo", "AtualizadoEm", "AtualizadoPor", "CriadoEm", "CriadoPor", "DataCadastro", "DesativadoEm", "Email", "Nome", "PerfilId", "SenhaHash" },
-                values: new object[] { new Guid("c0de0000-0000-0000-0000-000000000000"), true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "admin@valisys.com", "Administrador Master", new Guid("c0de0000-0000-0000-0000-000000000001"), "$2a$12$ceV2TtMQV.UXqYGXoyMt.eV9s2YcTh0SVykcjMPxxDxjci9hoYzeG" });
+                values: new object[] { new Guid("c0de0000-0000-0000-0000-000000000000"), true, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "admin@valisys.com", "Administrador Master", new Guid("c0de0000-0000-0000-0000-000000000001"), "$2a$12$ANrNWbumb63JFxo..Ar6A.3iQJhEqJUqR5kqjklRZoZHs3uM7C4k2" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BaixasParcelaPagar_CarteiraId",
+                table: "BaixasParcelaPagar",
+                column: "CarteiraId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BaixasParcelaPagar_ParcelaPagarId",
+                table: "BaixasParcelaPagar",
+                column: "ParcelaPagarId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BaixasParcelaReceber_CarteiraId",
+                table: "BaixasParcelaReceber",
+                column: "CarteiraId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BaixasParcelaReceber_ParcelaReceberId",
+                table: "BaixasParcelaReceber",
+                column: "ParcelaReceberId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CategoriasProduto_CodigoInterno",
@@ -1442,14 +1755,41 @@ namespace Valisys_Production.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ContasPagar_Codigo",
+                table: "ContasPagar",
+                column: "Codigo",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContasPagar_FormaPagamentoId",
+                table: "ContasPagar",
+                column: "FormaPagamentoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ContasPagar_FornecedorId",
                 table: "ContasPagar",
                 column: "FornecedorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ContasPagar_RegraRecorrenciaId",
+                table: "ContasPagar",
+                column: "RegraRecorrenciaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ContasPagar_Status",
                 table: "ContasPagar",
                 column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContasReceber_Codigo",
+                table: "ContasReceber",
+                column: "Codigo",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContasReceber_FormaPagamentoId",
+                table: "ContasReceber",
+                column: "FormaPagamentoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ContasReceber_PedidoVendaId",
@@ -1536,6 +1876,32 @@ namespace Valisys_Production.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Inventarios_DepositoId",
+                table: "Inventarios",
+                column: "DepositoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Inventarios_Numero",
+                table: "Inventarios",
+                column: "Numero",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Inventarios_UsuarioAberturaId",
+                table: "Inventarios",
+                column: "UsuarioAberturaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ItensInventario_InventarioId",
+                table: "ItensInventario",
+                column: "InventarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ItensInventario_ProdutoId",
+                table: "ItensInventario",
+                column: "ProdutoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ItensOrcamento_OrcamentoId",
                 table: "ItensOrcamento",
                 column: "OrcamentoId");
@@ -1554,12 +1920,6 @@ namespace Valisys_Production.Migrations
                 name: "IX_ItensPedido_ProdutoId",
                 table: "ItensPedido",
                 column: "ProdutoId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_LimiteCredito_PessoaId",
-                table: "LimiteCredito",
-                column: "PessoaId",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_LogsSistema_DataHora",
@@ -1622,6 +1982,31 @@ namespace Valisys_Production.Migrations
                 column: "UsuarioId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_MovimentacoesCarteira_CarteiraId",
+                table: "MovimentacoesCarteira",
+                column: "CarteiraId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovimentacoesCarteira_ContaPagarId",
+                table: "MovimentacoesCarteira",
+                column: "ContaPagarId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovimentacoesCarteira_ContaReceberId",
+                table: "MovimentacoesCarteira",
+                column: "ContaReceberId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovimentacoesCarteira_ParcelaPagarId",
+                table: "MovimentacoesCarteira",
+                column: "ParcelaPagarId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovimentacoesCarteira_ParcelaReceberId",
+                table: "MovimentacoesCarteira",
+                column: "ParcelaReceberId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Orcamentos_ClienteId",
                 table: "Orcamentos",
                 column: "ClienteId");
@@ -1651,6 +2036,11 @@ namespace Valisys_Production.Migrations
                 name: "IX_OrdensDeProducao_AlmoxarifadoId",
                 table: "OrdensDeProducao",
                 column: "AlmoxarifadoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrdensDeProducao_DepositoId",
+                table: "OrdensDeProducao",
+                column: "DepositoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrdensDeProducao_FaseAtualId",
@@ -1694,14 +2084,26 @@ namespace Valisys_Production.Migrations
                 column: "CondicaoPagamentoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ParcelasPagar_ContaPagarId",
+                name: "IX_ParcelasPagar_CarteiraId",
                 table: "ParcelasPagar",
-                column: "ContaPagarId");
+                column: "CarteiraId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ParcelasReceber_ContaReceberId",
+                name: "IX_ParcelasPagar_ContaPagarId_NumeroParcela",
+                table: "ParcelasPagar",
+                columns: new[] { "ContaPagarId", "NumeroParcela" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ParcelasReceber_CarteiraId",
                 table: "ParcelasReceber",
-                column: "ContaReceberId");
+                column: "CarteiraId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ParcelasReceber_ContaReceberId_NumeroParcela",
+                table: "ParcelasReceber",
+                columns: new[] { "ContaReceberId", "NumeroParcela" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PedidosVenda_ClienteId",
@@ -1844,6 +2246,12 @@ namespace Valisys_Production.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "BaixasParcelaPagar");
+
+            migrationBuilder.DropTable(
+                name: "BaixasParcelaReceber");
+
+            migrationBuilder.DropTable(
                 name: "FichaTecnicaItens");
 
             migrationBuilder.DropTable(
@@ -1856,13 +2264,16 @@ namespace Valisys_Production.Migrations
                 name: "FormaPagamentoVendedores");
 
             migrationBuilder.DropTable(
+                name: "Fornecedores");
+
+            migrationBuilder.DropTable(
+                name: "ItensInventario");
+
+            migrationBuilder.DropTable(
                 name: "ItensOrcamento");
 
             migrationBuilder.DropTable(
                 name: "ItensPedido");
-
-            migrationBuilder.DropTable(
-                name: "LimiteCredito");
 
             migrationBuilder.DropTable(
                 name: "LogsSistema");
@@ -1871,13 +2282,13 @@ namespace Valisys_Production.Migrations
                 name: "Movimentacoes");
 
             migrationBuilder.DropTable(
+                name: "MovimentacoesCarteira");
+
+            migrationBuilder.DropTable(
+                name: "Notificacoes");
+
+            migrationBuilder.DropTable(
                 name: "ParcelasCondicao");
-
-            migrationBuilder.DropTable(
-                name: "ParcelasPagar");
-
-            migrationBuilder.DropTable(
-                name: "ParcelasReceber");
 
             migrationBuilder.DropTable(
                 name: "PessoasFisicas");
@@ -1901,25 +2312,25 @@ namespace Valisys_Production.Migrations
                 name: "FichasTecnicas");
 
             migrationBuilder.DropTable(
-                name: "FormasPagamento");
+                name: "Inventarios");
 
             migrationBuilder.DropTable(
                 name: "Orcamentos");
 
             migrationBuilder.DropTable(
-                name: "Depositos");
+                name: "OrdensDeProducao");
 
             migrationBuilder.DropTable(
-                name: "OrdensDeProducao");
+                name: "ParcelasPagar");
+
+            migrationBuilder.DropTable(
+                name: "ParcelasReceber");
 
             migrationBuilder.DropTable(
                 name: "CondicoesPagamento");
 
             migrationBuilder.DropTable(
-                name: "ContasPagar");
-
-            migrationBuilder.DropTable(
-                name: "ContasReceber");
+                name: "Depositos");
 
             migrationBuilder.DropTable(
                 name: "FasesProducao");
@@ -1937,10 +2348,13 @@ namespace Valisys_Production.Migrations
                 name: "SolicitacoesProducao");
 
             migrationBuilder.DropTable(
-                name: "Fornecedores");
+                name: "ContasPagar");
 
             migrationBuilder.DropTable(
-                name: "PedidosVenda");
+                name: "Carteiras");
+
+            migrationBuilder.DropTable(
+                name: "ContasReceber");
 
             migrationBuilder.DropTable(
                 name: "Almoxarifados");
@@ -1952,10 +2366,16 @@ namespace Valisys_Production.Migrations
                 name: "TiposDeOrdemDeProducao");
 
             migrationBuilder.DropTable(
-                name: "Pessoas");
+                name: "Usuarios");
 
             migrationBuilder.DropTable(
-                name: "Usuarios");
+                name: "RegrasRecorrencia");
+
+            migrationBuilder.DropTable(
+                name: "FormasPagamento");
+
+            migrationBuilder.DropTable(
+                name: "PedidosVenda");
 
             migrationBuilder.DropTable(
                 name: "CategoriasProduto");
@@ -1965,6 +2385,15 @@ namespace Valisys_Production.Migrations
 
             migrationBuilder.DropTable(
                 name: "Perfis");
+
+            migrationBuilder.DropTable(
+                name: "Pessoas");
+
+            migrationBuilder.DropSequence(
+                name: "conta_pagar_codigo_seq");
+
+            migrationBuilder.DropSequence(
+                name: "conta_receber_codigo_seq");
         }
     }
 }
