@@ -89,7 +89,7 @@ export function MovimentacaoFormPage() {
     fetch('/api/almoxarifados', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setAlmoxarifados(d.map(a => ({ id: a.id, nome: a.nome }))));
-    fetch('/api/depositos', { headers: h })
+    fetch('/api/Deposito', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setDepositos(d.map(dep => ({
         id: dep.id, nome: dep.nome,

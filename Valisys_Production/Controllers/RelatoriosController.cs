@@ -50,9 +50,9 @@ namespace Valisys_Production.Controllers
 
         [HttpGet("estoque/abaixo-minimo")]
         public async Task<IActionResult> EstoqueAbaixoMinimo(
-            [FromQuery] Guid? produtoId,
-            [FromQuery] Guid? categoriaId,
-            [FromQuery] Guid? depositoId)
+            [FromQuery] List<Guid>? produtoId,
+            [FromQuery] List<Guid>? categoriaId,
+            [FromQuery] List<Guid>? depositoId)
         {
             var query = _context.Produtos
                 .AsNoTracking()
@@ -60,26 +60,41 @@ namespace Valisys_Production.Controllers
                 .Include(p => p.UnidadeMedida)
                 .Where(p => p.Ativo && p.EstoqueMinimo > 0);
 
-            if (produtoId.HasValue)
-                query = query.Where(p => p.Id == produtoId.Value);
-            if (categoriaId.HasValue)
-                query = query.Where(p => p.CategoriaProdutoId == categoriaId.Value);
+            if (produtoId?.Count > 0)
+                query = query.Where(p => produtoId.Contains(p.Id));
+            if (categoriaId?.Count > 0)
+                query = query.Where(p => categoriaId.Contains(p.CategoriaProdutoId));
 
             var produtos = await query.ToListAsync();
+            var temDeposito = depositoId?.Count > 0;
 
-            // Saldo global por produto via movimentações
-            var movs = await _context.Movimentacoes
+            // Saldo por produto via movimentações (global, ou restrito aos depósitos selecionados)
+            var movsQuery = _context.Movimentacoes
                 .AsNoTracking()
-                .Where(m => produtos.Select(p => p.Id).Contains(m.ProdutoId))
-                .ToListAsync();
+                .Where(m => produtos.Select(p => p.Id).Contains(m.ProdutoId));
+
+            if (temDeposito)
+                movsQuery = movsQuery.Where(m => depositoId!.Contains(m.DepositoDestinoId ?? Guid.Empty) || depositoId!.Contains(m.DepositoOrigemId ?? Guid.Empty));
+
+            var movs = await movsQuery.ToListAsync();
 
             var result = produtos
                 .Select(p =>
                 {
                     var movsP = movs.Where(m => m.ProdutoId == p.Id);
-                    var entrada = movsP.Where(m => m.Tipo == TipoMovimentacao.Entrada).Sum(m => m.Quantidade);
-                    var saida   = movsP.Where(m => m.Tipo == TipoMovimentacao.Saida || m.Tipo == TipoMovimentacao.Baixa).Sum(m => m.Quantidade);
-                    var saldo   = entrada - saida;
+                    decimal saldo;
+                    if (temDeposito)
+                    {
+                        var entradaDep = movsP.Where(m => m.DepositoDestinoId.HasValue && depositoId!.Contains(m.DepositoDestinoId.Value)).Sum(m => m.Quantidade);
+                        var saidaDep   = movsP.Where(m => m.DepositoOrigemId.HasValue && depositoId!.Contains(m.DepositoOrigemId.Value)).Sum(m => m.Quantidade);
+                        saldo = entradaDep - saidaDep;
+                    }
+                    else
+                    {
+                        var entrada = movsP.Where(m => m.Tipo == TipoMovimentacao.Entrada).Sum(m => m.Quantidade);
+                        var saida   = movsP.Where(m => m.Tipo == TipoMovimentacao.Saida || m.Tipo == TipoMovimentacao.Baixa).Sum(m => m.Quantidade);
+                        saldo = entrada - saida;
+                    }
                     return new RelAbaixoMinimoDto
                     {
                         Id            = p.Id,
@@ -101,9 +116,9 @@ namespace Valisys_Production.Controllers
 
         [HttpGet("estoque/saldo-produto")]
         public async Task<IActionResult> EstoqueSaldoProduto(
-            [FromQuery] Guid? produtoId,
-            [FromQuery] Guid? categoriaId,
-            [FromQuery] Guid? fornecedorId)
+            [FromQuery] List<Guid>? produtoId,
+            [FromQuery] List<Guid>? categoriaId,
+            [FromQuery] List<Guid>? fornecedorId)
         {
             var query = _context.Produtos
                 .AsNoTracking()
@@ -112,12 +127,12 @@ namespace Valisys_Production.Controllers
                 .Include(p => p.Fornecedores)
                 .Where(p => p.Ativo);
 
-            if (produtoId.HasValue)
-                query = query.Where(p => p.Id == produtoId.Value);
-            if (categoriaId.HasValue)
-                query = query.Where(p => p.CategoriaProdutoId == categoriaId.Value);
-            if (fornecedorId.HasValue)
-                query = query.Where(p => p.Fornecedores.Any(f => f.PessoaId == fornecedorId.Value));
+            if (produtoId?.Count > 0)
+                query = query.Where(p => produtoId.Contains(p.Id));
+            if (categoriaId?.Count > 0)
+                query = query.Where(p => categoriaId.Contains(p.CategoriaProdutoId));
+            if (fornecedorId?.Count > 0)
+                query = query.Where(p => p.Fornecedores.Any(f => fornecedorId.Contains(f.PessoaId)));
 
             var produtos = await query.ToListAsync();
 
@@ -154,8 +169,8 @@ namespace Valisys_Production.Controllers
 
         [HttpGet("estoque/saldo-deposito")]
         public async Task<IActionResult> EstoqueSaldoDeposito(
-            [FromQuery] Guid? produtoId,
-            [FromQuery] Guid? depositoId)
+            [FromQuery] List<Guid>? produtoId,
+            [FromQuery] List<Guid>? depositoId)
         {
             var movsQuery = _context.Movimentacoes
                 .AsNoTracking()
@@ -164,10 +179,10 @@ namespace Valisys_Production.Controllers
                 .Include(m => m.DepositoOrigem).ThenInclude(d => d!.Almoxarifado)
                 .Where(m => m.DepositoDestinoId != null || m.DepositoOrigemId != null);
 
-            if (produtoId.HasValue)
-                movsQuery = movsQuery.Where(m => m.ProdutoId == produtoId.Value);
-            if (depositoId.HasValue)
-                movsQuery = movsQuery.Where(m => m.DepositoDestinoId == depositoId.Value || m.DepositoOrigemId == depositoId.Value);
+            if (produtoId?.Count > 0)
+                movsQuery = movsQuery.Where(m => produtoId.Contains(m.ProdutoId));
+            if (depositoId?.Count > 0)
+                movsQuery = movsQuery.Where(m => depositoId.Contains(m.DepositoDestinoId ?? Guid.Empty) || depositoId.Contains(m.DepositoOrigemId ?? Guid.Empty));
 
             var movs = await movsQuery.ToListAsync();
 
@@ -211,8 +226,8 @@ namespace Valisys_Production.Controllers
 
         [HttpGet("financeiro/contas-pagar")]
         public async Task<IActionResult> FinanceiroContasPagar(
-            [FromQuery] StatusConta? status,
-            [FromQuery] Guid? fornecedorId,
+            [FromQuery] List<StatusConta>? status,
+            [FromQuery] List<Guid>? fornecedorId,
             [FromQuery] DateTime? dataInicio,
             [FromQuery] DateTime? dataFim)
         {
@@ -221,10 +236,10 @@ namespace Valisys_Production.Controllers
                 .Include(c => c.Fornecedor)
                 .AsQueryable();
 
-            if (status.HasValue)
-                query = query.Where(c => c.Status == status.Value);
-            if (fornecedorId.HasValue)
-                query = query.Where(c => c.FornecedorId == fornecedorId.Value);
+            if (status?.Count > 0)
+                query = query.Where(c => status.Contains(c.Status));
+            if (fornecedorId?.Count > 0)
+                query = query.Where(c => c.FornecedorId.HasValue && fornecedorId.Contains(c.FornecedorId.Value));
             if (dataInicio.HasValue)
                 query = query.Where(c => c.DataVencimento.Date >= dataInicio.Value.Date);
             if (dataFim.HasValue)
@@ -251,8 +266,8 @@ namespace Valisys_Production.Controllers
 
         [HttpGet("financeiro/contas-receber")]
         public async Task<IActionResult> FinanceiroContasReceber(
-            [FromQuery] StatusConta? status,
-            [FromQuery] Guid? clienteId,
+            [FromQuery] List<StatusConta>? status,
+            [FromQuery] List<Guid>? clienteId,
             [FromQuery] DateTime? dataInicio,
             [FromQuery] DateTime? dataFim)
         {
@@ -261,10 +276,10 @@ namespace Valisys_Production.Controllers
                 .Include(c => c.Pessoa)
                 .AsQueryable();
 
-            if (status.HasValue)
-                query = query.Where(c => c.Status == status.Value);
-            if (clienteId.HasValue)
-                query = query.Where(c => c.PessoaId == clienteId.Value);
+            if (status?.Count > 0)
+                query = query.Where(c => status.Contains(c.Status));
+            if (clienteId?.Count > 0)
+                query = query.Where(c => c.PessoaId.HasValue && clienteId.Contains(c.PessoaId.Value));
             if (dataInicio.HasValue)
                 query = query.Where(c => c.DataVencimento.Date >= dataInicio.Value.Date);
             if (dataFim.HasValue)
@@ -336,8 +351,8 @@ namespace Valisys_Production.Controllers
 
         [HttpGet("comercial/pedidos")]
         public async Task<IActionResult> ComercialPedidos(
-            [FromQuery] StatusPedido? status,
-            [FromQuery] Guid? clienteId,
+            [FromQuery] List<StatusPedido>? status,
+            [FromQuery] List<Guid>? clienteId,
             [FromQuery] DateTime? dataInicio,
             [FromQuery] DateTime? dataFim)
         {
@@ -347,10 +362,10 @@ namespace Valisys_Production.Controllers
                 .Include(p => p.Itens)
                 .AsQueryable();
 
-            if (status.HasValue)
-                query = query.Where(p => p.Status == status.Value);
-            if (clienteId.HasValue)
-                query = query.Where(p => p.ClienteId == clienteId.Value);
+            if (status?.Count > 0)
+                query = query.Where(p => status.Contains(p.Status));
+            if (clienteId?.Count > 0)
+                query = query.Where(p => clienteId.Contains(p.ClienteId));
             if (dataInicio.HasValue)
                 query = query.Where(p => p.DataEmissao.Date >= dataInicio.Value.Date);
             if (dataFim.HasValue)
@@ -376,8 +391,9 @@ namespace Valisys_Production.Controllers
         public async Task<IActionResult> ComercialVendasPorProduto(
             [FromQuery] DateTime? dataInicio,
             [FromQuery] DateTime? dataFim,
-            [FromQuery] Guid? categoriaId)
+            [FromQuery] List<Guid>? categoriaId)
         {
+            var temCategoria = categoriaId?.Count > 0;
             var vendasRaw = await (
                 from item in _context.ItensPedido
                 join pedido in _context.PedidosVenda on item.PedidoVendaId equals pedido.Id
@@ -385,7 +401,7 @@ namespace Valisys_Production.Controllers
                 where pedido.Status != StatusPedido.Cancelado
                    && (!dataInicio.HasValue || pedido.DataEmissao.Date >= dataInicio.Value.Date)
                    && (!dataFim.HasValue || pedido.DataEmissao.Date <= dataFim.Value.Date)
-                   && (!categoriaId.HasValue || produto.CategoriaProdutoId == categoriaId.Value)
+                   && (!temCategoria || categoriaId!.Contains(produto.CategoriaProdutoId))
                 group item by new { produto.Id, produto.Nome, produto.CodigoInternoProduto, produto.CategoriaProdutoId } into g
                 select new
                 {

@@ -27,6 +27,7 @@ interface LoteOption { id: string; numero: string; produtoId?: string }
 interface AlmoxarifadoOption { id: string; nome: string }
 interface RoteiroOption { id: string; label: string; produtoId: string }
 interface FaseOption { id: string; nome: string }
+interface DepositoOption { id: string; nome: string; almoxarifadoId: string; ativo: boolean; controlaLote: boolean }
 
 const STATUS_MAP: Record<number, { label: string; color: string }> = {
   1: { label: 'Ativa',      color: 'text-green-600 bg-green-50 border-green-200' },
@@ -40,6 +41,7 @@ interface FormState {
   produtoVariacaoId: string;
   tipoOrdemDeProducaoId: string;
   almoxarifadoId: string;
+  depositoId: string;
   roteiroProducaoId: string;
   faseAtualId: string;
   loteId: string;
@@ -53,6 +55,7 @@ interface FormErrors {
   produtoVariacaoId?: string;
   tipoOrdemDeProducaoId?: string;
   almoxarifadoId?: string;
+  depositoId?: string;
   faseAtualId?: string;
   loteId?: string;
   quantidade?: string;
@@ -357,6 +360,7 @@ export function OrdemDeProducaoFormPage() {
   const [tiposOrdem, setTiposOrdem]       = useState<TipoOrdemOption[]>([]);
   const [lotes, setLotes]                 = useState<LoteOption[]>([]);
   const [almoxarifados, setAlmoxarifados] = useState<AlmoxarifadoOption[]>([]);
+  const [depositos, setDepositos]         = useState<DepositoOption[]>([]);
   const [roteiros, setRoteiros]           = useState<RoteiroOption[]>([]);
   const [fases, setFases]                 = useState<FaseOption[]>([]);
 
@@ -374,6 +378,7 @@ export function OrdemDeProducaoFormPage() {
     produtoVariacaoId: '',
     tipoOrdemDeProducaoId: '',
     almoxarifadoId: '',
+    depositoId: '',
     roteiroProducaoId: '',
     faseAtualId: '',
     loteId: '',
@@ -391,13 +396,14 @@ export function OrdemDeProducaoFormPage() {
   const loadRefs = useCallback(async () => {
     setLoadingRefs(true);
     try {
-      const [resProdutos, resAlmox, resTipos, resLotes, resRoteiros, resFases] = await Promise.allSettled([
+      const [resProdutos, resAlmox, resTipos, resLotes, resRoteiros, resFases, resDepositos] = await Promise.allSettled([
         fetchWithAuth('/api/produtos'),
         fetchWithAuth('/api/almoxarifados'),
         fetchWithAuth('/api/tipos-ordem-producao'),
         fetchWithAuth('/api/lotes'),
         fetchWithAuth('/api/roteiros-producao'),
         fetchWithAuth('/api/fases-producao'),
+        fetchWithAuth('/api/Deposito'),
       ]);
 
       if (resProdutos.status === 'fulfilled' && resProdutos.value.ok) {
@@ -447,6 +453,17 @@ export function OrdemDeProducaoFormPage() {
         const data = await resFases.value.json();
         setFases(data.map((f: any) => ({ id: f.id, nome: f.nome ?? '' })));
       }
+
+      if (resDepositos.status === 'fulfilled' && resDepositos.value.ok) {
+        const data = await resDepositos.value.json();
+        setDepositos(data.map((d: any) => ({
+          id: d.id,
+          nome: d.nome ?? '',
+          almoxarifadoId: d.almoxarifadoId ?? '',
+          ativo: d.ativo ?? true,
+          controlaLote: d.controlaLote ?? false,
+        })));
+      }
     } finally {
       setLoadingRefs(false);
     }
@@ -485,6 +502,7 @@ export function OrdemDeProducaoFormPage() {
         produtoVariacaoId: String(data.produtoVariacaoId ?? ''),
         tipoOrdemDeProducaoId: String(data.tipoOrdemDeProducaoId ?? ''),
         almoxarifadoId: String(data.almoxarifadoId ?? ''),
+        depositoId: String(data.depositoId ?? ''),
         roteiroProducaoId: String(data.roteiroProducaoId ?? ''),
         loteId: String(data.loteId ?? ''),
         quantidade: String(data.quantidade ?? 1),
@@ -528,6 +546,11 @@ export function OrdemDeProducaoFormPage() {
 
   const mostrarLote = lotesParaProduto.length > 0;
   const semRoteiro = modo === 'criar' && !!selectedProduto && roteirosDoProduto.length === 0;
+  const exigeLote = !!selectedProduto?.controlaLote;
+
+  const depositosDoAlmoxarifado = form.almoxarifadoId
+    ? depositos.filter(d => d.ativo && d.almoxarifadoId === form.almoxarifadoId && (!exigeLote || d.controlaLote))
+    : [];
 
   const validate = (): boolean => {
     const errs: FormErrors = {};
@@ -536,6 +559,7 @@ export function OrdemDeProducaoFormPage() {
       errs.produtoVariacaoId = 'Selecione a cor/variação.';
     if (!form.tipoOrdemDeProducaoId) errs.tipoOrdemDeProducaoId = 'Selecione o tipo de ordem.';
     if (!form.almoxarifadoId) errs.almoxarifadoId = 'Selecione o almoxarifado.';
+    if (exigeLote && !form.depositoId) errs.depositoId = 'Selecione um depósito que controle lote.';
     if (semRoteiro && !form.faseAtualId) errs.faseAtualId = 'Selecione a fase inicial da ordem.';
     if (mostrarLote && !form.loteId) errs.loteId = 'Produto exige lote.';
     const qtd = parseInt(form.quantidade, 10);
@@ -555,6 +579,7 @@ export function OrdemDeProducaoFormPage() {
           quantidade: parseInt(form.quantidade, 10),
           tipoOrdemDeProducaoId: form.tipoOrdemDeProducaoId,
           almoxarifadoId: form.almoxarifadoId,
+          depositoId: form.depositoId || undefined,
           roteiroProducaoId: form.roteiroProducaoId || undefined,
           faseAtualId: form.faseAtualId || undefined,
           loteId: form.loteId || undefined,
@@ -579,6 +604,7 @@ export function OrdemDeProducaoFormPage() {
           quantidade: parseInt(form.quantidade, 10),
           status: form.status,
           almoxarifadoId: form.almoxarifadoId,
+          depositoId: form.depositoId || undefined,
           loteId: form.loteId || undefined,
           observacoes: form.observacoes || undefined,
           produtoVariacaoId: form.produtoVariacaoId || undefined,
@@ -658,8 +684,8 @@ export function OrdemDeProducaoFormPage() {
             value={form.produtoId}
             options={produtos}
             onChange={(pid) => {
-              setForm(prev => ({ ...prev, produtoId: pid, produtoVariacaoId: '', loteId: '', roteiroProducaoId: '', faseAtualId: '' }));
-              setErrors(prev => ({ ...prev, produtoId: undefined, produtoVariacaoId: undefined, loteId: undefined, faseAtualId: undefined }));
+              setForm(prev => ({ ...prev, produtoId: pid, produtoVariacaoId: '', loteId: '', roteiroProducaoId: '', faseAtualId: '', depositoId: '' }));
+              setErrors(prev => ({ ...prev, produtoId: undefined, produtoVariacaoId: undefined, loteId: undefined, faseAtualId: undefined, depositoId: undefined }));
             }}
             error={errors.produtoId}
             readOnly={readOnly || modo === 'editar'}
@@ -721,13 +747,30 @@ export function OrdemDeProducaoFormPage() {
           <UField label="Almoxarifado" required={!readOnly} error={errors.almoxarifadoId} readOnly={readOnly}>
             <SelectDropdown
               value={form.almoxarifadoId}
-              onChange={v => setField('almoxarifadoId', v)}
+              onChange={v => {
+                setForm(prev => ({ ...prev, almoxarifadoId: v, depositoId: '' }));
+                setErrors(prev => ({ ...prev, almoxarifadoId: undefined, depositoId: undefined }));
+              }}
               options={almoxarifados.map(a => ({ value: a.id, label: a.nome }))}
               placeholder="Selecionar almoxarifado…"
               readOnly={readOnly}
               searchable
             />
           </UField>
+
+          {/* Depósito — obrigatório quando o produto exige controle de lote */}
+          {(form.almoxarifadoId || (readOnly && form.depositoId)) && (
+            <UField label="Depósito" required={exigeLote && !readOnly} error={errors.depositoId} readOnly={readOnly}>
+              <SelectDropdown
+                value={form.depositoId}
+                onChange={v => setField('depositoId', v)}
+                options={depositosDoAlmoxarifado.map(d => ({ value: d.id, label: d.nome }))}
+                placeholder={exigeLote ? 'Selecionar depósito que controla lote…' : 'Selecionar depósito…'}
+                readOnly={readOnly}
+                searchable
+              />
+            </UField>
+          )}
 
           {/* Roteiro de produção — aparece quando o produto tem roteiros cadastrados */}
           {(roteirosDoProduto.length > 0 || (modo !== 'criar' && form.roteiroProducaoId)) && (

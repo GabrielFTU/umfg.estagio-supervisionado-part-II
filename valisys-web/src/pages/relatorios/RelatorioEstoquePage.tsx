@@ -4,19 +4,20 @@ import {
   TrendingDown, Package, Warehouse, FileSearch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ReportPrintModal, MultiSelectField, type PrintColumn } from './reportEngine';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ReportType = 'abaixo-minimo' | 'saldo-produto' | 'saldo-deposito';
 
 interface Filters {
-  produto: string;
-  categoria: string;
-  fornecedor: string;
-  deposito: string;
+  produto: string[];
+  categoria: string[];
+  fornecedor: string[];
+  deposito: string[];
 }
 
-const EMPTY: Filters = { produto: '', categoria: '', fornecedor: '', deposito: '' };
+const EMPTY: Filters = { produto: [], categoria: [], fornecedor: [], deposito: [] };
 
 interface Opt { id: string; nome: string }
 interface DepositoOpt { id: string; nome: string; almoxarifadoNome: string }
@@ -55,10 +56,54 @@ const REPORTS = [
 
 const PAGE_SIZE_OPTS = [10, 20, 50];
 
+const PRINT_COLUMNS: Record<ReportType, PrintColumn[]> = {
+  'abaixo-minimo': [
+    { key: 'produtoNome',    label: 'Produto' },
+    { key: 'produtoCodigo',  label: 'Código' },
+    { key: 'categoriaNome',  label: 'Categoria' },
+    { key: 'unidade',        label: 'Unid.', align: 'center' },
+    { key: 'estoqueAtual',   label: 'Atual', align: 'right' },
+    { key: 'estoqueMinimo',  label: 'Mínimo', align: 'right' },
+    { key: 'diferenca',      label: 'Déficit', align: 'right' },
+  ],
+  'saldo-produto': [
+    { key: 'produtoNome',    label: 'Produto' },
+    { key: 'produtoCodigo',  label: 'Código' },
+    { key: 'categoriaNome',  label: 'Categoria' },
+    { key: 'unidade',        label: 'Unid.', align: 'center' },
+    { key: 'saldoTotal',     label: 'Saldo', align: 'right' },
+    { key: 'custoMedio',     label: 'Custo Médio', align: 'right' },
+    { key: 'valorTotal',     label: 'Valor Total', align: 'right' },
+  ],
+  'saldo-deposito': [
+    { key: 'depositoNome',     label: 'Depósito' },
+    { key: 'almoxarifadoNome', label: 'Almoxarifado' },
+    { key: 'produtoNome',      label: 'Produto' },
+    { key: 'produtoCodigo',    label: 'Código' },
+    { key: 'unidade',          label: 'Unid.', align: 'center' },
+    { key: 'saldo',            label: 'Saldo', align: 'right' },
+  ],
+};
+
+const PRINT_FORMAT: Record<ReportType, Partial<Record<string, 'qty' | 'currency'>>> = {
+  'abaixo-minimo':  { estoqueAtual: 'qty', estoqueMinimo: 'qty', diferenca: 'qty' },
+  'saldo-produto':  { saldoTotal: 'qty', custoMedio: 'currency', valorTotal: 'currency' },
+  'saldo-deposito': { saldo: 'qty' },
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmtQtd = (v: number) => v.toLocaleString('pt-BR', { maximumFractionDigits: 4 });
 const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+function printCell(row: any, key: string, reportId: ReportType) {
+  const v = row[key];
+  if (v === null || v === undefined || v === '') return '—';
+  const fmt = PRINT_FORMAT[reportId][key];
+  if (fmt === 'qty') return fmtQtd(v);
+  if (fmt === 'currency') return fmtBRL(v);
+  return String(v);
+}
 
 function exportToCSV(data: any[], reportId: ReportType) {
   const headers: Record<ReportType, string[]> = {
@@ -122,6 +167,7 @@ export function RelatorioEstoquePage() {
   const [page, setPage]                 = useState(1);
   const [pageSize, setPageSize]         = useState(10);
   const [sort, setSort_]               = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: '', dir: 'asc' });
+  const [printOpen, setPrintOpen]       = useState(false);
 
   const [produtos, setProdutos]         = useState<Opt[]>([]);
   const [categorias, setCategorias]     = useState<Opt[]>([]);
@@ -142,7 +188,7 @@ export function RelatorioEstoquePage() {
     fetch('/api/Pessoas', { headers: h }).then(r => r.ok ? r.json() : []).then((d: any[]) =>
       setFornecedores(d.filter((p: any) => p.tipo === 'Fornecedor' || p.isFornecedor).map(p => ({ id: p.id, nome: p.nomeRazaoSocial ?? p.nome })))
     );
-    fetch('/api/depositos', { headers: h }).then(r => r.ok ? r.json() : []).then((d: DepositoOpt[]) =>
+    fetch('/api/Deposito', { headers: h }).then(r => r.ok ? r.json() : []).then((d: DepositoOpt[]) =>
       setDepositos(d.map(dep => ({ id: dep.id, nome: dep.almoxarifadoNome ? `${dep.nome} (${dep.almoxarifadoNome})` : dep.nome })))
     );
   }, []);
@@ -160,10 +206,10 @@ export function RelatorioEstoquePage() {
     const cfg = REPORTS.find(x => x.id === activeReport)!;
     const token = localStorage.getItem('token');
     const params = new URLSearchParams();
-    if (filters.produto)    params.set('produtoId',    filters.produto);
-    if (filters.categoria)  params.set('categoriaId',  filters.categoria);
-    if (filters.fornecedor) params.set('fornecedorId', filters.fornecedor);
-    if (filters.deposito)   params.set('depositoId',   filters.deposito);
+    filters.produto.forEach(v    => params.append('produtoId',    v));
+    filters.categoria.forEach(v  => params.append('categoriaId',  v));
+    filters.fornecedor.forEach(v => params.append('fornecedorId', v));
+    filters.deposito.forEach(v   => params.append('depositoId',   v));
 
     setLoading(true);
     setHasGenerated(true);
@@ -199,8 +245,6 @@ export function RelatorioEstoquePage() {
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const paginated  = sorted.slice((page - 1) * pageSize, page * pageSize);
   const goPage     = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
-
-  const selCls = 'w-full h-9 px-3 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none bg-white text-gray-800';
 
   function renderHeaders() {
     const S = (label: string, sk: string, align?: 'left' | 'right' | 'center') =>
@@ -256,7 +300,15 @@ export function RelatorioEstoquePage() {
     }
   }
 
-  const activeFiltersCount = report.filters.filter(f => !!filters[f]).length;
+  const activeFiltersCount = report.filters.filter(f => filters[f].length > 0).length;
+
+  const nomesDe = (ids: string[], opts: Opt[]) => ids.map(id => opts.find(o => o.id === id)?.nome ?? id);
+
+  const filtrosDesc: string[] = [];
+  if (filters.produto.length)    filtrosDesc.push(`Produto: ${nomesDe(filters.produto, produtos).join(', ')}`);
+  if (filters.categoria.length)  filtrosDesc.push(`Categoria: ${nomesDe(filters.categoria, categorias).join(', ')}`);
+  if (filters.fornecedor.length) filtrosDesc.push(`Fornecedor: ${nomesDe(filters.fornecedor, fornecedores).join(', ')}`);
+  if (filters.deposito.length)   filtrosDesc.push(`Depósito: ${nomesDe(filters.deposito, depositos).join(', ')}`);
 
   return (
     <div className="flex flex-col h-full bg-white overflow-auto">
@@ -316,37 +368,45 @@ export function RelatorioEstoquePage() {
             {report.filters.includes('produto') && (
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Produto</label>
-                <select value={filters.produto} onChange={e => setFilters(f => ({ ...f, produto: e.target.value }))} className={selCls}>
-                  <option value="">Todos os produtos</option>
-                  {produtos.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                </select>
+                <MultiSelectField
+                  values={filters.produto}
+                  onChange={vs => setFilters(f => ({ ...f, produto: vs }))}
+                  options={produtos}
+                  placeholder="Todos os produtos"
+                />
               </div>
             )}
             {report.filters.includes('categoria') && (
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Categoria</label>
-                <select value={filters.categoria} onChange={e => setFilters(f => ({ ...f, categoria: e.target.value }))} className={selCls}>
-                  <option value="">Todas as categorias</option>
-                  {categorias.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                </select>
+                <MultiSelectField
+                  values={filters.categoria}
+                  onChange={vs => setFilters(f => ({ ...f, categoria: vs }))}
+                  options={categorias}
+                  placeholder="Todas as categorias"
+                />
               </div>
             )}
             {report.filters.includes('fornecedor') && (
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Fornecedor</label>
-                <select value={filters.fornecedor} onChange={e => setFilters(f => ({ ...f, fornecedor: e.target.value }))} className={selCls}>
-                  <option value="">Todos os fornecedores</option>
-                  {fornecedores.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                </select>
+                <MultiSelectField
+                  values={filters.fornecedor}
+                  onChange={vs => setFilters(f => ({ ...f, fornecedor: vs }))}
+                  options={fornecedores}
+                  placeholder="Todos os fornecedores"
+                />
               </div>
             )}
             {report.filters.includes('deposito') && (
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Depósito</label>
-                <select value={filters.deposito} onChange={e => setFilters(f => ({ ...f, deposito: e.target.value }))} className={selCls}>
-                  <option value="">Todos os depósitos</option>
-                  {depositos.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                </select>
+                <MultiSelectField
+                  values={filters.deposito}
+                  onChange={vs => setFilters(f => ({ ...f, deposito: vs }))}
+                  options={depositos}
+                  placeholder="Todos os depósitos"
+                />
               </div>
             )}
           </div>
@@ -407,13 +467,18 @@ export function RelatorioEstoquePage() {
                   <Download size={15} />
                 </button>
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => setPrintOpen(true)}
+                  disabled={sorted.length === 0}
                   title="Imprimir"
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded"
+                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors rounded"
                 >
                   <Printer size={15} />
                 </button>
               </div>
+            </div>
+
+            <div className="px-4 py-2 border-b border-gray-100 bg-gray-50/50 text-xs text-gray-500">
+              <span className="font-semibold text-gray-400">Filtros:</span> {filtrosDesc.length > 0 ? filtrosDesc.join(' · ') : 'Nenhum filtro aplicado'}
             </div>
 
             <div className="overflow-x-auto">
@@ -462,6 +527,18 @@ export function RelatorioEstoquePage() {
           </div>
         )}
       </div>
+
+      {printOpen && (
+        <ReportPrintModal
+          title={report.label}
+          category="Relatório de Estoque"
+          columns={PRINT_COLUMNS[activeReport]}
+          rows={sorted}
+          renderCell={(row, col) => printCell(row, col.key, activeReport)}
+          filtrosDesc={filtrosDesc}
+          onClose={() => setPrintOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -4,15 +4,17 @@ import { ChevronRight, Home, Loader2, Plus, Trash2, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { SelectField } from '@/components/ui/SelectField';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
-const TIPOS_CONTAGEM = ['CICLICO', 'GERAL'] as const;
+const TIPOS_CONTAGEM = ['CICLICO'] as const;
 type TipoContagem = typeof TIPOS_CONTAGEM[number];
-const TIPOS_LABEL: Record<TipoContagem, string> = { CICLICO: 'Cíclico', GERAL: 'Geral' };
+const TIPOS_LABEL: Record<TipoContagem, string> = { CICLICO: 'Cíclico' };
 
-interface ProdutoOpt  { id: string; nome: string; sku: string }
-interface DepositoOpt { id: string; nome: string }
+interface ProdutoOpt      { id: string; nome: string; sku: string }
+interface AlmoxarifadoOpt { id: string; nome: string }
+interface DepositoOpt     { id: string; nome: string; almoxarifadoId: string }
 
 interface InventarioItem {
   tempId: string;
@@ -23,11 +25,6 @@ interface InventarioItem {
 }
 
 function uid() { return Math.random().toString(36).slice(2); }
-
-const ul = (err?: string) => cn(
-  'w-full h-9 bg-transparent text-sm border-b transition-colors focus:outline-none placeholder:text-gray-300',
-  err ? 'border-red-400' : 'border-gray-300 focus:border-[#1D4E89]',
-);
 
 function UField({ label, required, error, children }: {
   label: string; required?: boolean; error?: string; children: React.ReactNode;
@@ -61,10 +58,12 @@ export function InventarioFormPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [finalizarConfirm, setFinalizarConfirm] = useState(false);
 
+  const [almoxarifados, setAlmoxarifados] = useState<AlmoxarifadoOpt[]>([]);
   const [depositos, setDepositos] = useState<DepositoOpt[]>([]);
   const [produtos, setProdutos]   = useState<ProdutoOpt[]>([]);
 
   const [tipoContagem, setTipoContagem] = useState<TipoContagem>('CICLICO');
+  const [almoxarifadoId, setAlmoxarifadoId] = useState('');
   const [depositoId, setDepositoId]     = useState('');
   const [observacao, setObs]            = useState('');
   const [itens, setItens]               = useState<InventarioItem[]>([]);
@@ -72,9 +71,12 @@ export function InventarioFormPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const h = { Authorization: `Bearer ${token}` };
-    fetch('/api/depositos', { headers: h })
+    fetch('/api/almoxarifados', { headers: h })
       .then(r => r.ok ? r.json() : [])
-      .then((d: any[]) => setDepositos(d.map(dep => ({ id: dep.id, nome: dep.nome }))));
+      .then((d: any[]) => setAlmoxarifados(d.map(a => ({ id: a.id, nome: a.nome }))));
+    fetch('/api/Deposito', { headers: h })
+      .then(r => r.ok ? r.json() : [])
+      .then((d: any[]) => setDepositos(d.map(dep => ({ id: dep.id, nome: dep.nome, almoxarifadoId: dep.almoxarifadoId ?? '' }))));
     fetch('/api/Produtos', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setProdutos(d.map(p => ({ id: p.id, nome: p.nome, sku: p.sku ?? p.codigo ?? '—' }))));
@@ -90,6 +92,7 @@ export function InventarioFormPage() {
         if (!res.ok) throw new Error();
         const d = await res.json();
         setTipoContagem(d.tipoContagem ?? 'CICLICO');
+        setAlmoxarifadoId(d.almoxarifadoId ?? '');
         setDepositoId(d.depositoId ?? '');
         setObs(d.observacao ?? '');
         setItens((d.itens ?? []).map((it: any) => ({
@@ -107,6 +110,24 @@ export function InventarioFormPage() {
     };
     load();
   }, [id]);
+
+  // Quando os depósitos carregam, deduz o almoxarifado do depósito já selecionado (modo edição)
+  useEffect(() => {
+    if (!almoxarifadoId && depositoId) {
+      const dep = depositos.find(d => d.id === depositoId);
+      if (dep?.almoxarifadoId) setAlmoxarifadoId(dep.almoxarifadoId);
+    }
+  }, [depositos, depositoId, almoxarifadoId]);
+
+  const handleAlmoxarifadoChange = (v: string) => {
+    setAlmoxarifadoId(v);
+    const dep = depositos.find(d => d.id === depositoId);
+    if (dep && v && dep.almoxarifadoId !== v) setDepositoId('');
+  };
+
+  const depositosFiltrados = almoxarifadoId
+    ? depositos.filter(d => d.almoxarifadoId === almoxarifadoId)
+    : depositos;
 
   const addItem = () => setItens(prev => [
     ...prev,
@@ -130,6 +151,7 @@ export function InventarioFormPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
+    if (!almoxarifadoId) e.almoxarifadoId = 'Selecione um almoxarifado.';
     if (!depositoId) e.depositoId = 'Selecione um depósito.';
     if (itens.length === 0) e.itens = 'Adicione ao menos um produto.';
     else if (itens.some(it => !it.produtoId)) e.itens = 'Selecione o produto em todas as linhas.';
@@ -246,43 +268,39 @@ export function InventarioFormPage() {
           )}
 
           {/* Campos principais */}
-          <div className="grid grid-cols-2 gap-8 mb-8 max-w-2xl">
-            <UField label="Tipo de contagem" required={!readonly} error={fieldErrors.tipoContagem}>
-              {readonly ? (
-                <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
-                  {TIPOS_LABEL[tipoContagem]}
-                </p>
-              ) : (
-                <select
-                  value={tipoContagem}
-                  onChange={e => { setTipoContagem(e.target.value as TipoContagem); clearErr('tipoContagem'); }}
-                  className={ul(fieldErrors.tipoContagem)}
-                >
-                  {TIPOS_CONTAGEM.map(t => (
-                    <option key={t} value={t}>{TIPOS_LABEL[t]}</option>
-                  ))}
-                </select>
-              )}
-            </UField>
+          <div className="grid grid-cols-3 gap-8 mb-8 max-w-3xl">
+            <SelectField
+              label="Tipo de contagem"
+              required={!readonly}
+              readOnly={readonly}
+              error={fieldErrors.tipoContagem}
+              value={tipoContagem}
+              onChange={v => { setTipoContagem(v as TipoContagem); clearErr('tipoContagem'); }}
+              options={TIPOS_CONTAGEM.map(t => ({ value: t, label: TIPOS_LABEL[t] }))}
+            />
 
-            <UField label="Depósito" required={!readonly} error={fieldErrors.depositoId}>
-              {readonly ? (
-                <p className="text-sm text-gray-700 border-b border-gray-200 h-9 flex items-center">
-                  {depositos.find(d => d.id === depositoId)?.nome ?? '—'}
-                </p>
-              ) : (
-                <select
-                  value={depositoId}
-                  onChange={e => { setDepositoId(e.target.value); clearErr('depositoId'); }}
-                  className={ul(fieldErrors.depositoId)}
-                >
-                  <option value="">Selecione um depósito…</option>
-                  {depositos.map(d => (
-                    <option key={d.id} value={d.id}>{d.nome}</option>
-                  ))}
-                </select>
-              )}
-            </UField>
+            <SelectField
+              label="Almoxarifado"
+              required={!readonly}
+              readOnly={readonly}
+              error={fieldErrors.almoxarifadoId}
+              value={almoxarifadoId}
+              onChange={v => { handleAlmoxarifadoChange(v); clearErr('almoxarifadoId'); }}
+              placeholder="Selecione um almoxarifado…"
+              options={almoxarifados.map(a => ({ value: a.id, label: a.nome }))}
+            />
+
+            <SelectField
+              label="Depósito"
+              required={!readonly}
+              readOnly={readonly}
+              disabled={!readonly && !almoxarifadoId}
+              error={fieldErrors.depositoId}
+              value={depositoId}
+              onChange={v => { setDepositoId(v); clearErr('depositoId'); }}
+              placeholder={almoxarifadoId ? 'Selecione um depósito…' : 'Selecione um almoxarifado primeiro'}
+              options={depositosFiltrados.map(d => ({ value: d.id, label: d.nome }))}
+            />
           </div>
 
           {/* Observação */}
@@ -353,21 +371,13 @@ export function InventarioFormPage() {
                       {readonly ? (
                         <span className="text-sm text-gray-700">{item.produtoNome || '—'}</span>
                       ) : (
-                        <select
+                        <SelectField
+                          label=""
                           value={item.produtoId}
-                          onChange={e => updateItem(item.tempId, 'produtoId', e.target.value)}
-                          className={cn(
-                            'w-full h-8 bg-transparent text-sm border-b focus:outline-none transition-colors',
-                            item.produtoId
-                              ? 'border-gray-300 focus:border-[#1D4E89] text-gray-700'
-                              : 'border-gray-300 focus:border-[#1D4E89] text-gray-400',
-                          )}
-                        >
-                          <option value="">Selecione um produto…</option>
-                          {produtos.map(p => (
-                            <option key={p.id} value={p.id}>{p.nome}</option>
-                          ))}
-                        </select>
+                          onChange={v => updateItem(item.tempId, 'produtoId', v)}
+                          placeholder="Selecione um produto…"
+                          options={produtos.map(p => ({ value: p.id, label: p.nome }))}
+                        />
                       )}
                     </td>
                     <td className="py-2 pr-4">

@@ -7,7 +7,7 @@ export interface SelectOption {
   label: string;
 }
 
-export function SelectField({ label, required, value, onChange, options, placeholder, readOnly, error }: {
+export function SelectField({ label, required, value, onChange, options, placeholder, readOnly, disabled, error }: {
   label: string;
   required?: boolean;
   value: string;
@@ -15,6 +15,7 @@ export function SelectField({ label, required, value, onChange, options, placeho
   options: SelectOption[];
   placeholder?: string;
   readOnly?: boolean;
+  disabled?: boolean;
   error?: string;
 }) {
   const [open, setOpen]   = useState(false);
@@ -52,8 +53,12 @@ export function SelectField({ label, required, value, onChange, options, placeho
         <p className="text-sm text-gray-700 h-9 flex items-center">{selected?.label || '—'}</p>
       ) : (
         <>
-          <button type="button" onClick={() => { setOpen(v => !v); setQuery(''); }}
-            className="w-full h-9 flex items-center justify-between text-left focus:outline-none">
+          <button type="button" disabled={disabled}
+            onClick={() => { if (disabled) return; setOpen(v => !v); setQuery(''); }}
+            className={cn(
+              'w-full h-9 flex items-center justify-between text-left focus:outline-none',
+              disabled && 'cursor-not-allowed opacity-50',
+            )}>
             <span className={cn('text-sm truncate', value ? 'text-gray-700' : 'text-gray-300')}>
               {selected?.label || placeholder || 'Selecione…'}
             </span>

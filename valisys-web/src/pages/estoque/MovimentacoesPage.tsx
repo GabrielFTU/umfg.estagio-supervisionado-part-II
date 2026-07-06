@@ -275,7 +275,7 @@ export function MovimentacoesPage() {
     fetch('/api/Produtos', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setProdutos(d.map(p => ({ id: p.id, nome: p.nome, codigo: p.codigo ?? '' }))));
-    fetch('/api/depositos', { headers: h })
+    fetch('/api/Deposito', { headers: h })
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setDepositos(d.map(dep => ({ id: dep.id, nome: dep.nome, almoxarifadoNome: dep.almoxarifadoNome ?? '' }))));
   }, []);
