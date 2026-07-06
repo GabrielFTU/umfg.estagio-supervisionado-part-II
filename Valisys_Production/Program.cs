@@ -208,6 +208,8 @@ builder.Services.AddScoped<IRoteiroProducaoService, RoteiroProducaoService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ILogSistemaRepository, LogSistemaRepository>();
 builder.Services.AddScoped<ILogSistemaService, LogSistemaService>();
+builder.Services.AddScoped<INotificacaoRepository, NotificacaoRepository>();
+builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IContaReceberRepository, ContaReceberRepository>();
 builder.Services.AddScoped<IContaReceberService, ContaReceberService>();

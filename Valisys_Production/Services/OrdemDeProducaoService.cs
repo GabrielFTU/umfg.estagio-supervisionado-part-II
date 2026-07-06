@@ -19,6 +19,7 @@ namespace Valisys_Production.Services
         private readonly IAlmoxarifadoRepository _almoxarifadoRepository;
         private readonly IDepositoRepository _depositoRepository;
         private readonly ILogSistemaService _logService;
+        private readonly INotificacaoService _notificacaoService;
 
         public OrdemDeProducaoService(
             IOrdemDeProducaoRepository repository,
@@ -29,7 +30,8 @@ namespace Valisys_Production.Services
             ApplicationDbContext context,
             IAlmoxarifadoRepository almoxarifadoRepository,
             IDepositoRepository depositoRepository,
-            ILogSistemaService logService)
+            ILogSistemaService logService,
+            INotificacaoService notificacaoService)
         {
             _repository = repository;
             _produtoRepository = produtoRepository;
@@ -40,6 +42,7 @@ namespace Valisys_Production.Services
             _almoxarifadoRepository = almoxarifadoRepository;
             _depositoRepository = depositoRepository;
             _logService = logService;
+            _notificacaoService = notificacaoService;
         }
 
         private async Task<Almoxarifado> GetAlmoxarifadoPrincipalAsync()
@@ -149,6 +152,12 @@ namespace Valisys_Production.Services
 
                 await _logService.RegistrarAsync("Finalização", "Produção",
                     $"Concluiu a produção da OP {ordem.CodigoOrdem}", usuarioId);
+
+                await _notificacaoService.CriarAsync(
+                    "Ordem de Produção concluída",
+                    $"A OP {ordem.CodigoOrdem} foi finalizada.",
+                    "ProducaoConcluida",
+                    ordem.Id);
             }
             catch
             {

@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { UserMenu } from './UserMenu';
+import { NotificationBell } from './NotificationBell';
 
 
 interface AppLayoutProps {
@@ -49,6 +50,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Direita — ações */}
         <div className="flex-1 flex items-center justify-end gap-1">
+          <NotificationBell />
           <UserMenu user={user} initials={initials} />
         </div>
       </header>

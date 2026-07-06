@@ -24,7 +24,7 @@ namespace Valisys_Production.Repositories
         }
 
         public virtual async Task<T?> GetByIdAsync(Guid id)
-            => await _dbSet.FindAsync(id);
+            => await _dbSet.FirstOrDefaultAsync(e => e.Id == id);
 
         public virtual async Task<IEnumerable<T>> GetAllAsync()
             => await _dbSet.AsNoTracking().ToListAsync();
