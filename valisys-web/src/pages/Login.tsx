@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { login, saveSession } from '@/services/auth';
 import { Eye, EyeOff } from 'lucide-react';
+import { span } from 'framer-motion/client';
 
 type Mode = 'login';
 
