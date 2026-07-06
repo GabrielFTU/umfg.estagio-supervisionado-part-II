@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Bell } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { UserMenu } from './UserMenu';
@@ -49,11 +49,6 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Direita — ações */}
         <div className="flex-1 flex items-center justify-end gap-1">
-          <button className="relative p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-            <Bell size={20} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-yellow-300 rounded-full border border-[#FFDE21]" />
-          </button>
-
           <UserMenu user={user} initials={initials} />
         </div>
       </header>
