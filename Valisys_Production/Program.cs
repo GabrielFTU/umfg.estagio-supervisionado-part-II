@@ -227,7 +227,7 @@ builder.Services.AddScoped<IInventarioService, InventarioService>();
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>() ?? ["http://31.97.27.244:5173", "https://www.valisys.com.br"];
+    .Get<string[]>() ?? ["http://187.127.2.114:5173", "https://www.valisys.com.br"];
 
 builder.Services.AddCors(options =>
 {
