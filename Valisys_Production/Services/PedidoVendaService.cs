@@ -48,6 +48,7 @@ namespace Valisys_Production.Services
             var codigo = await _repository.GetProximoCodigoAsync();
 
             await ValidarFormaPagamentoAsync(dto.FormaPagamento, dto.RepresentanteId);
+            await ValidarProdutosDisponiveisParaVendaAsync(dto.Itens.Select(i => i.ProdutoId));
 
             var pedido = new PedidoVenda(
                 codigo,
@@ -95,6 +96,7 @@ namespace Valisys_Production.Services
                 throw new InvalidOperationException("Pedidos cancelados ou concluídos não podem ser editados.");
 
             await ValidarFormaPagamentoAsync(dto.FormaPagamento, dto.RepresentanteId);
+            await ValidarProdutosDisponiveisParaVendaAsync(dto.Itens.Select(i => i.ProdutoId));
 
             existente.Atualizar(
                 dto.ClienteId,
@@ -256,6 +258,19 @@ namespace Valisys_Production.Services
             };
 
             await _contaReceberService.CreateAsync(dto);
+        }
+
+        private async Task ValidarProdutosDisponiveisParaVendaAsync(IEnumerable<Guid> produtoIds)
+        {
+            foreach (var produtoId in produtoIds.Distinct())
+            {
+                var produto = await _produtoRepository.GetByIdAsync(produtoId)
+                    ?? throw new ArgumentException("Produto não encontrado.");
+
+                if (!produto.DisponivelParaVenda)
+                    throw new InvalidOperationException(
+                        $"O produto '{produto.Nome}' não está disponível para venda.");
+            }
         }
 
         private async Task ValidarFormaPagamentoAsync(string? formaPagamento, Guid representanteId)

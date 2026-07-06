@@ -318,7 +318,7 @@ function ProdutoModal({ onAdd, onClose }: {
       const res = await fetch('/api/produtos', { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) { setLoading(false); return; }
       const data: any[] = await res.json();
-      setProdutos(data.filter(p => p.ativo).map(p => ({
+      setProdutos(data.filter(p => p.ativo && p.disponivelParaVenda).map(p => ({
         id: p.id, nome: p.nome, codigo: String(p.codigoInternoProduto ?? ''),
         unidade: p.unidadeMedida?.sigla ?? 'UN', preco: p.custoPadrao ?? 0,
       })));
