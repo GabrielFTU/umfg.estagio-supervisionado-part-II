@@ -584,7 +584,6 @@ export function ProdutoFormPage() {
       const body = {
         ...(id ? { id } : {}),
         nome: f.nome, descricao: f.descricao, observacoes: f.observacoes || null,
-        sku: f.sku.trim().toUpperCase() || null,
         classificacao: f.classificacao, categoriaProdutoId: f.categoriaId,
         unidadeMedidaId: f.unidadeMedidaId, estoqueMinimo: parseFloat(f.estoqueMinimo) || 0,
         controlarPorLote: f.controlarPorLote, ativo: f.ativo, imagemUrl: finalImagemUrl ?? null,
@@ -791,14 +790,6 @@ export function ProdutoFormPage() {
                         placeholder="Ex: Chapa de Aço 1020" className="h-10 text-base font-medium"
                         onChange={handleChange} />
                       <FieldError msg={errors.nome} />
-                    </div>
-                    <div>
-                      <Label>SKU</Label>
-                      <Input name="sku" value={f.sku} ro={ro}
-                        placeholder="Ex: ACO-1020-CH" maxLength={50}
-                        onChange={handleChange}
-                        className="uppercase placeholder:normal-case" />
-                      <p className="mt-1 text-[11px] text-gray-400">Código de referência do fabricante ou fornecedor (opcional).</p>
                     </div>
                   </div>
                 </Card>
