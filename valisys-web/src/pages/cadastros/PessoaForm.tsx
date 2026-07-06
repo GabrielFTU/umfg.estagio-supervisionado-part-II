@@ -180,12 +180,6 @@ function PapelMultiSelect({ value, onChange, error, readOnly }: {
           })}
         </div>
       )}
-
-      {error && !readOnly && (
-        <p className="mt-1 text-[11px] text-red-500 flex items-center gap-1">
-          <span className="inline-block w-1 h-1 rounded-full bg-red-400" />{error}
-        </p>
-      )}
     </div>
   );
 }
@@ -399,8 +393,9 @@ export function PessoaFormPage() {
     setLoading(true);
     try {
       const papelEnum = papeis.reduce((acc, p) => acc | PAPEL_ENUM[p], 0);
-      const end = f.cep ? {
-        cep: f.cep.replace(/\D/g, ''), logradouro: f.logradouro || null,
+      const temEndereco = f.cep || f.logradouro || f.numero || f.complemento || f.bairro || f.cidade || f.uf;
+      const end = temEndereco ? {
+        cep: f.cep.replace(/\D/g, '') || null, logradouro: f.logradouro || null,
         numero: f.numero || null, complemento: f.complemento || null,
         bairro: f.bairro || null, cidade: f.cidade || null, uf: f.uf || null, codigoIbge: null,
       } : null;

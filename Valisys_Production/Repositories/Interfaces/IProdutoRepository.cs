@@ -5,5 +5,6 @@ namespace Valisys_Production.Repositories.Interfaces
     public interface IProdutoRepository : IRepository<Produto>
     {
         Task<int?> GetUltimoCodigoAsync();
+        Task<int> ContarProdutosPorCategoriaAsync(Guid categoriaProdutoId);
     }
 }

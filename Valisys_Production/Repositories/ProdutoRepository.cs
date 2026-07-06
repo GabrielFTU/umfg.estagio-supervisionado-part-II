@@ -33,5 +33,9 @@ namespace Valisys_Production.Repositories
                 .OrderByDescending(p => p.CodigoInternoProduto)
                 .Select(p => (int?)p.CodigoInternoProduto)
                 .FirstOrDefaultAsync();
+
+        public async Task<int> ContarProdutosPorCategoriaAsync(Guid categoriaProdutoId)
+            => await _dbSet.AsNoTracking()
+                .CountAsync(p => p.CategoriaProdutoId == categoriaProdutoId);
     }
 }

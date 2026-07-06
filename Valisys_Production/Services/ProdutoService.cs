@@ -8,11 +8,13 @@ namespace Valisys_Production.Services
     public class ProdutoService : IProdutoService
     {
         private readonly IProdutoRepository _repository;
+        private readonly ICategoriaProdutoRepository _categoriaRepository;
         private readonly ILogSistemaService _logService;
 
-        public ProdutoService(IProdutoRepository repository, ILogSistemaService logService)
+        public ProdutoService(IProdutoRepository repository, ICategoriaProdutoRepository categoriaRepository, ILogSistemaService logService)
         {
             _repository = repository;
+            _categoriaRepository = categoriaRepository;
             _logService = logService;
         }
 
@@ -27,7 +29,7 @@ namespace Valisys_Production.Services
                 dto.Observacoes, dto.ImagemUrl);
 
             produto.DefinirCodigo(await GerarProximoCodigoSequencialAsync());
-            produto.DefinirSku(dto.Sku);
+            produto.DefinirSku(await GerarSkuAsync(dto.CategoriaProdutoId));
 
             // campos fiscais e custos exigem Atualizar; ativo=true por padrão no create
             produto.Atualizar(
@@ -66,7 +68,6 @@ namespace Valisys_Production.Services
                 dto.Observacoes, dto.Ativo, dto.ImagemUrl,
                 dto.Ncm, dto.TipoItem, dto.OrigemMercadoria,
                 dto.CustoPadrao, dto.CustoUltimaCompra, dto.DataUltimaCompra);
-            existing.DefinirSku(dto.Sku);
 
             var updated = await _repository.UpdateAsync(existing);
 
@@ -111,6 +112,17 @@ namespace Valisys_Production.Services
         {
             var ultimo = await _repository.GetUltimoCodigoAsync();
             return (ultimo ?? 0) + 1;
+        }
+
+        private async Task<string> GerarSkuAsync(Guid categoriaProdutoId)
+        {
+            var categoria = await _categoriaRepository.GetByIdAsync(categoriaProdutoId)
+                ?? throw new KeyNotFoundException("Categoria não encontrada.");
+
+            var sequencial = await _repository.ContarProdutosPorCategoriaAsync(categoriaProdutoId) + 1;
+            var prefixo = string.IsNullOrWhiteSpace(categoria.CodigoInterno) ? "000" : categoria.CodigoInterno;
+
+            return $"{prefixo}-{sequencial:D4}";
         }
     }
 }
