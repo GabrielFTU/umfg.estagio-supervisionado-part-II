@@ -61,16 +61,23 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            if (await _repository.HasActiveDependenciasAsync(id))
-                throw new InvalidOperationException(
-                    $"A fase '{existing.Nome}' está sendo utilizada em roteiros de produção ou ordens em andamento e não pode ser desativada.");
+            if (existing.Ativo)
+            {
+                if (await _repository.HasActiveDependenciasAsync(id))
+                    throw new InvalidOperationException(
+                        $"A fase '{existing.Nome}' está sendo utilizada em roteiros de produção ou ordens em andamento e não pode ser desativada.");
+                existing.Desativar();
+            }
+            else
+            {
+                existing.Ativar();
+            }
 
-            existing.Desativar();
             var deleted = await _repository.UpdateAsync(existing);
 
             if (deleted)
-                await _logService.RegistrarAsync("Inativação", "Fases de Produção",
-                    $"Inativou a fase '{existing.Nome}'");
+                await _logService.RegistrarAsync(existing.Ativo ? "Ativação" : "Inativação", "Fases de Produção",
+                    $"{(existing.Ativo ? "Reativou" : "Inativou")} a fase '{existing.Nome}'");
 
             return deleted;
         }

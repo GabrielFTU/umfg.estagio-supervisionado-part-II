@@ -7,6 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 type Aba = 'geral' | 'fiscal' | 'fornecedores' | 'variacoes' | 'custos';
@@ -419,11 +420,9 @@ export function ProdutoFormPage() {
   // ─── Effects ─────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const h: HeadersInit = { Authorization: `Bearer ${token}` };
     Promise.all([
-      fetch('/api/CategoriasProduto', { headers: h }).then(r => r.json()).catch(() => []),
-      fetch('/api/UnidadesMedida',    { headers: h }).then(r => r.json()).catch(() => []),
+      fetchWithAuth('/api/CategoriasProduto').then(r => r.json()).catch(() => []),
+      fetchWithAuth('/api/UnidadesMedida').then(r => r.json()).catch(() => []),
     ]).then(([cats, ums]) => {
       setCategorias(Array.isArray(cats) ? cats.map((c: { id: string; nome: string }) => ({ id: c.id, nome: c.nome })) : []);
       setUnidades(Array.isArray(ums) ? ums.map((u: { id: string; nome: string; sigla: string }) => ({ id: u.id, nome: u.nome, extra: u.sigla })) : []);
@@ -435,8 +434,7 @@ export function ProdutoFormPage() {
     setLoadingData(true);
     const load = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/produtos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetchWithAuth(`/api/produtos/${id}`);
         if (!res.ok) throw new Error();
         const d = await res.json();
         setF({

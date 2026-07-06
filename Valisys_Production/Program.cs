@@ -331,7 +331,11 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($" Erro ao migrar banco: {ex.Message}");
+        // Não engolir: se a migration falhar, o app não pode subir com um schema
+        // desatualizado (isso já causou 500s silenciosos em produção). Falha alto
+        // e derruba o processo — o container reinicia e o erro fica visível nos logs.
+        Console.Error.WriteLine($"ERRO FATAL ao migrar banco: {ex}");
+        throw;
     }
 }
 

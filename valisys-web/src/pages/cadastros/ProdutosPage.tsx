@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Search, SlidersHorizontal, Package,
-  ChevronRight, Home, Loader2, MoreHorizontal,
+  ChevronRight, Home, Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { RowActionsMenu } from '@/components/ui/RowActionsMenu';
+import { fetchWithAuth } from '@/services/api';
 
 type ProdutoItem = {
   id: string;
@@ -34,75 +36,30 @@ const CLASSIF_LABEL: Record<string, string> = {
   MaterialConsumo: 'Material de Consumo',
 };
 
-function RowMenu({ id, ativo, onEdit, onView, onDesativar }: {
-  id: string; ativo: boolean;
+function RowMenu({ ativo, onEdit, onView, onDesativar }: {
+  ativo: boolean;
   onEdit: () => void; onView: () => void; onDesativar: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos]   = useState({ top: 0, right: 0 });
-  const btnRef  = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const handleToggle = () => {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
-    }
-    setOpen(v => !v);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    const onDown = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current  && !btnRef.current.contains(e.target as Node)
-      ) close();
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('scroll', close, true);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('scroll', close, true);
-    };
-  }, [open]);
-
   return (
-    <>
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        className={cn(
-          'p-1.5 rounded-md transition-colors',
-          open ? 'bg-gray-100 text-gray-700' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100',
-        )}
-      >
-        <MoreHorizontal size={15} />
-      </button>
-
-      {open && (
-        <div
-          ref={menuRef}
-          style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg shadow-black/[0.07] py-0.5 text-[13px]"
-        >
-          <button onClick={() => { setOpen(false); onView(); }}
+    <RowActionsMenu>
+      {close => (
+        <>
+          <button onClick={() => { close(); onView(); }}
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
             Visualizar
           </button>
-          <button onClick={() => { setOpen(false); onEdit(); }}
+          <button onClick={() => { close(); onEdit(); }}
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
             Editar
           </button>
           <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button onClick={() => { setOpen(false); onDesativar(); }}
+          <button onClick={() => { close(); onDesativar(); }}
             className="w-full text-left px-3 py-1.5 text-red-500 hover:bg-red-50 transition-colors">
             {ativo ? 'Desativar' : 'Reativar'}
           </button>
-        </div>
+        </>
       )}
-    </>
+    </RowActionsMenu>
   );
 }
 
@@ -129,11 +86,8 @@ export function ProdutosPage() {
   const load = async () => {
     setLoading(true);
     setError('');
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/produtos', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetchWithAuth('/api/produtos');
       if (res.status === 403) { setProdutos([]); return; }
       if (!res.ok) throw new Error();
       const data: any[] = await res.json();
@@ -174,11 +128,7 @@ export function ProdutosPage() {
       navigate(`/cadastros/produtos/${p.id}/editar`);
       return;
     }
-    const token = localStorage.getItem('token');
-    await fetch(`/api/produtos/${p.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await fetchWithAuth(`/api/produtos/${p.id}`, { method: 'DELETE' });
     load();
   };
 
@@ -335,7 +285,6 @@ export function ProdutosPage() {
                       <td className={cn('py-3 pr-6 text-xs text-gray-500', !p.ativo && 'opacity-50')}>{p.unidadeSigla}</td>
                       <td className="py-3 pr-3 text-right">
                         <RowMenu
-                          id={p.id}
                           ativo={p.ativo}
                           onView={() => navigate(`/cadastros/produtos/${p.id}`)}
                           onEdit={() => handleEdit(p)}

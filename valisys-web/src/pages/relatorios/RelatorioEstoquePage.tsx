@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ReportPrintModal, MultiSelectField, type PrintColumn } from './reportEngine';
+import { fetchWithAuth } from '@/services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -163,6 +164,7 @@ export function RelatorioEstoquePage() {
   const [filters, setFilters]           = useState<Filters>({ ...EMPTY });
   const [rows, setRows]                 = useState<any[]>([]);
   const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
   const [page, setPage]                 = useState(1);
   const [pageSize, setPageSize]         = useState(10);
@@ -177,18 +179,16 @@ export function RelatorioEstoquePage() {
   const report = REPORTS.find(r => r.id === activeReport)!;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const h = { Authorization: `Bearer ${token}` };
-    fetch('/api/Produtos', { headers: h }).then(r => r.ok ? r.json() : []).then((d: any[]) =>
+    fetchWithAuth('/api/Produtos').then(r => r.ok ? r.json() : []).then((d: any[]) =>
       setProdutos(d.map(p => ({ id: p.id, nome: p.nome })))
     );
-    fetch('/api/CategoriasProduto', { headers: h }).then(r => r.ok ? r.json() : []).then((d: any[]) =>
+    fetchWithAuth('/api/CategoriasProduto').then(r => r.ok ? r.json() : []).then((d: any[]) =>
       setCategorias(d.map(c => ({ id: c.id, nome: c.nome })))
     );
-    fetch('/api/Pessoas', { headers: h }).then(r => r.ok ? r.json() : []).then((d: any[]) =>
+    fetchWithAuth('/api/Pessoas').then(r => r.ok ? r.json() : []).then((d: any[]) =>
       setFornecedores(d.filter((p: any) => p.tipo === 'Fornecedor' || p.isFornecedor).map(p => ({ id: p.id, nome: p.nomeRazaoSocial ?? p.nome })))
     );
-    fetch('/api/Deposito', { headers: h }).then(r => r.ok ? r.json() : []).then((d: DepositoOpt[]) =>
+    fetchWithAuth('/api/Deposito').then(r => r.ok ? r.json() : []).then((d: DepositoOpt[]) =>
       setDepositos(d.map(dep => ({ id: dep.id, nome: dep.almoxarifadoNome ? `${dep.nome} (${dep.almoxarifadoNome})` : dep.nome })))
     );
   }, []);
@@ -204,7 +204,6 @@ export function RelatorioEstoquePage() {
 
   const handleGenerate = () => {
     const cfg = REPORTS.find(x => x.id === activeReport)!;
-    const token = localStorage.getItem('token');
     const params = new URLSearchParams();
     filters.produto.forEach(v    => params.append('produtoId',    v));
     filters.categoria.forEach(v  => params.append('categoriaId',  v));
@@ -213,18 +212,23 @@ export function RelatorioEstoquePage() {
 
     setLoading(true);
     setHasGenerated(true);
+    setError('');
     setRows([]);
     setPage(1);
-    fetch(`${cfg.endpoint}?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : [])
+    fetchWithAuth(`${cfg.endpoint}?${params}`)
+      .then(async r => {
+        if (!r.ok) throw new Error(`Falha ao gerar relatório (HTTP ${r.status}).`);
+        return r.json();
+      })
       .then(setRows)
-      .catch(() => setRows([]))
+      .catch((e: Error) => setError(e.message || 'Não foi possível gerar o relatório.'))
       .finally(() => setLoading(false));
   };
 
   const handleClear = () => {
     setFilters({ ...EMPTY });
     setRows([]);
+    setError('');
     setHasGenerated(false);
     setPage(1);
   };
@@ -444,6 +448,11 @@ export function RelatorioEstoquePage() {
         ) : loading ? (
           <div className="flex items-center justify-center py-16 gap-2 text-gray-400 text-sm">
             <Loader2 size={16} className="animate-spin" /> Carregando…
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+            <p className="text-sm font-semibold text-red-500">{error}</p>
+            <button onClick={handleGenerate} className="text-xs text-[#1D4E89] hover:underline">Tentar novamente</button>
           </div>
         ) : (
           <div className="border border-gray-200 rounded-xl overflow-hidden">

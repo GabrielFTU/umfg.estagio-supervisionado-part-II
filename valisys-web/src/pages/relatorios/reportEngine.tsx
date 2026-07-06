@@ -3,6 +3,7 @@ import {
   Loader2, Home, ChevronRight, ChevronUp, ChevronDown, Download, Printer, FileSearch, Search, Check, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fetchWithAuth } from '@/services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -428,6 +429,7 @@ export function ReportPage({ breadcrumbLabel, slug, reports }: ReportPageProps) 
   const [filters, setFilters]           = useState<Record<string, string[]>>({});
   const [rows, setRows]                 = useState<any[]>([]);
   const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
   const [page, setPage]                 = useState(1);
   const [pageSize, setPageSize]         = useState(10);
@@ -447,7 +449,6 @@ export function ReportPage({ breadcrumbLabel, slug, reports }: ReportPageProps) 
   };
 
   const handleGenerate = () => {
-    const token = localStorage.getItem('token');
     const params = new URLSearchParams();
     report.filters.forEach(f => {
       (filters[f.key] ?? []).forEach(v => params.append(f.key, v));
@@ -455,18 +456,23 @@ export function ReportPage({ breadcrumbLabel, slug, reports }: ReportPageProps) 
 
     setLoading(true);
     setHasGenerated(true);
+    setError('');
     setRows([]);
     setPage(1);
-    fetch(`${report.endpoint}?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : [])
+    fetchWithAuth(`${report.endpoint}?${params}`)
+      .then(async r => {
+        if (!r.ok) throw new Error(`Falha ao gerar relatório (HTTP ${r.status}).`);
+        return r.json();
+      })
       .then(setRows)
-      .catch(() => setRows([]))
+      .catch((e: Error) => setError(e.message || 'Não foi possível gerar o relatório.'))
       .finally(() => setLoading(false));
   };
 
   const handleClear = () => {
     setFilters({});
     setRows([]);
+    setError('');
     setHasGenerated(false);
     setPage(1);
   };
@@ -626,6 +632,11 @@ export function ReportPage({ breadcrumbLabel, slug, reports }: ReportPageProps) 
           <div className="flex items-center justify-center py-16 gap-2 text-gray-400 text-sm">
             <Loader2 size={16} className="animate-spin" /> Carregando…
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+            <p className="text-sm font-semibold text-red-500">{error}</p>
+            <button onClick={handleGenerate} className="text-xs text-[#1D4E89] hover:underline">Tentar novamente</button>
+          </div>
         ) : (
           <div className="border border-gray-200 rounded-xl overflow-hidden">
             {/* Table header bar */}
@@ -755,8 +766,7 @@ export function ReportPage({ breadcrumbLabel, slug, reports }: ReportPageProps) 
 export function useOptions(url: string, mapper: (d: any) => Opt): [Opt[]] {
   const [opts, setOpts] = useState<Opt[]>([]);
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    fetchWithAuth(url)
       .then(r => r.ok ? r.json() : [])
       .then((d: any[]) => setOpts(d.map(mapper)))
       .catch(() => setOpts([]));

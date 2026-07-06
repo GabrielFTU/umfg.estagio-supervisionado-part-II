@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, MoreHorizontal, Loader2, SlidersHorizontal, X, CheckCircle2, XCircle } from 'lucide-react';
+import { Search, Plus, Loader2, SlidersHorizontal, X, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { RowActionsMenu } from '@/components/ui/RowActionsMenu';
+import { fetchWithAuth } from '@/services/api';
 
 interface DepositoItem {
   id: string;
@@ -25,53 +27,22 @@ function BoolIcon({ value }: { value: boolean }) {
 function RowMenu({ ativo, onEdit, onView, onToggle }: {
   ativo: boolean; onEdit: () => void; onView: () => void; onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos]   = useState({ top: 0, right: 0 });
-  const btnRef  = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const toggle = () => {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
-    }
-    setOpen(v => !v);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    const h = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
-          btnRef.current  && !btnRef.current.contains(e.target as Node)) close();
-    };
-    document.addEventListener('mousedown', h);
-    document.addEventListener('scroll', close, true);
-    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('scroll', close, true); };
-  }, [open]);
-
   return (
-    <>
-      <button ref={btnRef} onClick={toggle}
-        className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-        <MoreHorizontal size={15} />
-      </button>
-      {open && (
-        <div ref={menuRef}
-          style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-0.5 text-[13px]">
-          <button onClick={() => { setOpen(false); onView(); }}
+    <RowActionsMenu buttonClassName="text-gray-400 hover:text-gray-600">
+      {close => (
+        <>
+          <button onClick={() => { close(); onView(); }}
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Visualizar</button>
-          <button onClick={() => { setOpen(false); onEdit(); }}
+          <button onClick={() => { close(); onEdit(); }}
             className="w-full text-left px-3 py-1.5 text-gray-600 hover:bg-gray-50">Editar</button>
           <div className="my-0.5 mx-2 border-t border-gray-100" />
-          <button onClick={() => { setOpen(false); onToggle(); }}
+          <button onClick={() => { close(); onToggle(); }}
             className={cn('w-full text-left px-3 py-1.5 hover:bg-gray-50', ativo ? 'text-red-500' : 'text-emerald-600')}>
             {ativo ? 'Desativar' : 'Reativar'}
           </button>
-        </div>
+        </>
       )}
-    </>
+    </RowActionsMenu>
   );
 }
 
@@ -96,8 +67,7 @@ export function DepositosPage() {
 
   const load = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const res = await fetch('/api/Deposito', { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetchWithAuth('/api/Deposito');
     if (res.ok) setItems(await res.json());
     setLoading(false);
   };
@@ -120,8 +90,7 @@ export function DepositosPage() {
       navigate(`/cadastros/depositos/${item.id}/editar`);
       return;
     }
-    const token = localStorage.getItem('token');
-    await fetch(`/api/Deposito/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    await fetchWithAuth(`/api/Deposito/${item.id}`, { method: 'DELETE' });
     load();
   };
 
