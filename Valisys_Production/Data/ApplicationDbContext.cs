@@ -49,6 +49,7 @@ namespace Valisys_Production.Data
         public DbSet<RoteiroProducao> RoteirosProducao { get; set; }
         public DbSet<RoteiroProducaoEtapa> RoteiroProducaoEtapas { get; set; }
         public DbSet<LogSistema> LogsSistema { get; set; }
+        public DbSet<Notificacao> Notificacoes { get; set; }
         public DbSet<ContaReceber> ContasReceber { get; set; }
         public DbSet<ParcelaReceber> ParcelasReceber { get; set; }
         public DbSet<BaixaParcelaReceber> BaixasParcelaReceber { get; set; }
