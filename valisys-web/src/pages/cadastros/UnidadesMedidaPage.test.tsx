@@ -97,12 +97,12 @@ describe('UnidadesMedidaPage — exibição de dados', () => {
     expect(screen.getByText('m')).toBeInTheDocument();
   });
 
-  it('destaca unidades inativas com risco no nome', async () => {
+  it('destaca unidades inativas com o mesmo estilo de desativação da tela de clientes', async () => {
     renderPage();
     await waitFor(() => screen.getByText('Quilograma'));
 
-    expect(screen.getByText('Metro')).toHaveClass('line-through');
-    expect(screen.getByText('Quilograma')).not.toHaveClass('line-through');
+    expect(screen.getByText('Metro').closest('td')).toHaveClass('opacity-50');
+    expect(screen.getByText('Quilograma').closest('td')).not.toHaveClass('opacity-50');
   });
 
   it('marca unidades base corretamente', async () => {
@@ -171,6 +171,25 @@ describe('UnidadesMedidaPage — navegação', () => {
     fireEvent.click(screen.getByRole('button', { name: /nova unidade/i }));
     expect(mockNavigate).toHaveBeenCalledWith('/cadastros/unidades/novo');
   });
+
+  it('solicita confirmação antes de editar uma unidade', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true, status: 200, json: async () => [mockUnidades[0]],
+    }) as any;
+
+    renderPage();
+    await waitFor(() => screen.getByText('Quilograma'));
+
+    fireEvent.click(screen.getByRole('button', { name: /mais ações/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Editar$/i }));
+
+    expect(screen.getByText(/editar unidade de medida/i)).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalledWith('/cadastros/unidades/1/editar');
+
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmar$/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/cadastros/unidades/1/editar');
+  });
 });
 
 describe('UnidadesMedidaPage — desativar com produtos ativos (409)', () => {
@@ -186,18 +205,14 @@ describe('UnidadesMedidaPage — desativar com produtos ativos (409)', () => {
       }) as any;
 
     const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderPage();
     await waitFor(() => screen.getByText('Quilograma'));
 
-    const menuBtn = screen.getByRole('button', { name: '' });
-    fireEvent.click(menuBtn);
+    fireEvent.click(screen.getByRole('button', { name: /mais ações/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Desativar$/i }));
 
-    await waitFor(() => {
-      const desativarBtn = screen.getByText('Desativar');
-      fireEvent.click(desativarBtn);
-    });
+    fireEvent.click(await screen.findByRole('button', { name: /^Confirmar$/i }));
 
     await waitFor(() => {
       expect(alertMock).toHaveBeenCalledWith(

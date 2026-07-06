@@ -55,7 +55,7 @@ function RowMenu({ ativo, onEdit, onView, onToggle }: {
 
   return (
     <>
-      <button ref={btnRef} onClick={toggle}
+      <button ref={btnRef} onClick={toggle} aria-label="Mais ações"
         className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
         <MoreHorizontal size={15} />
       </button>
@@ -90,7 +90,7 @@ export function UnidadesMedidaPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<UnidadeItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: UnidadeItem } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -118,14 +118,22 @@ export function UnidadesMedidaPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = (item: UnidadeItem) => {
-    setConfirmTarget(item);
+  const handleEdit = (item: UnidadeItem) => {
+    setConfirmAction({ type: 'edit', item });
   };
 
-  const execToggle = async () => {
-    if (!confirmTarget) return;
-    const item = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggle = (item: UnidadeItem) => {
+    setConfirmAction({ type: 'toggle', item });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/unidades/${item.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     const res = await fetch(`/api/UnidadesMedida/${item.id}`, {
       method: 'DELETE',
@@ -279,19 +287,19 @@ export function UnidadesMedidaPage() {
                 ) : paginated.map(item => (
                   <tr key={item.id}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-3">
+                    <td className={cn('px-6 py-3', !item.ativo && 'opacity-50')}>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-[#1D4E89] text-xs font-mono font-semibold">
                         {item.sigla}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                    <td className={cn('px-4 py-3', !item.ativo && 'opacity-50')}>
+                      <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400')}>
                         {item.nome}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{GRANDEZA_LABEL[item.grandeza] ?? item.grandeza}</td>
-                    <td className="px-4 py-3 text-sm font-mono text-gray-500">{item.fatorConversao}</td>
-                    <td className="px-4 py-3">
+                    <td className={cn('px-4 py-3 text-sm text-gray-500', !item.ativo && 'opacity-50')}>{GRANDEZA_LABEL[item.grandeza] ?? item.grandeza}</td>
+                    <td className={cn('px-4 py-3 text-sm font-mono text-gray-500', !item.ativo && 'opacity-50')}>{item.fatorConversao}</td>
+                    <td className={cn('px-4 py-3', !item.ativo && 'opacity-50')}>
                       {item.ehUnidadeBase ? (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 font-medium">Sim</span>
                       ) : (
@@ -301,7 +309,7 @@ export function UnidadesMedidaPage() {
                     <td className="pr-4 text-right">
                       <RowMenu ativo={item.ativo}
                         onView={() => navigate(`/cadastros/unidades/${item.id}`)}
-                        onEdit={() => navigate(`/cadastros/unidades/${item.id}/editar`)}
+                        onEdit={() => handleEdit(item)}
                         onToggle={() => handleToggle(item)} />
                     </td>
                   </tr>
@@ -334,12 +342,17 @@ export function UnidadesMedidaPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} unidade de medida` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a unidade de medida "${confirmTarget.nome} (${confirmTarget.sigla})"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggle}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar unidade de medida'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} unidade de medida` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar a unidade de medida "${confirmAction.item.nome} (${confirmAction.item.sigla})"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} a unidade de medida "${confirmAction.item.nome} (${confirmAction.item.sigla})"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

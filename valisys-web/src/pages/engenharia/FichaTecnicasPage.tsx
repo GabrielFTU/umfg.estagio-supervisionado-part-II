@@ -256,7 +256,7 @@ export function FichaTecnicasPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={cn('text-sm', f.ativa ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                      <span className={cn('text-sm', f.ativa ? 'text-gray-700' : 'text-gray-400')}>
                         {f.produtoNome}
                       </span>
                     </td>

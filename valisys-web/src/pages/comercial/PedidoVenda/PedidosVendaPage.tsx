@@ -206,7 +206,7 @@ function DateRangeField({ label, from, to, onFromChange, onToChange }: {
   return (
     <div>
       <label className="text-xs font-semibold text-gray-600 mb-2 block">{label}</label>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-2">
         <div>
           <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">De</span>
           <DatePicker value={from} onChange={onFromChange} />
@@ -239,7 +239,7 @@ function FiltersPanel({ filters, onChange, onClose, clientes, representantes, pr
   const reset = () => { const d = { ...DEFAULT_FILTERS, statuses: [...DEFAULT_FILTERS.statuses] }; setLocal(d); onChange(d); onClose(); };
 
   return (
-    <div className="absolute z-40 right-0 top-full mt-1.5 w-[420px] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="absolute z-40 right-0 top-full mt-1.5 w-[420px] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-visible">
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
         <span className="text-sm font-bold text-gray-800">Filtros avançados</span>
         <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">

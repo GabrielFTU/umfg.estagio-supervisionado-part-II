@@ -92,7 +92,6 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
   const [open, setOpen]         = useState(false);
   const [viewYear, setViewYear] = useState(parsed?.getFullYear() ?? today.getFullYear());
   const [viewMonth, setViewMonth] = useState(parsed?.getMonth() ?? today.getMonth());
-  const [pos, setPos] = useState({ top: 0, left: 0 });
   const [text, setText] = useState(fmtDisplay(value));
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -131,14 +130,6 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
 
   const handleOpen = () => {
     if (disabled) return;
-    if (containerRef.current) {
-      const r = containerRef.current.getBoundingClientRect();
-      const PW = 256, PH = 300;
-      let left = r.left;
-      if (left + PW > window.innerWidth - 8) left = window.innerWidth - PW - 8;
-      const top = window.innerHeight - r.bottom >= PH ? r.bottom + 4 : r.top - PH - 4;
-      setPos({ top, left });
-    }
     if (parsed) { setViewYear(parsed.getFullYear()); setViewMonth(parsed.getMonth()); }
     setOpen(v => !v);
   };
@@ -159,7 +150,7 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
       <div
         ref={containerRef}
         className={cn(
-          'flex items-center h-9 border-b transition-colors',
+          'relative flex items-center h-9 border-b transition-colors',
           error  ? 'border-red-400'
           : open  ? 'border-[#1D4E89]'
           : 'border-gray-300 hover:border-gray-400',
@@ -195,8 +186,7 @@ export function DatePicker({ value, onChange, disabled, error, placeholder = 'dd
         <div
           ref={popupRef}
           onMouseDown={e => e.stopPropagation()}
-          style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
-          className="w-64 bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-black/10 p-3"
+          className="absolute left-0 top-full mt-2 z-[60] w-64 bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-black/10 p-3"
         >
           {/* Header: nav */}
           <div className="flex items-center justify-between mb-3">

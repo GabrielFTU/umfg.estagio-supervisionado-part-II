@@ -90,7 +90,7 @@ export function FormasPagamentoPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<FormaItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: FormaItem } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -125,14 +125,22 @@ export function FormasPagamentoPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = (f: FormaItem) => {
-    setConfirmTarget(f);
+  const handleEdit = (f: FormaItem) => {
+    setConfirmAction({ type: 'edit', item: f });
   };
 
-  const execToggle = async () => {
-    if (!confirmTarget) return;
-    const f = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggle = (f: FormaItem) => {
+    setConfirmAction({ type: 'toggle', item: f });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item: f } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/formas-pagamento/${f.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     await fetch(`/api/formas-pagamento/${f.id}`, {
       method: 'DELETE',
@@ -277,8 +285,8 @@ export function FormasPagamentoPage() {
                   <tr key={f.id}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-3 text-sm text-gray-500">{String(f.codigo).padStart(3, '0')}</td>
-                    <td className="px-4 py-3">
-                      <span className={cn('text-sm', f.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                    <td className={cn('px-4 py-3', !f.ativo && 'opacity-50')}>
+                      <span className={cn('text-sm', f.ativo ? 'text-gray-700' : 'text-gray-400')}>
                         {f.nome}
                       </span>
                       {f.descricao && (
@@ -302,7 +310,7 @@ export function FormasPagamentoPage() {
                       <RowMenu
                         item={f}
                         onView={() => navigate(`/cadastros/formas-pagamento/${f.id}`)}
-                        onEdit={() => navigate(`/cadastros/formas-pagamento/${f.id}/editar`)}
+                        onEdit={() => handleEdit(f)}
                         onToggle={() => handleToggle(f)}
                       />
                     </td>
@@ -336,12 +344,17 @@ export function FormasPagamentoPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} forma de pagamento` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a forma de pagamento "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggle}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar forma de pagamento'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} forma de pagamento` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar a forma de pagamento "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} a forma de pagamento "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

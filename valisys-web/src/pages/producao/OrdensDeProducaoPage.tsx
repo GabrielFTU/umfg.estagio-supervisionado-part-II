@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { fetchWithAuth } from '@/services/api';
 import { Barcode } from '@/components/producao/Barcode';
+import { ModalMsg } from '@/components/ui/ModalMsg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -812,6 +813,7 @@ export function OrdensDeProducaoPage() {
   const [cancelTarget, setCancelTarget]   = useState<OrdemItem | null>(null);
   const [estornarTarget, setEstornarTarget] = useState<OrdemItem | null>(null);
   const [printTarget, setPrintTarget]     = useState<OrdemItem | null>(null);
+  const [editTarget, setEditTarget]       = useState<OrdemItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -1117,7 +1119,7 @@ export function OrdensDeProducaoPage() {
                     <RowMenu
                       ordem={o}
                       onView={() => navigate(`/producao/ordens/${o.id}`)}
-                      onEdit={() => navigate(`/producao/ordens/${o.id}/editar`)}
+                      onEdit={() => setEditTarget(o)}
                       onIniciar={() => handleAvancarFase(o, 'iniciar')}
                       onAvancar={() => handleAvancarFase(o, 'avancar')}
                       onCancelar={() => setCancelTarget(o)}
@@ -1156,6 +1158,20 @@ export function OrdensDeProducaoPage() {
       )}
 
       {/* ── Modais ── */}
+      <ModalMsg
+        aberto={editTarget !== null}
+        titulo="Editar ordem de produção"
+        descricao={editTarget ? `Editar a ordem "${editTarget.codigoOrdem}"?` : ''}
+        variante="info"
+        onConfirmar={() => {
+          if (editTarget) {
+            setEditTarget(null);
+            navigate(`/producao/ordens/${editTarget.id}/editar`);
+          }
+        }}
+        onCancelar={() => setEditTarget(null)}
+      />
+
       {cancelTarget && (
         <CancelModal
           ordem={cancelTarget}

@@ -101,7 +101,7 @@ export function PerfisPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<PerfilItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: PerfilItem } | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
@@ -136,12 +136,18 @@ export function PerfisPage() {
 
   const isProtegido = (p: PerfilItem) => p.nome === 'Administrador';
 
-  const handleToggleAtivo = (p: PerfilItem) => setConfirmTarget(p);
+  const handleEdit = (p: PerfilItem) => setConfirmAction({ type: 'edit', item: p });
 
-  const execToggleAtivo = async () => {
-    if (!confirmTarget) return;
-    const p = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggleAtivo = (p: PerfilItem) => setConfirmAction({ type: 'toggle', item: p });
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item: p } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/configuracoes/perfis/${p.id}/editar`);
+      return;
+    }
     setErrorMsg('');
     const token = localStorage.getItem('token');
     if (p.ativo) {
@@ -284,8 +290,8 @@ export function PerfisPage() {
                     transition={{ duration: 0.18, delay: Math.min(i * 0.03, 0.3) }}
                     onClick={() => navigate(`/configuracoes/perfis/${p.id}`)}
                     className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                    <td className="px-4 sm:px-6 py-3">
-                      <span className={cn('text-sm flex items-center gap-1.5', p.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                    <td className={cn('px-4 sm:px-6 py-3', !p.ativo && 'opacity-50')}>
+                      <span className={cn('text-sm flex items-center gap-1.5', p.ativo ? 'text-gray-700' : 'text-gray-400')}>
                         {isProtegido(p) && <ShieldCheck size={13} className="text-[#1D4E89] shrink-0" />}
                         {p.nome}
                       </span>
@@ -312,7 +318,7 @@ export function PerfisPage() {
                         protegido={isProtegido(p)}
                         ativo={p.ativo}
                         onView={() => navigate(`/configuracoes/perfis/${p.id}`)}
-                        onEdit={() => navigate(`/configuracoes/perfis/${p.id}/editar`)}
+                        onEdit={() => handleEdit(p)}
                         onToggleAtivo={() => handleToggleAtivo(p)} />
                     </td>
                   </motion.tr>
@@ -344,12 +350,17 @@ export function PerfisPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} perfil` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} o perfil "${confirmTarget.nome}"? ${confirmTarget.ativo ? 'Usuários vinculados a este perfil perderão o acesso associado a ele.' : ''}` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggleAtivo}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar perfil'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} perfil` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar o perfil "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} o perfil "${confirmAction.item.nome}"? ${confirmAction.item.ativo ? 'Usuários vinculados a este perfil perderão o acesso associado a ele.' : ''}`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </motion.div>
   );

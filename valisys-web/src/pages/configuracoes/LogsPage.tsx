@@ -152,7 +152,7 @@ export function LogsPage() {
                   exit={{ opacity: 0, y: -4, scale: 0.98 }}
                   transition={{ duration: 0.12 }}
                   onMouseDown={e => e.stopPropagation()}
-                  className="absolute z-30 right-0 top-full mt-1.5 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-3 space-y-3">
+                  className="absolute z-30 right-0 top-full mt-1.5 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-3 space-y-3 overflow-visible">
                   <div>
                     <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Módulo</p>
                     <select
@@ -166,10 +166,15 @@ export function LogsPage() {
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Período</p>
-                    <div className="flex items-center gap-2">
-                      <DatePicker value={de} onChange={v => { setDe(v); setPage(1); }} />
-                      <span className="text-xs text-gray-400 shrink-0">até</span>
-                      <DatePicker value={ate} onChange={v => { setAte(v); setPage(1); }} />
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">De</span>
+                        <DatePicker value={de} onChange={v => { setDe(v); setPage(1); }} />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">Até</span>
+                        <DatePicker value={ate} onChange={v => { setAte(v); setPage(1); }} />
+                      </div>
                     </div>
                   </div>
                 </motion.div>

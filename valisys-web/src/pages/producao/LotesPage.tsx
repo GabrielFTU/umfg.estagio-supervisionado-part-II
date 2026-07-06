@@ -111,7 +111,7 @@ export function LotesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<LoteItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'cancel'; item: LoteItem } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -132,12 +132,17 @@ export function LotesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleCancel = (item: LoteItem) => { setConfirmTarget(item); };
+  const handleEdit = (item: LoteItem) => { setConfirmAction({ type: 'edit', item }); };
+  const handleCancel = (item: LoteItem) => { setConfirmAction({ type: 'cancel', item }); };
 
-  const execCancel = async () => {
-    if (!confirmTarget) return;
-    const item = confirmTarget;
-    setConfirmTarget(null);
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/lotes/${item.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     await fetch(`/api/lotes/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     load();
@@ -254,7 +259,7 @@ export function LotesPage() {
                   <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
                     <RowMenu status={item.status}
                       onView={() => navigate(`/lotes/${item.id}`)}
-                      onEdit={() => navigate(`/lotes/${item.id}/editar`)}
+                      onEdit={() => handleEdit(item)}
                       onCancel={() => handleCancel(item)} />
                   </td>
                 </tr>
@@ -286,13 +291,16 @@ export function LotesPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo="Cancelar lote"
-        descricao={confirmTarget ? `Cancelar lote "${confirmTarget.codigoLote}"?` : ''}
-        variante="perigo"
-        labelConfirmar="Cancelar lote"
-        onConfirmar={execCancel}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit' ? 'Editar lote' : 'Cancelar lote'}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar lote "${confirmAction.item.codigoLote}"?`
+          : `Cancelar lote "${confirmAction.item.codigoLote}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : 'perigo'}
+        labelConfirmar={confirmAction?.type === 'edit' ? 'Confirmar' : 'Cancelar lote'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

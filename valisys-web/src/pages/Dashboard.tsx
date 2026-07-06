@@ -292,8 +292,8 @@ function PayablesPanel({ data, loading }: { data?: FluxoSemanal[]; loading: bool
             tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} width={32} />
           <Tooltip {...tooltipStyle} formatter={(v) => [formatBRL(Number(v))]} />
           <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          <Bar dataKey="aReceber" name="A receber" fill="#1D4E89" radius={[5, 5, 0, 0]} />
-          <Bar dataKey="aPagar"   name="A pagar"   fill="#10B981" radius={[5, 5, 0, 0]} />
+          <Bar dataKey="aReceber" name="A receber" fill="#10B981" radius={[5, 5, 0, 0]} />
+          <Bar dataKey="aPagar"   name="A pagar"   fill="#ff0000" radius={[5, 5, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

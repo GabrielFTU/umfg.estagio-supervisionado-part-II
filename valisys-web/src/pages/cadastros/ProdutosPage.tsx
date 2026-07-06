@@ -115,7 +115,7 @@ export function ProdutosPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filtroClassif, setFiltroClassif] = useState('');
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<ProdutoItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: ProdutoItem } | null>(null);
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {
@@ -158,14 +158,22 @@ export function ProdutosPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDesativar = (p: ProdutoItem) => {
-    setConfirmTarget(p);
+  const handleEdit = (p: ProdutoItem) => {
+    setConfirmAction({ type: 'edit', item: p });
   };
 
-  const execDesativar = async () => {
-    if (!confirmTarget) return;
-    const p = confirmTarget;
-    setConfirmTarget(null);
+  const handleDesativar = (p: ProdutoItem) => {
+    setConfirmAction({ type: 'toggle', item: p });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item: p } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/produtos/${p.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     await fetch(`/api/produtos/${p.id}`, {
       method: 'DELETE',
@@ -308,32 +316,29 @@ export function ProdutosPage() {
                 </thead>
                 <tbody>
                   {filtered.map(p => (
-                    <tr key={p.id} className={cn(
-                      'border-b border-gray-50 hover:bg-blue-50/40 transition-colors',
-                      !p.ativo && 'opacity-50',
-                    )}>
-                      <td className="py-2 pl-4 pr-2">
+                    <tr key={p.id} className="border-b border-gray-50 hover:bg-blue-50/40 transition-colors">
+                      <td className={cn('py-2 pl-4 pr-2', !p.ativo && 'opacity-50')}>
                         <div className="w-9 h-9 rounded-lg border border-gray-100 bg-gray-50 overflow-hidden flex items-center justify-center shrink-0">
                           {p.imagemUrl
                             ? <img src={p.imagemUrl} alt={p.nome} className="w-full h-full object-cover" />
                             : <Package size={14} className="text-gray-300" />}
                         </div>
                       </td>
-                      <td className="py-3 pr-6 text-xs text-gray-500 tabular-nums font-medium">#{p.codigo}</td>
-                      <td className="py-3 pr-6 text-gray-700 font-medium">{p.nome}</td>
-                      <td className="py-3 pr-6">
+                      <td className={cn('py-3 pr-6 text-xs text-gray-500 tabular-nums font-medium', !p.ativo && 'opacity-50')}>#{p.codigo}</td>
+                      <td className={cn('py-3 pr-6 text-gray-700 font-medium', !p.ativo && 'opacity-50')}>{p.nome}</td>
+                      <td className={cn('py-3 pr-6', !p.ativo && 'opacity-50')}>
                         <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', CLASSIF_COLORS[p.classificacao] ?? 'bg-gray-100 text-gray-500')}>
                           {CLASSIF_LABEL[p.classificacao] ?? p.classificacao}
                         </span>
                       </td>
-                      <td className="py-3 pr-6 text-xs text-gray-500">{p.categoriaNome}</td>
-                      <td className="py-3 pr-6 text-xs text-gray-500">{p.unidadeSigla}</td>
+                      <td className={cn('py-3 pr-6 text-xs text-gray-500', !p.ativo && 'opacity-50')}>{p.categoriaNome}</td>
+                      <td className={cn('py-3 pr-6 text-xs text-gray-500', !p.ativo && 'opacity-50')}>{p.unidadeSigla}</td>
                       <td className="py-3 pr-3 text-right">
                         <RowMenu
                           id={p.id}
                           ativo={p.ativo}
                           onView={() => navigate(`/cadastros/produtos/${p.id}`)}
-                          onEdit={() => navigate(`/cadastros/produtos/${p.id}/editar`)}
+                          onEdit={() => handleEdit(p)}
                           onDesativar={() => handleDesativar(p)}
                         />
                       </td>
@@ -347,12 +352,17 @@ export function ProdutosPage() {
       </div>
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} produto` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execDesativar}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar produto'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} produto` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

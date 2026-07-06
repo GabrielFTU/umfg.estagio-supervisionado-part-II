@@ -80,7 +80,7 @@ export function TiposDeOrdemPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<TipoDeOrdemItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: TipoDeOrdemItem } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -113,14 +113,22 @@ export function TiposDeOrdemPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = (t: TipoDeOrdemItem) => {
-    setConfirmTarget(t);
+  const handleEdit = (t: TipoDeOrdemItem) => {
+    setConfirmAction({ type: 'edit', item: t });
   };
 
-  const execToggleAtivo = async () => {
-    if (!confirmTarget) return;
-    const t = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggleAtivo = (t: TipoDeOrdemItem) => {
+    setConfirmAction({ type: 'toggle', item: t });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item: t } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/tipos-ordem/${t.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     if (t.ativo) {
       const res = await fetch(`/api/tipos-ordem-producao/${t.id}`, {
@@ -249,8 +257,8 @@ export function TiposDeOrdemPage() {
                   <td className="px-6 py-3 text-sm text-gray-500">
                     {String(t.codigo).padStart(3, '0')}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={cn('text-sm', t.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                  <td className={cn('px-4 py-3', !t.ativo && 'opacity-50')}>
+                    <span className={cn('text-sm', t.ativo ? 'text-gray-700' : 'text-gray-400')}>
                       {t.nome.toUpperCase()}
                     </span>
                   </td>
@@ -258,7 +266,7 @@ export function TiposDeOrdemPage() {
                   <td className="pr-4 text-right">
                     <RowMenu ativo={t.ativo}
                       onView={() => navigate(`/cadastros/tipos-ordem/${t.id}`)}
-                      onEdit={() => navigate(`/cadastros/tipos-ordem/${t.id}/editar`)}
+                      onEdit={() => handleEdit(t)}
                       onToggleAtivo={() => handleToggleAtivo(t)} />
                   </td>
                 </tr>
@@ -290,12 +298,17 @@ export function TiposDeOrdemPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} tipo de ordem` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} o tipo de ordem "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggleAtivo}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar tipo de ordem'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} tipo de ordem` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar o tipo de ordem "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} o tipo de ordem "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

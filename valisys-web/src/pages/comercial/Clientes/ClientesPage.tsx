@@ -126,7 +126,7 @@ export function ClientesPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [modal, setModal] = useState<{ p: PessoaItem; acao: 'desativar' | 'bloquear' } | null>(null);
+  const [modal, setModal] = useState<{ p: PessoaItem; acao: 'desativar' | 'bloquear' | 'editar' } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -180,6 +180,7 @@ export function ClientesPage() {
 
   useEffect(() => { load(); }, []);
 
+  const handleEditar    = (p: PessoaItem) => setModal({ p, acao: 'editar' });
   const handleDesativar = (p: PessoaItem) => setModal({ p, acao: 'desativar' });
   const handleBloquear  = (p: PessoaItem) => setModal({ p, acao: 'bloquear' });
 
@@ -187,6 +188,10 @@ export function ClientesPage() {
     if (!modal) return;
     const { p, acao } = modal;
     setModal(null);
+    if (acao === 'editar') {
+      navigate(`/comercial/clientes/${p.tipo}/${p.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     const base = p.tipo === 'fisica' ? '/api/PessoasFisicas' : '/api/PessoasJuridicas';
     if (acao === 'desativar') {
@@ -341,14 +346,11 @@ export function ClientesPage() {
               ) : paginated.map(p => (
                 <tr key={p.id}
                   onClick={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
-                  className={cn(
-                    'border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors',
-                    !p.ativo && 'opacity-50',
-                  )}>
-                  <td className="px-6 py-3 text-gray-500 tabular-nums truncate">
+                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                  <td className={cn('px-6 py-3 text-gray-500 tabular-nums truncate', !p.ativo && 'opacity-50')}>
                     {maskDoc(p.tipo, p.doc)}
                   </td>
-                  <td className="px-4 py-3 truncate">
+                  <td className={cn('px-4 py-3 truncate', !p.ativo && 'opacity-50')}>
                     <div className="flex items-center gap-2">
                       <span className="text-gray-700 font-medium">{p.nome.toUpperCase()}</span>
                       {p.bloqueado && (
@@ -358,17 +360,17 @@ export function ClientesPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 truncate">
+                  <td className={cn('px-4 py-3 text-gray-500 truncate', !p.ativo && 'opacity-50')}>
                     {p.email ?? maskPhone(p.telefone) ?? '—'}
                   </td>
-                  <td className="px-4 py-3 text-gray-500 truncate">
+                  <td className={cn('px-4 py-3 text-gray-500 truncate', !p.ativo && 'opacity-50')}>
                     {p.cidade !== '—' ? `${p.cidade}${p.uf ? ` – ${p.uf}` : ''}` : '—'}
                   </td>
                   <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
                     <RowMenu
                       p={p}
                       onView={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}`)}
-                      onEdit={() => navigate(`/comercial/clientes/${p.tipo}/${p.id}/editar`)}
+                      onEdit={() => handleEditar(p)}
                       onDesativar={() => handleDesativar(p)}
                       onBloquear={() => handleBloquear(p)}
                     />
@@ -403,25 +405,31 @@ export function ClientesPage() {
 
       <ModalMsg
         aberto={!!modal}
-        variante={modal?.acao === 'desativar' ? 'perigo' : 'aviso'}
+        variante={modal?.acao === 'desativar' ? 'perigo' : modal?.acao === 'editar' ? 'info' : 'aviso'}
         titulo={
-          modal?.acao === 'desativar'
-            ? `${modal.p.ativo ? 'Desativar' : 'Reativar'} "${modal.p.nome}"?`
-            : `${modal?.p.bloqueado ? 'Desbloquear' : 'Bloquear'} crédito de "${modal?.p.nome}"?`
+          modal?.acao === 'editar'
+            ? 'Editar cliente'
+            : modal?.acao === 'desativar'
+              ? `${modal.p.ativo ? 'Desativar' : 'Reativar'} "${modal.p.nome}"?`
+              : `${modal?.p.bloqueado ? 'Desbloquear' : 'Bloquear'} crédito de "${modal?.p.nome}"?`
         }
         descricao={
-          modal?.acao === 'desativar'
-            ? modal.p.ativo
-              ? 'O cliente será inativado e não aparecerá em novas operações.'
-              : 'O cliente será reativado e voltará a estar disponível.'
-            : modal?.p.bloqueado
-              ? 'O crédito do cliente será liberado.'
-              : 'O cliente ficará impedido de realizar compras a crédito.'
+          modal?.acao === 'editar'
+            ? `Editar "${modal.p.nome}"?`
+            : modal?.acao === 'desativar'
+              ? modal.p.ativo
+                ? 'O cliente será inativado e não aparecerá em novas operações.'
+                : 'O cliente será reativado e voltará a estar disponível.'
+              : modal?.p.bloqueado
+                ? 'O crédito do cliente será liberado.'
+                : 'O cliente ficará impedido de realizar compras a crédito.'
         }
         labelConfirmar={
-          modal?.acao === 'desativar'
-            ? modal.p.ativo ? 'Desativar' : 'Reativar'
-            : modal?.p.bloqueado ? 'Desbloquear' : 'Bloquear'
+          modal?.acao === 'editar'
+            ? 'Confirmar'
+            : modal?.acao === 'desativar'
+              ? modal.p.ativo ? 'Desativar' : 'Reativar'
+              : modal?.p.bloqueado ? 'Desbloquear' : 'Bloquear'
         }
         onConfirmar={execAcao}
         onCancelar={() => setModal(null)}

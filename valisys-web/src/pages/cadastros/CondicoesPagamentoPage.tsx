@@ -74,7 +74,7 @@ export function CondicoesPagamentoPage() {
   const [page, setPage]       = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<CondicaoPagamento | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: CondicaoPagamento } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -93,14 +93,22 @@ export function CondicoesPagamentoPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = (item: CondicaoPagamento) => {
-    setConfirmTarget(item);
+  const handleEdit = (item: CondicaoPagamento) => {
+    setConfirmAction({ type: 'edit', item });
   };
 
-  const execToggle = async () => {
-    if (!confirmTarget) return;
-    const item = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggle = (item: CondicaoPagamento) => {
+    setConfirmAction({ type: 'toggle', item });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/condicoes-pagamento/${item.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     if (item.ativo) {
       await fetch(`/api/condicoes-pagamento/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
@@ -214,8 +222,8 @@ export function CondicoesPagamentoPage() {
                 <tr key={item.id}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-gray-500">{item.codigo}</td>
-                  <td className="px-6 py-3">
-                    <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                  <td className={cn('px-6 py-3', !item.ativo && 'opacity-50')}>
+                    <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400')}>
                       {item.nome}
                     </span>
                   </td>
@@ -224,7 +232,7 @@ export function CondicoesPagamentoPage() {
                   <td className="pr-4 text-right">
                     <RowMenu item={item}
                       onView={() => navigate(`/cadastros/condicoes-pagamento/${item.id}`)}
-                      onEdit={() => navigate(`/cadastros/condicoes-pagamento/${item.id}/editar`)}
+                      onEdit={() => handleEdit(item)}
                       onToggle={() => handleToggle(item)} />
                   </td>
                 </tr>
@@ -255,12 +263,17 @@ export function CondicoesPagamentoPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Inativar' : 'Reativar'} condição de pagamento` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Inativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggle}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar condição de pagamento'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Inativar' : 'Reativar'} condição de pagamento` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Inativar' : 'Reativar'} "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

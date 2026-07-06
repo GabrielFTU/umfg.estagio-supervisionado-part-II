@@ -676,7 +676,7 @@ export function ContasReceberPage() {
                     <td className="px-3 py-2 text-sm text-gray-500">{row.pessoaNome ?? '—'}</td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1.5">
-                        <span className={cn('text-sm', row.contaAtivo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                        <span className={cn('text-sm', row.contaAtivo ? 'text-gray-700' : 'text-gray-400')}>
                           {row.descricao}
                         </span>
                         {row.pedidoVendaId && (

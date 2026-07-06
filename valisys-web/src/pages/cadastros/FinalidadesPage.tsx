@@ -73,7 +73,7 @@ export function FinalidadesPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<Finalidade | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: Finalidade } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -92,14 +92,22 @@ export function FinalidadesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = (item: Finalidade) => {
-    setConfirmTarget(item);
+  const handleEdit = (item: Finalidade) => {
+    setConfirmAction({ type: 'edit', item });
   };
 
-  const execToggle = async () => {
-    if (!confirmTarget) return;
-    const item = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggle = (item: Finalidade) => {
+    setConfirmAction({ type: 'toggle', item });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/finalidades/${item.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     if (item.ativo) {
       await fetch(`/api/finalidades/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
@@ -218,8 +226,8 @@ export function FinalidadesPage() {
                   <td className="px-6 py-3 text-sm text-gray-500">
                     {item.codigo != null ? String(item.codigo).padStart(2, '0') : '—'}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                  <td className={cn('px-4 py-3', !item.ativo && 'opacity-50')}>
+                    <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400')}>
                       {item.nome}
                     </span>
                     {item.descricao && (
@@ -229,7 +237,7 @@ export function FinalidadesPage() {
                   <td className="pr-4 text-right">
                     <RowMenu id={item.id} ativo={item.ativo}
                       onView={() => navigate(`/cadastros/finalidades/${item.id}`)}
-                      onEdit={() => navigate(`/cadastros/finalidades/${item.id}/editar`)}
+                      onEdit={() => handleEdit(item)}
                       onToggle={() => handleToggle(item)} />
                   </td>
                 </tr>
@@ -272,12 +280,17 @@ export function FinalidadesPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Inativar' : 'Reativar'} finalidade` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Inativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggle}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar finalidade'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Inativar' : 'Reativar'} finalidade` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Inativar' : 'Reativar'} "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

@@ -84,7 +84,7 @@ export function FasesPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<FaseItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: FaseItem } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -124,14 +124,22 @@ export function FasesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = (f: FaseItem) => {
-    setConfirmTarget(f);
+  const handleEdit = (f: FaseItem) => {
+    setConfirmAction({ type: 'edit', item: f });
   };
 
-  const execToggleAtivo = async () => {
-    if (!confirmTarget) return;
-    const f = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggleAtivo = (f: FaseItem) => {
+    setConfirmAction({ type: 'toggle', item: f });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item: f } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/fases/${f.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     const res = await fetch(`/api/fases-producao/${f.id}`, {
       method: 'DELETE',
@@ -260,7 +268,7 @@ export function FasesPage() {
                     {f.ordem}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={cn('text-sm', f.ativo ? 'text-gray-700' : 'text-gray-400 line-through max-w-xs truncate  ')}>
+                    <span className={cn('text-sm', f.ativo ? 'text-gray-700' : 'text-gray-400 max-w-xs truncate')}>
                       {f.nome.toUpperCase()}
                     </span>
                   </td>
@@ -280,7 +288,7 @@ export function FasesPage() {
                     <RowMenu
                       ativo={f.ativo}
                       onView={() => navigate(`/cadastros/fases/${f.id}`)}
-                      onEdit={() => navigate(`/cadastros/fases/${f.id}/editar`)}
+                      onEdit={() => handleEdit(f)}
                       onToggleAtivo={() => handleToggleAtivo(f)}
                     />
                   </td>
@@ -313,12 +321,15 @@ export function FasesPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} fase` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a fase "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggleAtivo}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit' ? 'Editar fase' : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} fase` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar a fase "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} a fase "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

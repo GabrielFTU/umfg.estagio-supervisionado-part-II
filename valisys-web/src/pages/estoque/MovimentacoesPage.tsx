@@ -122,7 +122,7 @@ function FiltersPanel({ filters, onChange, onClose, produtos, depositos }: {
   const reset = () => { onChange({ ...DEFAULT_FILTERS }); onClose(); };
 
   return (
-    <div className="absolute z-40 right-0 top-full mt-1.5 w-72 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="absolute z-40 right-0 top-full mt-1.5 w-72 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-visible">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
         <span className="text-sm font-semibold text-gray-800">Filtros</span>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors"><X size={15} /></button>
@@ -172,10 +172,15 @@ function FiltersPanel({ filters, onChange, onClose, produtos, depositos }: {
 
         <div>
           <p className="text-xs font-semibold text-gray-700 mb-1.5">Período</p>
-          <div className="flex items-center gap-2">
-            <DatePicker value={local.de} onChange={v => set('de', v)} />
-            <span className="text-xs text-gray-500 shrink-0">até</span>
-            <DatePicker value={local.ate} onChange={v => set('ate', v)} />
+          <div className="space-y-2">
+            <div>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">De</span>
+              <DatePicker value={local.de} onChange={v => set('de', v)} />
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">Até</span>
+              <DatePicker value={local.ate} onChange={v => set('ate', v)} />
+            </div>
           </div>
         </div>
 

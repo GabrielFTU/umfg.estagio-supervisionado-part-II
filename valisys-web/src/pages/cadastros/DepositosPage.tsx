@@ -85,7 +85,7 @@ export function DepositosPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<DepositoItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: DepositoItem } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -104,14 +104,22 @@ export function DepositosPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = (item: DepositoItem) => {
-    setConfirmTarget(item);
+  const handleEdit = (item: DepositoItem) => {
+    setConfirmAction({ type: 'edit', item });
   };
 
-  const execToggle = async () => {
-    if (!confirmTarget) return;
-    const item = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggle = (item: DepositoItem) => {
+    setConfirmAction({ type: 'toggle', item });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/depositos/${item.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     await fetch(`/api/Deposito/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     load();
@@ -216,8 +224,8 @@ export function DepositosPage() {
                 <tr key={item.id}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-sm text-gray-500">{item.codigoIdentificador}</td>
-                  <td className="px-4 py-3">
-                    <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                  <td className={cn('px-4 py-3', !item.ativo && 'opacity-50')}>
+                    <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400')}>
                       {item.nome.toUpperCase()}
                     </span>
                   </td>
@@ -225,7 +233,7 @@ export function DepositosPage() {
                   <td className="pr-4 text-right">
                     <RowMenu ativo={item.ativo}
                       onView={() => navigate(`/cadastros/depositos/${item.id}`)}
-                      onEdit={() => navigate(`/cadastros/depositos/${item.id}/editar`)}
+                      onEdit={() => handleEdit(item)}
                       onToggle={() => handleToggle(item)} />
                   </td>
                 </tr>
@@ -257,12 +265,17 @@ export function DepositosPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} depósito` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggle}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar depósito'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} depósito` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

@@ -80,7 +80,7 @@ export function CategoriasPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<CategoriaItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: CategoriaItem } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -113,14 +113,22 @@ export function CategoriasPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggleAtivo = (c: CategoriaItem) => {
-    setConfirmTarget(c);
+  const handleEdit = (c: CategoriaItem) => {
+    setConfirmAction({ type: 'edit', item: c });
   };
 
-  const execToggleAtivo = async () => {
-    if (!confirmTarget) return;
-    const c = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggleAtivo = (c: CategoriaItem) => {
+    setConfirmAction({ type: 'toggle', item: c });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item: c } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/categorias/${c.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     if (c.ativo) {
       const res = await fetch(`/api/CategoriasProduto/${c.id}`, {
@@ -253,8 +261,8 @@ export function CategoriasPage() {
                   <td className="px-6 py-3 text-sm text-gray-500">
                     {c.codigo !== '—' ? String(c.codigo).padStart(3, '0') : '—'}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={cn('text-sm', c.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                  <td className={cn('px-4 py-3', !c.ativo && 'opacity-50')}>
+                    <span className={cn('text-sm', c.ativo ? 'text-gray-700' : 'text-gray-400')}>
                       {c.nome.toUpperCase()}
                     </span>
                   </td>
@@ -262,7 +270,7 @@ export function CategoriasPage() {
                   <td className="pr-4 text-right">
                     <RowMenu ativo={c.ativo}
                       onView={() => navigate(`/cadastros/categorias/${c.id}`)}
-                      onEdit={() => navigate(`/cadastros/categorias/${c.id}/editar`)}
+                      onEdit={() => handleEdit(c)}
                       onToggleAtivo={() => handleToggleAtivo(c)} />
                   </td>
                 </tr>
@@ -294,12 +302,17 @@ export function CategoriasPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} categoria` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} a categoria "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggleAtivo}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar categoria'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} categoria` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar a categoria "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} a categoria "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

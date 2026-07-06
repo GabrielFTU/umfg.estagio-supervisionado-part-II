@@ -144,6 +144,7 @@ export function PessoasPage() {
   const filterRef = useRef<HTMLDivElement>(null);
   const [desativarTarget, setDesativarTarget] = useState<PessoaItem | null>(null);
   const [bloquearTarget, setBloquearTarget] = useState<PessoaItem | null>(null);
+  const [editarTarget, setEditarTarget] = useState<PessoaItem | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -197,6 +198,15 @@ export function PessoasPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const handleEditar = (p: PessoaItem) => setEditarTarget(p);
+
+  const execEditar = () => {
+    if (!editarTarget) return;
+    const p = editarTarget;
+    setEditarTarget(null);
+    navigate(`/cadastros/pessoas/${p.tipo}/${p.id}/editar`);
+  };
 
   const handleDesativar = (p: PessoaItem) => setDesativarTarget(p);
 
@@ -386,14 +396,11 @@ export function PessoasPage() {
                 </tr>
               ) : paginated.map(p => (
                 <tr key={p.id}
-                  className={cn(
-                    'border-b border-gray-100 hover:bg-gray-50 transition-colors',
-                    !p.ativo && 'opacity-50',
-                  )}>
-                  <td className="px-6 py-3 text-gray-500 tabular-nums truncate">
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <td className={cn('px-6 py-3 text-gray-500 tabular-nums truncate', !p.ativo && 'opacity-50')}>
                     {maskDoc(p.tipo, p.doc)}
                   </td>
-                  <td className="px-4 py-3 truncate">
+                  <td className={cn('px-4 py-3 truncate', !p.ativo && 'opacity-50')}>
                     <div className="flex items-center gap-2">
                       <span className="text-gray-700 font-medium">{p.nome}</span>
                       {p.bloqueado && (
@@ -403,7 +410,7 @@ export function PessoasPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={cn('px-4 py-3', !p.ativo && 'opacity-50')}>
                     <div className="flex flex-wrap gap-1">
                       {p.papeis.length > 0
                         ? p.papeis.map(papel => (
@@ -416,17 +423,17 @@ export function PessoasPage() {
                       }
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 truncate">
+                  <td className={cn('px-4 py-3 text-gray-500 truncate', !p.ativo && 'opacity-50')}>
                     {p.email ?? maskPhone(p.telefone) ?? '—'}
                   </td>
-                  <td className="px-4 py-3 text-gray-500 truncate">
+                  <td className={cn('px-4 py-3 text-gray-500 truncate', !p.ativo && 'opacity-50')}>
                     {p.cidade !== '—' ? `${p.cidade}${p.uf ? ` – ${p.uf}` : ''}` : '—'}
                   </td>
                   <td className="pr-4 text-right">
                     <RowMenu
                       p={p}
                       onView={() => navigate(`/cadastros/pessoas/${p.tipo}/${p.id}`)}
-                      onEdit={() => navigate(`/cadastros/pessoas/${p.tipo}/${p.id}/editar`)}
+                      onEdit={() => handleEditar(p)}
                       onDesativar={() => handleDesativar(p)}
                       onBloquear={() => handleBloquear(p)}
                     />
@@ -458,6 +465,16 @@ export function PessoasPage() {
           </select>
         </div>
       )}
+
+      <ModalMsg
+        aberto={editarTarget !== null}
+        titulo="Editar pessoa"
+        descricao={editarTarget ? `Editar "${editarTarget.nome}"?` : ''}
+        variante="info"
+        labelConfirmar="Confirmar"
+        onConfirmar={execEditar}
+        onCancelar={() => setEditarTarget(null)}
+      />
 
       <ModalMsg
         aberto={desativarTarget !== null}

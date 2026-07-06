@@ -122,7 +122,7 @@ export function UsuariosPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<UsuarioItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: UsuarioItem } | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   const currentUserId = getCurrentUserId();
@@ -164,12 +164,18 @@ export function UsuariosPage() {
     [usuarios],
   );
 
-  const handleToggleAtivo = (u: UsuarioItem) => setConfirmTarget(u);
+  const handleEdit = (u: UsuarioItem) => setConfirmAction({ type: 'edit', item: u });
 
-  const execToggleAtivo = async () => {
-    if (!confirmTarget) return;
-    const u = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggleAtivo = (u: UsuarioItem) => setConfirmAction({ type: 'toggle', item: u });
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item: u } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/configuracoes/usuarios/${u.id}/editar`);
+      return;
+    }
     setErrorMsg('');
     const token = localStorage.getItem('token');
     if (u.ativo) {
@@ -341,7 +347,7 @@ export function UsuariosPage() {
                     transition={{ duration: 0.18, delay: Math.min(i * 0.03, 0.3) }}
                     onClick={() => navigate(`/configuracoes/usuarios/${u.id}`)}
                     className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                    <td className="px-4 sm:px-6 py-3">
+                    <td className={cn('px-4 sm:px-6 py-3', !u.ativo && 'opacity-50')}>
                       <div className="flex items-center gap-2.5">
                         <div className={cn(
                           'w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold text-white',
@@ -350,7 +356,7 @@ export function UsuariosPage() {
                           {iniciais(u.nome)}
                         </div>
                         <div className="min-w-0">
-                          <span className={cn('text-sm block truncate', u.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                          <span className={cn('text-sm block truncate', u.ativo ? 'text-gray-700' : 'text-gray-400')}>
                             {u.nome}
                           </span>
                           <span className="text-xs text-gray-400 md:hidden truncate block">{u.email}</span>
@@ -374,7 +380,7 @@ export function UsuariosPage() {
                         souEu={u.id === currentUserId}
                         ativo={u.ativo}
                         onView={() => navigate(`/configuracoes/usuarios/${u.id}`)}
-                        onEdit={() => navigate(`/configuracoes/usuarios/${u.id}/editar`)}
+                        onEdit={() => handleEdit(u)}
                         onToggleAtivo={() => handleToggleAtivo(u)} />
                     </td>
                   </motion.tr>
@@ -406,12 +412,17 @@ export function UsuariosPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} usuário` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} o usuário "${confirmTarget.nome}"? ${confirmTarget.ativo ? 'Ele perderá acesso ao sistema imediatamente.' : ''}` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggleAtivo}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar usuário'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} usuário` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar o usuário "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} o usuário "${confirmAction.item.nome}"? ${confirmAction.item.ativo ? 'Ele perderá acesso ao sistema imediatamente.' : ''}`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </motion.div>
   );

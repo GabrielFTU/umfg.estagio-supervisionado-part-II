@@ -41,7 +41,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             className="h-9 w-9 object-contain transform transition-transform hover:scale-105" />
           <div className="flex flex-col border-l border-white/20 pl-3">
             <span className="text-white font-bold text-base tracking-wide leading-none">
-              ATHEL ERP
+              VALISYS
             </span>
           </div>
         </div>

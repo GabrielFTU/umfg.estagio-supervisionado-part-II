@@ -89,7 +89,7 @@ export function RoteiroProducaoPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<RoteiroItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'delete'; item: RoteiroItem } | null>(null);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -110,12 +110,17 @@ export function RoteiroProducaoPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDelete = (item: RoteiroItem) => { setConfirmTarget(item); };
+  const handleEdit = (item: RoteiroItem) => { setConfirmAction({ type: 'edit', item }); };
+  const handleDelete = (item: RoteiroItem) => { setConfirmAction({ type: 'delete', item }); };
 
-  const execDelete = async () => {
-    if (!confirmTarget) return;
-    const item = confirmTarget;
-    setConfirmTarget(null);
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/producao/roteiros/${item.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     await fetch(`/api/roteiros-producao/${item.id}`, {
       method: 'DELETE',
@@ -268,7 +273,7 @@ export function RoteiroProducaoPage() {
                   </td>
                   <td className="pr-4 text-right" onClick={e => e.stopPropagation()}>
                     <RowMenu
-                      onEdit={() => navigate(`/producao/roteiros/${item.id}/editar`)}
+                      onEdit={() => handleEdit(item)}
                       onDelete={() => handleDelete(item)}
                     />
                   </td>
@@ -311,12 +316,16 @@ export function RoteiroProducaoPage() {
         </div>
       )}
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo="Excluir roteiro"
-        descricao={confirmTarget ? `Excluir roteiro "${confirmTarget.codigo}"?` : ''}
-        variante="perigo"
-        onConfirmar={execDelete}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit' ? 'Editar roteiro' : 'Excluir roteiro'}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar roteiro "${confirmAction.item.codigo}"?`
+          : `Excluir roteiro "${confirmAction.item.codigo}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : 'perigo'}
+        labelConfirmar={confirmAction?.type === 'edit' ? 'Confirmar' : 'Excluir'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );

@@ -365,7 +365,7 @@ function FiltersPanel({ filters, onChange, onClose, clientes, vendedores, produt
 
 
   return (
-    <div className="absolute z-40 right-0 top-full mt-1.5 w-80 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="absolute z-40 right-0 top-full mt-1.5 w-80 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-visible">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
         <span className="text-sm font-semibold text-gray-800">Filtros</span>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
@@ -426,19 +426,29 @@ function FiltersPanel({ filters, onChange, onClose, clientes, vendedores, produt
 
         <div>
           <p className="text-xs font-semibold text-gray-700 mb-1.5">Data de Emissão</p>
-          <div className="flex items-center gap-2">
-            <DatePicker value={local.emissaoFrom} onChange={v => set('emissaoFrom', v)} />
-            <span className="text-xs text-gray-500 shrink-0">até</span>
-            <DatePicker value={local.emissaoTo} onChange={v => set('emissaoTo', v)} />
+          <div className="space-y-2">
+            <div>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">De</span>
+              <DatePicker value={local.emissaoFrom} onChange={v => set('emissaoFrom', v)} />
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">Até</span>
+              <DatePicker value={local.emissaoTo} onChange={v => set('emissaoTo', v)} />
+            </div>
           </div>
         </div>
 
         <div>
           <p className="text-xs font-semibold text-gray-700 mb-1.5">Validade</p>
-          <div className="flex items-center gap-2">
-            <DatePicker value={local.validadeFrom} onChange={v => set('validadeFrom', v)} />
-            <span className="text-xs text-gray-500 shrink-0">até</span>
-            <DatePicker value={local.validadeTo} onChange={v => set('validadeTo', v)} />
+          <div className="space-y-2">
+            <div>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">De</span>
+              <DatePicker value={local.validadeFrom} onChange={v => set('validadeFrom', v)} />
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5 block">Até</span>
+              <DatePicker value={local.validadeTo} onChange={v => set('validadeTo', v)} />
+            </div>
           </div>
         </div>
 

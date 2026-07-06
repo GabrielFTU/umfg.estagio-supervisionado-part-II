@@ -82,7 +82,7 @@ export function AlmoxarifadosPage() {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const filterRef = useRef<HTMLDivElement>(null);
-  const [confirmTarget, setConfirmTarget] = useState<AlmoxarifadoItem | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'edit' | 'toggle'; item: AlmoxarifadoItem } | null>(null);
   useEffect(() => {
     if (!filterOpen) return;
     const h = (e: MouseEvent) => { if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false); };
@@ -100,14 +100,22 @@ export function AlmoxarifadosPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleToggle = (item: AlmoxarifadoItem) => {
-    setConfirmTarget(item);
+  const handleEdit = (item: AlmoxarifadoItem) => {
+    setConfirmAction({ type: 'edit', item });
   };
 
-  const execToggle = async () => {
-    if (!confirmTarget) return;
-    const item = confirmTarget;
-    setConfirmTarget(null);
+  const handleToggle = (item: AlmoxarifadoItem) => {
+    setConfirmAction({ type: 'toggle', item });
+  };
+
+  const execConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, item } = confirmAction;
+    setConfirmAction(null);
+    if (type === 'edit') {
+      navigate(`/cadastros/almoxarifados/${item.id}/editar`);
+      return;
+    }
     const token = localStorage.getItem('token');
     if (item.ativo) {
       await fetch(`/api/almoxarifados/${item.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
@@ -233,8 +241,8 @@ export function AlmoxarifadosPage() {
                     <td className="px-6 py-3 text-sm text-gray-500">
                       {item.codigo != null ? String(item.codigo).padStart(3, '0') : '—'}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400 line-through')}>
+                    <td className={cn('px-4 py-3', !item.ativo && 'opacity-50')}>
+                      <span className={cn('text-sm', item.ativo ? 'text-gray-700' : 'text-gray-400')}>
                         {item.nome.toUpperCase()}
                       </span>
                     </td>
@@ -243,7 +251,7 @@ export function AlmoxarifadosPage() {
                     <td className="pr-4 text-right">
                       <RowMenu ativo={item.ativo}
                         onView={() => navigate(`/cadastros/almoxarifados/${item.id}`)}
-                        onEdit={() => navigate(`/cadastros/almoxarifados/${item.id}/editar`)}
+                        onEdit={() => handleEdit(item)}
                         onToggle={() => handleToggle(item)} />
                     </td>
                   </tr>
@@ -276,12 +284,17 @@ export function AlmoxarifadosPage() {
       )}
 
       <ModalMsg
-        aberto={confirmTarget !== null}
-        titulo={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} almoxarifado` : ''}
-        descricao={confirmTarget ? `${confirmTarget.ativo ? 'Desativar' : 'Reativar'} "${confirmTarget.nome}"?` : ''}
-        variante={confirmTarget?.ativo ? 'perigo' : 'aviso'}
-        onConfirmar={execToggle}
-        onCancelar={() => setConfirmTarget(null)}
+        aberto={confirmAction !== null}
+        titulo={confirmAction?.type === 'edit'
+          ? 'Editar almoxarifado'
+          : confirmAction ? `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} almoxarifado` : ''}
+        descricao={confirmAction ? (confirmAction.type === 'edit'
+          ? `Editar "${confirmAction.item.nome}"?`
+          : `${confirmAction.item.ativo ? 'Desativar' : 'Reativar'} "${confirmAction.item.nome}"?`
+        ) : ''}
+        variante={confirmAction?.type === 'edit' ? 'info' : confirmAction?.item.ativo ? 'perigo' : 'aviso'}
+        onConfirmar={execConfirm}
+        onCancelar={() => setConfirmAction(null)}
       />
     </div>
   );
