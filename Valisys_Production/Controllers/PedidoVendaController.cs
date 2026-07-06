@@ -124,6 +124,8 @@ namespace Valisys_Production.Controllers
             }
             catch (ArgumentException ex)           { return Problem(ex.Message); }
             catch (InvalidOperationException ex)   { return ConflictProblem(ex.Message); }
+            catch (KeyNotFoundException ex)        { return NotFoundProblem(ex.Message); }
+            catch (DbUpdateException ex)           { return ConflictProblem(ex.InnerException?.Message ?? ex.Message); }
         }
 
         // ─── PUT /api/pedidos-venda/{id} ──────────────────────────────────────────

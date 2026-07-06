@@ -72,9 +72,6 @@ namespace Valisys_Production.Repositories
                     
                     _context.MovimentacoesCarteira.Add(movimentacao);
 
-                    _context.ContasPagar.Update(conta);
-                    _context.Carteiras.Update(carteira);
-
                     var result = await _context.SaveChangesAsync() > 0;
 
                     if (result)

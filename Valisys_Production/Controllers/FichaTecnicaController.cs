@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Valisys_Production.DTOs;
 using Valisys_Production.Infrastructure.Authorization;
 using Valisys_Production.Models;
@@ -64,6 +65,7 @@ namespace Valisys_Production.Controllers
             }
             catch (KeyNotFoundException ex) { return NotFoundProblem(ex.Message); }
             catch (InvalidOperationException ex) { return Problem(ex.Message); }
+            catch (DbUpdateException ex) { return ConflictProblem(ex.InnerException?.Message ?? ex.Message); }
         }
 
         [HttpPut("{id:guid}")]
