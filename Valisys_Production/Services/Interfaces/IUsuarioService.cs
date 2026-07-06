@@ -11,5 +11,6 @@ namespace Valisys_Production.Services.Interfaces
         Task<IEnumerable<Usuario>> GetAllAsync();
         Task<bool> UpdateAsync(UsuarioUpdateDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task ChangePasswordAsync(Guid usuarioId, ChangePasswordDto dto);
     }
 }

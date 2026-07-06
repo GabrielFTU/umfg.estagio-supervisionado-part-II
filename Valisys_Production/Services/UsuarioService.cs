@@ -83,5 +83,19 @@ namespace Valisys_Production.Services
 
             return result;
         }
+
+        public async Task ChangePasswordAsync(Guid usuarioId, ChangePasswordDto dto)
+        {
+            var usuario = await _repository.GetByIdAsync(usuarioId);
+            if (usuario == null) throw new KeyNotFoundException("Usuário não encontrado.");
+
+            var novaSenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.NovaSenha);
+            usuario.AtualizarSenha(novaSenhaHash);
+
+            await _repository.UpdateAsync(usuario);
+
+            await _logService.RegistrarAsync("Edição", "Usuários",
+                $"Usuário alterou a própria senha: {usuario.Email}");
+        }
     }
 }

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Bell, ChevronDown } from 'lucide-react';
+import { Menu, X, Bell } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { UserMenu } from './UserMenu';
 
 
 interface AppLayoutProps {
@@ -53,15 +54,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-yellow-300 rounded-full border border-[#FFDE21]" />
           </button>
 
-          <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-sm shrink-0">
-              <span className="text-white text-[11px] font-bold">{initials}</span>
-            </div>
-            <span className="text-white text-sm font-medium hidden md:block max-w-[120px] truncate">
-              {user?.nome?.split(' ')[0] ?? 'Usuário'}
-            </span>
-            <ChevronDown size={13} className="text-white/60 hidden md:block" />
-          </button>
+          <UserMenu user={user} initials={initials} />
         </div>
       </header>
 

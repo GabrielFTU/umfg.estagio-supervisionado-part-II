@@ -1,4 +1,5 @@
 import type { LoginResponse } from '@/types';
+import { fetchWithAuth } from './api';
 
 const API_BASE = '/api';
 
@@ -79,4 +80,25 @@ export function clearSession(): void {
   localStorage.removeItem('token');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
+}
+
+export async function changePassword(novaSenha: string, confirmarNovaSenha: string): Promise<void> {
+  const res = await fetchWithAuth(`${API_BASE}/Usuarios/senha`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ novaSenha, confirmarNovaSenha }),
+  });
+
+  if (!res.ok) {
+    let message = 'Não foi possível alterar a senha.';
+    try {
+      const body = await res.json() as { message?: string; errors?: Record<string, string[]> };
+      if (body.errors) {
+        message = Object.values(body.errors).flat()[0] ?? message;
+      } else {
+        message = body.message ?? message;
+      }
+    } catch {}
+    throw new Error(message);
+  }
 }

@@ -6,6 +6,7 @@ using AutoMapper;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Valisys_Production.Controllers
@@ -130,6 +131,34 @@ namespace Valisys_Production.Controllers
             catch (InvalidOperationException ex)
             {
                 return Conflict(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("senha")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                await _service.ChangePasswordAsync(userId, dto);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
             }
         }
     }
