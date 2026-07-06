@@ -83,12 +83,14 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            existing.Desativar();
+            if (existing.Ativo) existing.Desativar();
+            else existing.Ativar();
+
             var deleted = await _repository.UpdateAsync(existing);
 
             if (deleted)
-                await _logService.RegistrarAsync("Inativação", "Produtos",
-                    $"Inativou o produto '{existing.Nome}'");
+                await _logService.RegistrarAsync(existing.Ativo ? "Ativação" : "Inativação", "Produtos",
+                    $"{(existing.Ativo ? "Reativou" : "Inativou")} o produto '{existing.Nome}'");
 
             return deleted;
         }

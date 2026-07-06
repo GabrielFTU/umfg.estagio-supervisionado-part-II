@@ -4,6 +4,7 @@ import { Loader2, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { fetchWithAuth } from '@/services/api';
 
 type Modo = 'criar' | 'editar' | 'visualizar';
 
@@ -82,8 +83,7 @@ export function CondicaoPagamentoFormPage() {
   useEffect(() => {
     if (!id) return;
     const fn = async () => {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/condicoes-pagamento/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetchWithAuth(`/api/condicoes-pagamento/${id}`);
       if (!res.ok) { navigate('/cadastros/condicoes-pagamento'); return; }
       const data = await res.json();
       setForm({
@@ -131,8 +131,7 @@ export function CondicaoPagamentoFormPage() {
 
   const execSalvar = async () => {
     setSaving(true); setGlobalErr('');
-    const token = localStorage.getItem('token');
-    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+    const headers = { 'Content-Type': 'application/json' };
     const body = {
       id, nome: form.nome.trim(), numeroParcelas: form.numeroParcelas,
       diasParaPrimeiroVencimento: form.diasParaPrimeiroVencimento,
@@ -144,8 +143,8 @@ export function CondicaoPagamentoFormPage() {
     };
     try {
       const res = modo === 'criar'
-        ? await fetch('/api/condicoes-pagamento', { method: 'POST', headers, body: JSON.stringify(body) })
-        : await fetch(`/api/condicoes-pagamento/${id}`, { method: 'PUT', headers, body: JSON.stringify(body) });
+        ? await fetchWithAuth('/api/condicoes-pagamento', { method: 'POST', headers, body: JSON.stringify(body) })
+        : await fetchWithAuth(`/api/condicoes-pagamento/${id}`, { method: 'PUT', headers, body: JSON.stringify(body) });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail ?? 'Erro ao salvar.');

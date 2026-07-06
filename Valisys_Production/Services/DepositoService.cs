@@ -68,11 +68,18 @@ namespace Valisys_Production.Services
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
-            if (await _repository.HasActiveLotesInAlmoxarifadoAsync(existing.AlmoxarifadoId))
-                throw new InvalidOperationException(
-                    $"Não é possível desativar o depósito '{existing.Nome}' pois o almoxarifado possui lotes ativos.");
+            if (existing.Ativo)
+            {
+                if (await _repository.HasActiveLotesInAlmoxarifadoAsync(existing.AlmoxarifadoId))
+                    throw new InvalidOperationException(
+                        $"Não é possível desativar o depósito '{existing.Nome}' pois o almoxarifado possui lotes ativos.");
+                existing.Desativar();
+            }
+            else
+            {
+                existing.Ativar();
+            }
 
-            existing.Desativar();
             return await _repository.UpdateAsync(existing);
         }
 

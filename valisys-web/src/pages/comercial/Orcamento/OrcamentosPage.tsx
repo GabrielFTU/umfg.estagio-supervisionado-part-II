@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus, Search, Loader2, MoreHorizontal,
+  Plus, Search, Loader2,
   FileText, ChevronDown, SlidersHorizontal, ArrowRightCircle,
   Home, ChevronRight, ChevronLeft, X,
 } from 'lucide-react';
@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/contexts/ToastContext';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { ModalMsg } from '@/components/ui/ModalMsg';
+import { RowActionsMenu } from '@/components/ui/RowActionsMenu';
+import { fetchWithAuth } from '@/services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -151,31 +153,6 @@ function RowMenu({ orcamento, onView, onEdit, onEnviar, onCancelar, onConverter 
   onCancelar: () => void;
   onConverter: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos]   = useState({ top: 0, right: 0 });
-  const btnRef  = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const toggle = () => {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
-    }
-    setOpen(v => !v);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    const h = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
-          btnRef.current  && !btnRef.current.contains(e.target as Node)) close();
-    };
-    document.addEventListener('mousedown', h);
-    document.addEventListener('scroll', close, true);
-    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('scroll', close, true); };
-  }, [open]);
-
   const s = orcamento.status;
   const canEdit      = s === 0 || s === 1 || s === 2;
   const canEnviar    = s === 0;
@@ -183,39 +160,33 @@ function RowMenu({ orcamento, onView, onEdit, onEnviar, onCancelar, onConverter 
   const canConverter = s !== 4 && s !== 5;
 
   return (
-    <>
-      <button ref={btnRef} onClick={toggle}
-        className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors">
-        <MoreHorizontal size={15} />
-      </button>
-      {open && (
-        <div ref={menuRef}
-          style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-52 bg-white border border-gray-200 rounded-lg shadow-xl py-0.5 text-[13px]">
-          <button onClick={() => { setOpen(false); onView(); }}
+    <RowActionsMenu buttonClassName="rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200" menuClassName="w-52 shadow-xl">
+      {close => (
+        <>
+          <button onClick={() => { close(); onView(); }}
             className="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100">Visualizar</button>
           {canEdit && (
-            <button onClick={() => { setOpen(false); onEdit(); }}
+            <button onClick={() => { close(); onEdit(); }}
               className="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100">Editar</button>
           )}
           {(canEnviar || canCancelar || canConverter) && <div className="my-0.5 mx-2 border-t border-gray-200" />}
           {canEnviar && (
-            <button onClick={() => { setOpen(false); onEnviar(); }}
+            <button onClick={() => { close(); onEnviar(); }}
               className="w-full text-left px-3 py-2 text-blue-700 hover:bg-blue-50">Enviar</button>
           )}
           {canConverter && (
-            <button onClick={() => { setOpen(false); onConverter(); }}
+            <button onClick={() => { close(); onConverter(); }}
               className="w-full text-left px-3 py-2 text-violet-700 hover:bg-violet-50 flex items-center gap-1.5">
               <ArrowRightCircle size={13} /> Transformar em Pedido
             </button>
           )}
           {canCancelar && (
-            <button onClick={() => { setOpen(false); onCancelar(); }}
+            <button onClick={() => { close(); onCancelar(); }}
               className="w-full text-left px-3 py-2 text-red-600 hover:bg-red-50">Cancelar orçamento</button>
           )}
-        </div>
+        </>
       )}
-    </>
+    </RowActionsMenu>
   );
 }
 
@@ -498,9 +469,8 @@ export function OrcamentosPage() {
 
   const load = async () => {
     setLoading(true); setError('');
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/orcamentos?pageSize=500', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetchWithAuth('/api/orcamentos?pageSize=500');
       if (!res.ok) throw new Error();
       const data = await res.json();
       setOrcamentos(Array.isArray(data) ? data : (data.items ?? []));
@@ -556,8 +526,7 @@ export function OrcamentosPage() {
     if (!enviarTarget) return;
     const o = enviarTarget;
     setEnviarTarget(null);
-    const token = localStorage.getItem('token');
-    const res = await fetch(`/api/orcamentos/${o.id}/enviar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetchWithAuth(`/api/orcamentos/${o.id}/enviar`, { method: 'PATCH' });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       showToast(data.detail ?? data.message ?? 'Não foi possível enviar o orçamento.');
@@ -573,8 +542,7 @@ export function OrcamentosPage() {
     if (!cancelarTarget) return;
     const o = cancelarTarget;
     setCancelarTarget(null);
-    const token = localStorage.getItem('token');
-    const res = await fetch(`/api/orcamentos/${o.id}/cancelar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetchWithAuth(`/api/orcamentos/${o.id}/cancelar`, { method: 'PATCH' });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       showToast(data.detail ?? data.message ?? 'Não foi possível cancelar o orçamento.');
@@ -590,11 +558,8 @@ export function OrcamentosPage() {
     if (!converterTarget) return;
     const o = converterTarget;
     setConverterTarget(null);
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`/api/orcamentos/${o.id}/converter-em-pedido`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetchWithAuth(`/api/orcamentos/${o.id}/converter-em-pedido`, { method: 'POST' });
       if (!res.ok) { const err = await res.json().catch(() => ({})); showToast(err.detail ?? 'Erro ao converter.'); return; }
       const data = await res.json();
       showToast('Orçamento convertido em pedido com sucesso.');
@@ -612,13 +577,10 @@ export function OrcamentosPage() {
     setConverterLoteConfirm(false);
     const convertible = orcamentos.filter(o => selected.has(o.id) && o.status !== 4 && o.status !== 5);
     setConverting(true);
-    const token = localStorage.getItem('token');
     let success = 0;
     for (const o of convertible) {
       try {
-        const res = await fetch(`/api/orcamentos/${o.id}/converter-em-pedido`, {
-          method: 'POST', headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetchWithAuth(`/api/orcamentos/${o.id}/converter-em-pedido`, { method: 'POST' });
         if (res.ok) success++;
       } catch { /* skip */ }
     }
