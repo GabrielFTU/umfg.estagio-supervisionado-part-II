@@ -68,6 +68,8 @@ namespace Valisys_Production.Data
         public DbSet<RegraRecorrencia> RegrasRecorrencia { get; set; }
         public DbSet<Carteira> Carteiras { get; set; }
         public DbSet<MovimentacaoCarteira> MovimentacoesCarteira { get; set; }
+        public DbSet<Inventario> Inventarios { get; set; }
+        public DbSet<ItemInventario> ItensInventario { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -518,6 +520,37 @@ namespace Valisys_Production.Data
                 .HasForeignKey(i => i.OrcamentoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Inventario>()
+                .Navigation(i => i.Itens).HasField("_itens");
+
+            modelBuilder.Entity<Inventario>()
+                .HasIndex(i => i.Numero)
+                .IsUnique();
+
+            modelBuilder.Entity<Inventario>()
+                .HasOne(i => i.Deposito)
+                .WithMany()
+                .HasForeignKey(i => i.DepositoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Inventario>()
+                .HasOne(i => i.UsuarioAbertura)
+                .WithMany()
+                .HasForeignKey(i => i.UsuarioAberturaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ItemInventario>()
+                .HasOne(i => i.Produto)
+                .WithMany()
+                .HasForeignKey(i => i.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ItemInventario>()
+                .HasOne<Inventario>()
+                .WithMany(i => i.Itens)
+                .HasForeignKey(i => i.InventarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<RefreshToken>()
                 .HasOne(r => r.Usuario)
                 .WithMany()
@@ -626,6 +659,7 @@ namespace Valisys_Production.Data
                 // Estoque
                 P.Estoque.Visualizar,
                 P.Movimentacoes.Visualizar, P.Movimentacoes.Criar, P.Movimentacoes.Editar, P.Movimentacoes.Excluir,
+                P.Inventarios.Visualizar, P.Inventarios.Criar, P.Inventarios.Editar, P.Inventarios.Finalizar, P.Inventarios.Cancelar,
                 // Financeiro
                 P.Financeiro.Visualizar,
                 // Produção

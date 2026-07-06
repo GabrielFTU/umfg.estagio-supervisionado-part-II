@@ -17,7 +17,6 @@ export default defineConfig({
     },
   },
   server: {
-    // Em dev: toda chamada /api/* vai para o backend sem passar pelo CORS do browser.
     proxy: {
       '/api': {
         target: 'http://localhost:5019',

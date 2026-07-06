@@ -203,6 +203,15 @@
             public const string Excluir    = "Depositos.Excluir";
         }
 
+        public static class Inventarios
+        {
+            public const string Visualizar = "Inventarios.Visualizar";
+            public const string Criar      = "Inventarios.Criar";
+            public const string Editar     = "Inventarios.Editar";
+            public const string Finalizar  = "Inventarios.Finalizar";
+            public const string Cancelar   = "Inventarios.Cancelar";
+        }
+
         public static IReadOnlyList<string> Todas() =>
         [
             Finalidades.Visualizar, Finalidades.Criar, Finalidades.Editar, Finalidades.Inativar,
@@ -231,6 +240,7 @@
             TiposOrdem.Visualizar, TiposOrdem.Criar, TiposOrdem.Editar, TiposOrdem.Excluir,
             Relatorios.Visualizar, Dashboard.Visualizar, Estoque.Visualizar, Logs.Visualizar,
             Financeiro.Visualizar,
+            Inventarios.Visualizar, Inventarios.Criar, Inventarios.Editar, Inventarios.Finalizar, Inventarios.Cancelar,
         ];
     }
 }

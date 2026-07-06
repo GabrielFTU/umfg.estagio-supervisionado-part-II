@@ -222,6 +222,8 @@ builder.Services.AddScoped<ICarteiraRepository, CarteiraRepository>();
 builder.Services.AddScoped<ICarteiraService, CarteiraService>();
 builder.Services.AddScoped<IMovimentacaoCarteiraRepository, MovimentacaoCarteiraRepository>();
 builder.Services.AddScoped<IMovimentacaoCarteiraService, MovimentacaoCarteiraService>();
+builder.Services.AddScoped<IInventarioRepository, InventarioRepository>();
+builder.Services.AddScoped<IInventarioService, InventarioService>();
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")

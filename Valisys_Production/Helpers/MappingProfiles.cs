@@ -202,6 +202,19 @@ namespace Valisys_Production.Helpers
                 .ForMember(dest => dest.Origem, opt => opt.MapFrom(src => src.Origem.ToString()))
                 .ForMember(dest => dest.CarteiraNome, opt => opt.MapFrom(src =>
                     src.Carteira != null ? $"{src.Carteira.CodigoBanco} - {src.Carteira.NomeBanco}" : null));
+
+            // Inventário
+            CreateMap<ItemInventario, InventarioItemReadDto>()
+                .ForMember(dest => dest.ProdutoNome, opt => opt.MapFrom(src => src.Produto != null ? src.Produto.Nome : string.Empty))
+                .ForMember(dest => dest.Sku, opt => opt.MapFrom(src => src.Produto != null
+                    ? (src.Produto.Sku ?? src.Produto.CodigoInternoProduto.ToString())
+                    : string.Empty));
+
+            CreateMap<Inventario, InventarioReadDto>()
+                .ForMember(dest => dest.DepositoNome, opt => opt.MapFrom(src => src.Deposito != null ? src.Deposito.Nome : string.Empty))
+                .ForMember(dest => dest.TipoContagem, opt => opt.MapFrom(src => src.TipoContagem.ToString().ToUpper()))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString().ToUpper()))
+                .ForMember(dest => dest.UsuarioNome, opt => opt.MapFrom(src => src.UsuarioAbertura != null ? src.UsuarioAbertura.Nome : null));
         }
     }
 }
