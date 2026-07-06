@@ -117,7 +117,14 @@ namespace Valisys_Production.Controllers
             catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
             catch (DbUpdateException ex)
             {
-                return Conflict(new { message = ex.InnerException?.Message ?? "Não foi possível salvar a baixa." });
+                var errorMessage = ex.InnerException?.InnerException?.Message 
+                    ?? ex.InnerException?.Message 
+                    ?? ex.Message;
+                
+                System.Diagnostics.Debug.WriteLine($"[ERRO_BAIXA] {errorMessage}");
+                System.Diagnostics.Debug.WriteLine($"[ERRO_BAIXA] StackTrace: {ex.StackTrace}");
+                
+                return Conflict(new { message = errorMessage });
             }
         }
 
