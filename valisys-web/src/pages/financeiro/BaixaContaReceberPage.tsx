@@ -477,17 +477,20 @@ export function BaixaContaReceberPage() {
 
             {/* Conta financeira */}
             <div className="relative w-72" ref={carteiraRef}>
+              <label className={cn('block text-xs mb-1', erros.carteira ? 'text-red-500' : 'text-gray-500')}>
+                Conta financeira *
+              </label>
               <div
                 onClick={() => setCarteiraOpen(v => !v)}
                 className={cn(
-                  'flex items-center justify-between pb-2 border-b cursor-pointer transition-colors',
+                  'flex items-center justify-between h-9 border-b cursor-pointer transition-colors',
                   erros.carteira ? 'border-red-400' : 'border-gray-300 hover:border-gray-500',
                 )}
               >
                 <span className={cn('text-sm', selectedCart ? 'text-gray-700' : 'text-gray-400')}>
                   {selectedCart
                     ? `${selectedCart.codigoBanco} ${selectedCart.nomeBanco}`
-                    : 'Conta financeira *'}
+                    : 'Selecione…'}
                 </span>
                 <ChevronDown size={14} className="text-gray-400 shrink-0 ml-2" />
               </div>
@@ -520,11 +523,12 @@ export function BaixaContaReceberPage() {
 
             {/* Forma de pagamento */}
             <div className="relative w-44" ref={formaRef}>
+              <label className="block text-xs mb-1 text-gray-500">Forma de pagamento</label>
               <div
                 onClick={() => setFormaOpen(v => !v)}
-                className="flex items-center justify-between pb-2 border-b border-gray-300 hover:border-gray-500 cursor-pointer transition-colors"
+                className="flex items-center justify-between h-9 border-b border-gray-300 hover:border-gray-500 cursor-pointer transition-colors"
               >
-                <span className="text-sm text-gray-700">{selectedForma?.label ?? 'Forma de pagamento'}</span>
+                <span className="text-sm text-gray-700">{selectedForma?.label ?? 'Selecione…'}</span>
                 <ChevronDown size={14} className="text-gray-400 shrink-0 ml-2" />
               </div>
               {isBoleto && (

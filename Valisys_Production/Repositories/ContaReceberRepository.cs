@@ -44,29 +44,51 @@ namespace Valisys_Production.Repositories
             DateTime dataPagamento, FormaPagamentoEnum formaPagamento, Guid carteiraId,
             decimal? juros, decimal? multa, string? observacoes)
         {
-            var conta = await _context.ContasReceber
-                .Include(c => c.Parcelas)
-                .FirstOrDefaultAsync(c => c.Id == contaId);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var conta = await _context.ContasReceber
+                    .Include(c => c.Parcelas)
+                    .FirstOrDefaultAsync(c => c.Id == contaId);
 
-            if (conta is null) return false;
+                if (conta is null)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
 
-            var carteira = await _context.Carteiras.FirstOrDefaultAsync(c => c.Id == carteiraId)
-                ?? throw new KeyNotFoundException("Carteira financeira não encontrada.");
+                var carteira = await _context.Carteiras.FirstOrDefaultAsync(c => c.Id == carteiraId)
+                    ?? throw new KeyNotFoundException("Carteira financeira não encontrada.");
 
-            var parcela = conta.Parcelas.FirstOrDefault(p => p.Id == parcelaId)
-                ?? throw new KeyNotFoundException("Parcela não encontrada.");
+                var parcela = conta.Parcelas.FirstOrDefault(p => p.Id == parcelaId)
+                    ?? throw new KeyNotFoundException("Parcela não encontrada.");
 
-            conta.BaixarParcela(parcelaId, valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes);
-            carteira.Creditar(valorPago);
+                if (parcela.DataPagamento.HasValue)
+                    throw new InvalidOperationException("Esta parcela já foi paga.");
 
-            var movimentacao = new MovimentacaoCarteira(carteiraId, TipoMovimentacaoCarteira.Credito,
-                OrigemMovimentacaoCarteira.ContaReceber, valorPago, dataPagamento,
-                $"Baixa parcela {parcela.NumeroParcela}/{conta.Parcelas.Count} - {conta.Descricao}",
-                contaReceberId: contaId, parcelaReceberId: parcelaId);
-            _context.MovimentacoesCarteira.Add(movimentacao);
+                conta.BaixarParcela(parcelaId, valorPago, dataPagamento, formaPagamento, carteiraId, juros, multa, observacoes);
+                carteira.Creditar(valorPago);
 
-            try { return await _context.SaveChangesAsync() > 0; }
-            catch { return false; }
+                var movimentacao = new MovimentacaoCarteira(carteiraId, TipoMovimentacaoCarteira.Credito,
+                    OrigemMovimentacaoCarteira.ContaReceber, valorPago, dataPagamento,
+                    $"Baixa parcela {parcela.NumeroParcela}/{conta.Parcelas.Count} - {conta.Descricao}",
+                    contaReceberId: contaId, parcelaReceberId: parcelaId);
+                _context.MovimentacoesCarteira.Add(movimentacao);
+
+                var result = await _context.SaveChangesAsync() > 0;
+
+                if (result)
+                    await transaction.CommitAsync();
+                else
+                    await transaction.RollbackAsync();
+
+                return result;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<bool> EstornarParcelaAsync(Guid contaId, Guid parcelaId)
@@ -101,8 +123,7 @@ namespace Valisys_Production.Repositories
                 _context.MovimentacoesCarteira.Add(movimentacao);
             }
 
-            try { return await _context.SaveChangesAsync() > 0; }
-            catch { return false; }
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task VerificarVencimentosAsync()

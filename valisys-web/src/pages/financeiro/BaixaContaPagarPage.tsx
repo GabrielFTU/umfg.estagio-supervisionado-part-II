@@ -453,17 +453,20 @@ export function BaixaContaPagarPage() {
 
             {/* Conta financeira */}
             <div className="relative w-80" ref={carteiraRef}>
+              <label className={cn('block text-xs mb-1', erros.carteira ? 'text-red-500' : 'text-gray-500')}>
+                Conta financeira *
+              </label>
               <div
                 onClick={() => setCarteiraOpen(v => !v)}
                 className={cn(
-                  'flex items-center justify-between pb-2 border-b cursor-pointer transition-colors',
+                  'flex items-center justify-between h-9 border-b cursor-pointer transition-colors',
                   erros.carteira ? 'border-red-400' : 'border-gray-300 hover:border-gray-500',
                 )}
               >
                 <span className={cn('text-sm', selectedCart ? 'text-gray-700' : 'text-gray-400')}>
                   {selectedCart
                     ? `${selectedCart.codigoBanco} ${selectedCart.nomeBanco}`
-                    : 'Conta financeira *'}
+                    : 'Selecione…'}
                 </span>
                 <ChevronDown size={14} className="text-gray-400 shrink-0 ml-2" />
               </div>

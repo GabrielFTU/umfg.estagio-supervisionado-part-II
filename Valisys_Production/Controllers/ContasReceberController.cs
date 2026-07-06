@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Valisys_Production.DTOs;
 using Valisys_Production.Services.Interfaces;
 
@@ -114,6 +115,14 @@ namespace Valisys_Production.Controllers
             catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
             catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+            catch (DbUpdateException ex)
+            {
+                var errorMessage = ex.InnerException?.InnerException?.Message
+                    ?? ex.InnerException?.Message
+                    ?? ex.Message;
+
+                return Conflict(new { message = errorMessage });
+            }
         }
 
         [HttpPost("estornar-parcela")]
@@ -132,6 +141,10 @@ namespace Valisys_Production.Controllers
             catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
             catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+            catch (DbUpdateException ex)
+            {
+                return Conflict(new { message = ex.InnerException?.Message ?? "Não foi possível estornar a baixa. Tente novamente." });
+            }
         }
 
         [HttpPost("verificar-vencimentos")]
